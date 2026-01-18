@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: private-repo-creds
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/secret-type: repository
+stringData:
+  url: https://github.com/nordiwnd/GearPit.git
+  username: nordiwnd
+  password: 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
