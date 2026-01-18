@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gearpit-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/nordiwnd/GearPit.git
+    targetRevision: main
+    path: manifests
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true      # Gitから消えたリソースはk8sからも消す
+      selfHeal: true   # 手動でk8sを変更されても、Gitの状態に強制的に戻す
+    syncOptions:
+      - CreateNamespace=true
