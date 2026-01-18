@@ -1,5 +1,5 @@
 # Build Stage
-FROM golang:1.25-bullseye as builder
+FROM golang:1.25 as builder
 
 WORKDIR /app
 COPY go.mod ./
