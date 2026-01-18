@@ -14,7 +14,7 @@ func main() {
 
 	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("GearPit is alive on ARM64!"))
+		w.Write([]byte("GearPit is alive on ARM64! Action-ArgoCD Test!"))
 	})
 
 	log.Printf("Server starting on port %s", port)
