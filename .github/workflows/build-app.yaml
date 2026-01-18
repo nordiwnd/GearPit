@@ -1,35 +1,41 @@
-name: Build App
+name: Build and Update Manifest
 
 on:
   push:
     branches: [ "main" ]
+    # アプリのコード変更時のみトリガー (manifests変更時はトリガーしない -> ループ防止)
     paths: [ "app/**", ".github/workflows/build-app.yaml" ]
   workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
-  # 画像名は全て小文字である必要があります
-  IMAGE_NAME: ${{ github.repository }}-app
+  # 画像名 (小文字)
+  IMAGE_NAME: nordiwnd/gearpit-app
+  # git config 用
+  GIT_USER_NAME: "github-actions[bot]"
+  GIT_USER_EMAIL: "github-actions[bot]@users.noreply.github.com"
 
 jobs:
-  build-and-push:
+  build-push-update:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      packages: write
+      contents: write # Gitへのコミット権限
+      packages: write # GHCRへのPush権限
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ARM64ビルドのためのQEMUセットアップ
+      # 1. バージョン生成 (ショートSHA)
+      - name: Generate Short SHA
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      # 2. Docker Build & Push Setup
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
-
-      # Docker Buildxセットアップ
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
       - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
@@ -37,23 +43,45 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=sha,format=long
-            type=raw,value=latest
-
+      # 3. Build & Push (タグを sha-xxxx に変更)
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: ./app
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          # ここで AMD64 と ARM64 の両方をビルド
+          # tags: latest と sha-xxxx の両方をPush
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.sha_short }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # 4. Install Kustomize
+      - name: Setup Kustomize
+        uses: imranismail/setup-kustomize@v2
+
+      # 5. Update kustomization.yaml (一番重要)
+      - name: Update Kubernetes resources
+        run: |
+          cd manifests
+          # kustomization.yaml の newTag を書き換える
+          kustomize edit set image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.sha_short }}
+          cat kustomization.yaml # ログ確認用
+
+      # 6. Commit & Push changes
+      - name: Commit and Push Manifest changes
+        run: |
+          git config --global user.name "${{ env.GIT_USER_NAME }}"
+          git config --global user.email "${{ env.GIT_USER_EMAIL }}"
+          
+          # 変更がある場合のみコミット
+          if [[ -n $(git status -s manifests/kustomization.yaml) ]]; then
+            git add manifests/kustomization.yaml
+            git commit -m "ops: update image tag to ${{ steps.vars.outputs.sha_short }} [skip ci]"
+            git push origin main
+          else
+            echo "No changes to commit"
+          fi
