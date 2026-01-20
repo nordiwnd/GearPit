@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
 - test-deploy.yaml
+- ingress.yaml
 
 images:
 - name: ghcr.io/nordiwnd/gearpit-app
