@@ -6,6 +6,7 @@ metadata:
     app: gearpit-skeleton
 spec:
   replicas: 1
+  revisionHistoryLimit: 3
   selector:
     matchLabels:
       app: gearpit-skeleton
