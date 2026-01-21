@@ -4,7 +4,7 @@ kind: Kustomization
 resources:
 - test-deploy.yaml
 - ingress.yaml
-
+- argocd/apps/operator.yaml
 images:
 - name: ghcr.io/nordiwnd/gearpit-app
   newName: ghcr.io/nordiwnd/gearpit-app
