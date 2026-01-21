@@ -1,33 +1,34 @@
-# Build the manager binary
-FROM golang:1.24 AS builder
+# 変更点1: --platform=$BUILDPLATFORM を追加
+# これにより、ビルド処理自体はホストのアーキテクチャ(amd64)で高速に実行されます
+FROM --platform=$BUILDPLATFORM golang:1.24 AS builder
+
 ARG TARGETOS
 ARG TARGETARCH
 
 WORKDIR /workspace
-# Copy the Go Modules manifests
+
+# 依存関係のダウンロード (変更頻度が低いので先にやる)
 COPY go.mod go.mod
 COPY go.sum go.sum
-# cache deps before building and copying source so that we don't need to re-download as much
-# and so that source changes don't invalidate our downloaded layer
-RUN go mod download
 
-COPY cmd/main.go cmd/main.go
+# 変更点2: キャッシュマウントを追加
+# go mod download の結果をキャッシュ
+RUN --mount=type=cache,target=/go/pkg/mod/ \
+    go mod download
+
+# ソースコードのコピー
+COPY cmd/ cmd/
 COPY api/ api/
 COPY internal/ internal/
 
-
-# Copy the Go source (relies on .dockerignore to filter)
-COPY . .
-
 # Build
-# the GOARCH has no default value to allow the binary to be built according to the host where the command
-# was called. For example, if we call make docker-build in a local env which has the Apple Silicon M1 SO
-# the docker BUILDPLATFORM arg will be linux/arm64 when for Apple x86 it will be linux/amd64. Therefore,
-# by leaving it empty we can ensure that the container and binary shipped on it will have the same platform.
-RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -o manager cmd/main.go
+# 変更点3: ビルドキャッシュとモジュールキャッシュをマウント
+# これにより、変更されていないパッケージの再コンパイルを防ぎます
+RUN --mount=type=cache,target=/go/pkg/mod/ \
+    --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -o manager cmd/main.go
 
-# Use distroless as minimal base image to package the manager binary
-# Refer to https://github.com/GoogleContainerTools/distroless for more details
+# 実行用イメージ (ここはターゲットアーキテクチャが必要なので platform 指定はしない)
 FROM gcr.io/distroless/static:nonroot
 WORKDIR /
 COPY --from=builder /workspace/manager .
