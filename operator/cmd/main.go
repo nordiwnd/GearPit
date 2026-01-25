@@ -154,6 +154,7 @@ func main() {
 		metricsServerOptions.KeyName = metricsCertKey
 	}
 
+	// 1. Managerの初期化
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		Metrics:                metricsServerOptions,
@@ -161,16 +162,6 @@ func main() {
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "67ef9923.gearpit.io",
-		// LeaderElectionReleaseOnCancel defines if the leader should step down voluntarily
-		// when the Manager ends. This requires the binary to immediately end when the
-		// Manager is stopped, otherwise, this setting is unsafe. Setting this significantly
-		// speeds up voluntary leader transitions as the new leader don't have to wait
-		// LeaseDuration time first.
-		//
-		// In the default scaffold provided, the program ends immediately after
-		// the manager stops, so would be fine to enable this option. However,
-		// if you are doing or is intended to do any operation such as perform cleanups
-		// after the manager stops then its usage might be unsafe.
 		// LeaderElectionReleaseOnCancel: true,
 	})
 	if err != nil {
@@ -178,13 +169,23 @@ func main() {
 		os.Exit(1)
 	}
 
+	// 2. 環境変数の取得 (Manager初期化後、Controller登録前に実施)
+	baseDomain := os.Getenv("PREVIEW_BASE_DOMAIN")
+	if baseDomain == "" {
+		baseDomain = "192.168.40.100.nip.io" // デフォルト値
+		setupLog.Info("PREVIEW_BASE_DOMAIN not set, using default", "domain", baseDomain)
+	}
+
+	// 3. Controllerの登録
 	if err := (&controller.PreviewEnvReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:     mgr.GetClient(),
+		Scheme:     mgr.GetScheme(),
+		BaseDomain: baseDomain, // 環境変数を注入
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "PreviewEnv")
 		os.Exit(1)
 	}
+
 	// +kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
