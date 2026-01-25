@@ -67,7 +67,13 @@ func (r *PreviewEnvReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 						Name:  "app",
 						Image: "ghcr.io/nordiwnd/gearpit-app:" + previewEnv.Spec.ImageTag,
 						Ports: []corev1.ContainerPort{{ContainerPort: 8080}},
-						Env:   []corev1.EnvVar{{Name: "DB_HOST", Value: req.Name + "-db"}},
+						Env: []corev1.EnvVar{
+							{Name: "DB_HOST", Value: req.Name + "-db"},
+							{Name: "DB_PORT", Value: "5432"},
+							{Name: "DB_USER", Value: "gearpit"},     // DBコンテナの設定と合わせる
+							{Name: "DB_PASSWORD", Value: "gearpit"}, // DBコンテナの設定と合わせる
+							{Name: "DB_NAME", Value: "gearpit"},     // DBコンテナの設定と合わせる
+						},
 					}},
 				},
 			},
