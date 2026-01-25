@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://github.com/nordiwnd/GearPit.git
     targetRevision: main
-    path: manifests
+    path: manifests/apps/gearpit-core/base
   destination:
     server: https://kubernetes.default.svc
     namespace: default

@@ -1,0 +1,8 @@
+apiVersion: core.gearpit.io/v1alpha1
+kind: PreviewEnv
+metadata:
+  name: preview-test-123
+  namespace: default
+spec:
+  prNumber: 123
+  imageTag: "latest"  # 既存のイメージタグを指定

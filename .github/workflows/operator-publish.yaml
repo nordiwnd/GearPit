@@ -2,15 +2,17 @@ name: Build and Push Operator
 
 on:
   push:
-    branches: [ "main" ]
-    # operatorディレクトリの変更のみ検知
+    branches: 
+      - "main"
+      - "refactor/**"
+      - "dev/**"
     paths:
       - 'operator/**'
       - '.github/workflows/operator-publish.yaml'
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/operator
+  IMAGE_NAME: ${{ github.repository_owner }}/gearpit-operator
 
 jobs:
   build-and-push:
