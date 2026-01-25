@@ -2,8 +2,10 @@ name: Build and Push Operator
 
 on:
   push:
-    branches: [ "main" ]
-    # operatorディレクトリの変更のみ検知
+    branches: 
+      - "main"
+      - "refactor/**"
+      - "dev/**"
     paths:
       - 'operator/**'
       - '.github/workflows/operator-publish.yaml'
