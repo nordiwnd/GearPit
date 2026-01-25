@@ -60,6 +60,9 @@ func (r *PreviewEnvReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{Labels: appLabels},
 				Spec: corev1.PodSpec{
+					ImagePullSecrets: []corev1.LocalObjectReference{
+						{Name: "ghcr-creds"},
+					},
 					Containers: []corev1.Container{{
 						Name:  "app",
 						Image: "ghcr.io/nordiwnd/gearpit-app:" + previewEnv.Spec.ImageTag,
