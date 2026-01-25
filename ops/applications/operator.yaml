@@ -9,7 +9,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/nordiwnd/gearpit.git
-    targetRevision: main
+    targetRevision: refactor/monorepo-structure
     path: operator/config/default
   destination:
     server: https://kubernetes.default.svc
