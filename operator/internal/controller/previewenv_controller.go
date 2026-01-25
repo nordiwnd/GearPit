@@ -53,7 +53,7 @@ func (r *PreviewEnvReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	// --- App Deployment ---
 	appLabels := map[string]string{"app": "gearpit-app", "instance": req.Name}
 	deploy := &appsv1.Deployment{
-		TypeMeta: metav1.TypeMeta{Kind: "Deployment", APIVersion: "apps/v1"},
+		TypeMeta:   metav1.TypeMeta{Kind: "Deployment", APIVersion: "apps/v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: req.Name + "-app", Namespace: req.Namespace, Labels: appLabels},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{MatchLabels: appLabels},
@@ -62,7 +62,7 @@ func (r *PreviewEnvReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
 						Name:  "app",
-						Image: "ghcr.io/nordiwnd/gearpit/app:" + previewEnv.Spec.ImageTag,
+						Image: "ghcr.io/nordiwnd/gearpit-app:" + previewEnv.Spec.ImageTag,
 						Ports: []corev1.ContainerPort{{ContainerPort: 8080}},
 						Env:   []corev1.EnvVar{{Name: "DB_HOST", Value: req.Name + "-db"}},
 					}},
@@ -76,7 +76,7 @@ func (r *PreviewEnvReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	// --- App Service ---
 	svc := &corev1.Service{
-		TypeMeta: metav1.TypeMeta{Kind: "Service", APIVersion: "v1"},
+		TypeMeta:   metav1.TypeMeta{Kind: "Service", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: req.Name + "-app", Namespace: req.Namespace, Labels: appLabels},
 		Spec: corev1.ServiceSpec{
 			Selector: appLabels,
@@ -90,7 +90,7 @@ func (r *PreviewEnvReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	// --- Ingress ---
 	host := fmt.Sprintf("pr-%d.gearpit.nip.io", previewEnv.Spec.PRNumber)
 	ingress := &netv1.Ingress{
-		TypeMeta: metav1.TypeMeta{Kind: "Ingress", APIVersion: "networking.k8s.io/v1"},
+		TypeMeta:   metav1.TypeMeta{Kind: "Ingress", APIVersion: "networking.k8s.io/v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: req.Name, Namespace: req.Namespace, Labels: appLabels},
 		Spec: netv1.IngressSpec{
 			Rules: []netv1.IngressRule{{
@@ -117,7 +117,7 @@ func (r *PreviewEnvReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	if previewEnv.Spec.IncludeDB {
 		dbLabels := map[string]string{"app": "gearpit-db", "instance": req.Name}
 		dbDeploy := &appsv1.Deployment{
-			TypeMeta: metav1.TypeMeta{Kind: "Deployment", APIVersion: "apps/v1"},
+			TypeMeta:   metav1.TypeMeta{Kind: "Deployment", APIVersion: "apps/v1"},
 			ObjectMeta: metav1.ObjectMeta{Name: req.Name + "-db", Namespace: req.Namespace, Labels: dbLabels},
 			Spec: appsv1.DeploymentSpec{
 				Selector: &metav1.LabelSelector{MatchLabels: dbLabels},
@@ -141,9 +141,9 @@ func (r *PreviewEnvReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		if err := applyResource(dbDeploy); err != nil {
 			return ctrl.Result{}, err
 		}
-		
+
 		dbSvc := &corev1.Service{
-			TypeMeta: metav1.TypeMeta{Kind: "Service", APIVersion: "v1"},
+			TypeMeta:   metav1.TypeMeta{Kind: "Service", APIVersion: "v1"},
 			ObjectMeta: metav1.ObjectMeta{Name: req.Name + "-db", Namespace: req.Namespace, Labels: dbLabels},
 			Spec: corev1.ServiceSpec{
 				Selector: dbLabels,
