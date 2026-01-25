@@ -3,39 +3,40 @@ name: Build and Update Manifest
 on:
   push:
     branches: [ "main" ]
-    # アプリのコード変更時のみトリガー (manifests変更時はトリガーしない -> ループ防止)
-    paths: [ "app/**", ".github/workflows/build-app.yaml" ]
+    # パス修正: アプリコード変更時のみトリガー
+    paths: 
+      - "apps/gearpit-core/**"
+      - ".github/workflows/build-app.yaml"
   workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
-  # 画像名 (小文字)
   IMAGE_NAME: nordiwnd/gearpit-app
-  # git config 用
   GIT_USER_NAME: "github-actions[bot]"
   GIT_USER_EMAIL: "github-actions[bot]@users.noreply.github.com"
+  # 追加: マニフェストファイルのパスを変数化
+  MANIFEST_PATH: "manifests/apps/gearpit-core/base"
 
 jobs:
   build-push-update:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Gitへのコミット権限
-      packages: write # GHCRへのPush権限
+      contents: write # Git commit用
+      packages: write # GHCR push用
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 1. バージョン生成 (ショートSHA)
       - name: Generate Short SHA
         id: vars
         run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-      # 2. Docker Build & Push Setup
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+      
       - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
@@ -43,13 +44,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 3. Build & Push (タグを sha-xxxx に変更)
+      # Build & Push
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./app
+          # パス修正: ビルドコンテキストをアプリのディレクトリに指定
+          context: ./apps/gearpit-core
           push: true
-          # tags: latest と sha-xxxx の両方をPush
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.sha_short }}
@@ -59,28 +60,32 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # 4. Install Kustomize
       - name: Setup Kustomize
         uses: imranismail/setup-kustomize@v2
 
-      # 5. Update kustomization.yaml (一番重要)
+      # Update Manifest (Path修正)
       - name: Update Kubernetes resources
         run: |
-          cd manifests
-          # kustomization.yaml の newTag を書き換える
+          # パス修正: 対象のkustomization.yamlがある場所へ移動
+          cd ${{ env.MANIFEST_PATH }}
+          
+          # Image Tag書き換え
           kustomize edit set image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.sha_short }}
-          cat kustomization.yaml # ログ確認用
+          
+          cat kustomization.yaml
 
-      # 6. Commit & Push changes
+      # Commit & Push (Path修正)
       - name: Commit and Push Manifest changes
         run: |
           git config --global user.name "${{ env.GIT_USER_NAME }}"
           git config --global user.email "${{ env.GIT_USER_EMAIL }}"
           
-          # 変更がある場合のみコミット
-          if [[ -n $(git status -s manifests/kustomization.yaml) ]]; then
-            git add manifests/kustomization.yaml
-            git commit -m "ops: update image tag to ${{ steps.vars.outputs.sha_short }} [skip ci]"
+          # パス修正: git status / add の対象パスを変更
+          TARGET_FILE="${{ env.MANIFEST_PATH }}/kustomization.yaml"
+          
+          if [[ -n $(git status -s $TARGET_FILE) ]]; then
+            git add $TARGET_FILE
+            git commit -m "ops: update gearpit-core image tag to ${{ steps.vars.outputs.sha_short }} [skip ci]"
             git push origin main
           else
             echo "No changes to commit"
