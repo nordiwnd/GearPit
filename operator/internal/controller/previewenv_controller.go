@@ -20,7 +20,8 @@ import (
 // PreviewEnvReconciler reconciles a PreviewEnv object
 type PreviewEnvReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme     *runtime.Scheme
+	BaseDomain string // 環境変数から注入されるベースドメイン
 }
 
 // +kubebuilder:rbac:groups=core.gearpit.io,resources=previewenvs,verbs=get;list;watch;create;update;patch;delete
@@ -36,12 +37,15 @@ const (
 func (r *PreviewEnvReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
+	// 1. まずCRを取得する
 	var previewEnv gearpitiov1alpha1.PreviewEnv
 	if err := r.Get(ctx, req.NamespacedName, &previewEnv); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	logger.Info("Reconciling PreviewEnv", "PR", previewEnv.Spec.PRNumber)
+	// 2. CR取得後にHost名を生成する (ハードコーディング撤廃)
+	host := fmt.Sprintf("pr-%d.%s", previewEnv.Spec.PRNumber, r.BaseDomain)
+	logger.Info("Reconciling PreviewEnv", "PR", previewEnv.Spec.PRNumber, "Host", host)
 
 	applyResource := func(obj client.Object) error {
 		if err := ctrl.SetControllerReference(&previewEnv, obj, r.Scheme); err != nil {
@@ -97,13 +101,12 @@ func (r *PreviewEnvReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	// --- Ingress ---
-	host := fmt.Sprintf("pr%d-192-168-40-100.nip.io", previewEnv.Spec.PRNumber)
 	ingress := &netv1.Ingress{
 		TypeMeta:   metav1.TypeMeta{Kind: "Ingress", APIVersion: "networking.k8s.io/v1"},
 		ObjectMeta: metav1.ObjectMeta{Name: req.Name, Namespace: req.Namespace, Labels: appLabels},
 		Spec: netv1.IngressSpec{
 			Rules: []netv1.IngressRule{{
-				Host: host,
+				Host: host, // 生成した動的ホスト名を使用
 				IngressRuleValue: netv1.IngressRuleValue{
 					HTTP: &netv1.HTTPIngressRuleValue{
 						Paths: []netv1.HTTPIngressPath{{
