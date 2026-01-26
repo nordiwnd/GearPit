@@ -2,7 +2,7 @@
 
 # 1. Build Stage
 # バージョンは Operator と合わせて 1.24 にしておきます（1.25は未リリースでエラーになります）
-FROM --platform=$BUILDPLATFORM golang:1.24 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.25 AS builder
 
 WORKDIR /app
 

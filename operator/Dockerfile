@@ -1,6 +1,6 @@
 # 変更点1: --platform=$BUILDPLATFORM を追加
 # これにより、ビルド処理自体はホストのアーキテクチャ(amd64)で高速に実行されます
-FROM --platform=$BUILDPLATFORM golang:1.24 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.25 AS builder
 
 ARG TARGETOS
 ARG TARGETARCH
