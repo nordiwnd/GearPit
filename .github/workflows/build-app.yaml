@@ -9,9 +9,9 @@ on:
   # 追加: PR作成時もトリガーする
   pull_request:
     branches: [ "main" ]
-    paths: 
-      - "apps/gearpit-core/**"
-      - ".github/workflows/build-app.yaml"
+    # paths: 
+    #   - "apps/gearpit-core/**"
+    #   - ".github/workflows/build-app.yaml"
   workflow_dispatch:
 
 env:
