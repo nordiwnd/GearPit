@@ -1,9 +1,46 @@
+# manifests/apps/gearpit-core/overlays/preview/kustomization.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
   - ../../base
+  - postgres.yaml
 
-# プレビュー環境共通のラベル（識別用）
 commonLabels:
   variant: preview
+
+# アプリ(Deployment)にDB接続情報をパッチする
+# 1. Secretを生成する定義を追加
+secretGenerator:
+  - name: gearpit-db-secret
+    literals:
+      - POSTGRES_USER=gearpit
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=gearpit
+      - DB_USER=gearpit
+      - DB_PASSWORD=password
+      - DB_NAME=gearpit
+      - DB_HOST=gearpit-db-svc
+      - DB_PORT=5432
+      - SSL_MODE=disable
+
+# 2. 生成されたSecretをDeploymentに注入する
+patches:
+  - target:
+      kind: Deployment
+      name: gearpit-skeleton
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/envFrom
+        value:
+          - secretRef:
+              name: gearpit-db-secret
+  - target:
+      kind: Deployment
+      name: gearpit-db
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/envFrom
+        value:
+          - secretRef:
+              name: gearpit-db-secret
