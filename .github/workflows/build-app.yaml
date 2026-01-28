@@ -34,7 +34,15 @@ jobs:
 
       - name: Generate Short SHA
         id: vars
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+        run: |
+          # PRの場合は Head SHA を、それ以外(Push)は GITHUB_SHA を使用
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            FULL_SHA="${{ github.event.pull_request.head.sha }}"
+          else
+            FULL_SHA="${{ github.sha }}"
+          fi
+          # 先頭7文字を切り出す
+          echo "sha_short=$(echo $FULL_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3

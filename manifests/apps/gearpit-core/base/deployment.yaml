@@ -15,8 +15,8 @@ spec:
       labels:
         app: gearpit-app
     spec:
-      imagePullSecrets:
-        - name: ghcr-creds
+      # imagePullSecrets:
+      #   - name: ghcr-creds
       containers:
         - name: app
           image: ghcr.io/nordiwnd/gearpit-app:latest
