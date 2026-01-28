@@ -31,9 +31,7 @@ spec:
         
         kustomize:
           images:
-            - name: ghcr.io/nordiwnd/gearpit-app
-              newTag: '{{head_short_sha}}'
-          
+            - 'ghcr.io/nordiwnd/gearpit-app=ghcr.io/nordiwnd/gearpit-app:{{head_short_sha}}'
           namespace: 'pr{{number}}'
           patches:
             - target:

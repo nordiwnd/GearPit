@@ -1,0 +1,13 @@
+---
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
+metadata:
+  name: github-token
+  namespace: argocd
+spec:
+  encryptedData:
+    token: AgAqXbaBIQTDtwVCRQ/UFcA+EIQGZhFGxMYrRJeH1z+TYIe80k5amQYq00121Wqer7PGH7IYZ3eecTbGAIktiP7WLdo6FVm8koI1Jb7yzU7ithfHG6uW/3Oo2h+Lg1Ko8YUAA3jIYz2vpQkXq3SctufWCIDgPemwWM4QHGSbat/qtgOC3mWeuK7jBHAPEqZt/dyVImO2ivKEPky/g0ptapQCOEBN6B6GgTnaUrnYcdVtO1Ww0hL4hrHAFPnpC7yDr1+07e1BzWbsVE7plSkGt9aUmsy46HRvIUkStl0eR2/5TDaOjB9MZbBLTnG03PaEaHBN6g4gc4dWWaU3GDQYIZpoFQUL6y7hjbPfwW94QExIFRjEW1B1DftjYvbArC3BaDxhiWsAAl3WUpdFHG57fMkXc7i6GPJdGYb/vXpOKtWk6QUDxwPUVH94OU9gYOVofh8+qILtNDleMc0iPsNbXfi0nbD/SoAMu/7T+bZY8uAMb3rHmQabNixT1gGg8sM6d1XmgenYjEtJhutJ9jnwI5tLOTdKW1CuVZjJAmMSta3caKCkjF4T9BRbb7dR3aRypElt9WH8wm1cAvqFfqny54Y+ndS3z+jBg21MQx8TiX8oyo2lmG8es6K+FMXV5WIYtk6vneSG0BTh7B3WtXonNjkyW+2y8/ewHmRmSazEifgGSysp/yCTZ2u/h8sXG+J8NEaOvd6YE7ViVmbyk1Oe1xh/dQ12TpQ/4smqZ52/mesHa5INdbpDUCl+
+  template:
+    metadata:
+      name: github-token
+      namespace: argocd
