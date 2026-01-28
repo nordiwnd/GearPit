@@ -1,43 +1,46 @@
-# manifests/apps/gearpit-core/overlays/preview/kustomization.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
   - ../../base
-  - postgres.yaml
+  - postgres-ephemeral.yaml
 
 commonLabels:
   variant: preview
 
-# アプリ(Deployment)にDB接続情報をパッチする
-# 1. Secretを生成する定義を追加
+# 1. DB接続情報とPostgres初期化情報をまとめてSecretにする
 secretGenerator:
   - name: gearpit-db-secret
     literals:
+      # Postgresコンテナ用
       - POSTGRES_USER=gearpit
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=gearpit
+      # Goアプリ用
       - DB_USER=gearpit
       - DB_PASSWORD=password
       - DB_NAME=gearpit
-      - DB_HOST=gearpit-db-svc
+      - DB_HOST=gearpit-db-preview # ← Service名に合わせる
       - DB_PORT=5432
       - SSL_MODE=disable
 
 # 2. 生成されたSecretをDeploymentに注入する
 patches:
+  # Goアプリ (BaseのDeployment名に合わせる)
   - target:
       kind: Deployment
-      name: gearpit-app
+      name: gearpit-skeleton # ← gearpit-app から修正
     patch: |-
       - op: add
         path: /spec/template/spec/containers/0/envFrom
         value:
           - secretRef:
               name: gearpit-db-secret
+
+  # DB (EphemeralのDeployment名に合わせる)
   - target:
       kind: Deployment
-      name: gearpit-db
+      name: gearpit-db-preview # ← gearpit-db から修正
     patch: |-
       - op: add
         path: /spec/template/spec/containers/0/envFrom
