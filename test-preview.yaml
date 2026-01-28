@@ -1,8 +1,8 @@
 apiVersion: core.gearpit.io/v1alpha1
 kind: PreviewEnv
 metadata:
-  name: preview-test-123
-  namespace: default
+  name: pr-test
 spec:
-  prNumber: 123
-  imageTag: "latest"  # 既存のイメージタグを指定
+  prNumber: 1
+  imageTag: "191e3d4" # ビルドされたSHA
+  includeDB: true

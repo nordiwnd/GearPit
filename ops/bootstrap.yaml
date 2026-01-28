@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cluster-bootstrap
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/nordiwnd/GearPit.git
+    targetRevision: dev/01
+    path: ops
+    # ディレクトリ再帰読み込みを有効化（サブディレクトリも含める場合）
+    directory:
+      recurse: true
+      # jsonnetなどを除外し、純粋なYAMLのみ対象にする設定も可能
+      exclude: 'bootstrap.yaml' 
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

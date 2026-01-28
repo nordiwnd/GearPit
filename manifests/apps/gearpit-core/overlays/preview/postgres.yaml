@@ -1,0 +1,44 @@
+# manifests/apps/gearpit-core/overlays/preview/postgres.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gearpit-db
+  labels:
+    app: gearpit-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gearpit-db
+  template:
+    metadata:
+      labels:
+        app: gearpit-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          env:
+            - name: POSTGRES_USER
+              value: gearpit
+            - name: POSTGRES_PASSWORD
+              value: password
+            - name: POSTGRES_DB
+              value: gearpit
+          ports:
+            - containerPort: 5432
+          resources:
+            limits:
+              memory: 256Mi
+              cpu: 250m
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gearpit-db-svc
+spec:
+  selector:
+    app: gearpit-db
+  ports:
+    - port: 5432
+      targetPort: 5432

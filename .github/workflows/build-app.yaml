@@ -3,7 +3,12 @@ name: Build and Update Manifest
 on:
   push:
     branches: [ "main" ]
-    # パス修正: アプリコード変更時のみトリガー
+    paths: 
+      - "apps/gearpit-core/**"
+      - ".github/workflows/build-app.yaml"
+  # 追加: PR作成時もトリガーする
+  pull_request:
+    branches: [ "main" ]
     paths: 
       - "apps/gearpit-core/**"
       - ".github/workflows/build-app.yaml"
@@ -14,15 +19,14 @@ env:
   IMAGE_NAME: nordiwnd/gearpit-app
   GIT_USER_NAME: "github-actions[bot]"
   GIT_USER_EMAIL: "github-actions[bot]@users.noreply.github.com"
-  # 追加: マニフェストファイルのパスを変数化
   MANIFEST_PATH: "manifests/apps/gearpit-core/base"
 
 jobs:
   build-push-update:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Git commit用
-      packages: write # GHCR push用
+      contents: write
+      packages: write
 
     steps:
       - name: Checkout repository
@@ -44,11 +48,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Build & Push
+      # Build & Push (PRでもMainでも実行)
+      # PRの場合はここでPreview用のImageがGHCRにPushされます
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          # パス修正: ビルドコンテキストをアプリのディレクトリに指定
           context: ./apps/gearpit-core
           push: true
           tags: |
@@ -63,24 +67,21 @@ jobs:
       - name: Setup Kustomize
         uses: imranismail/setup-kustomize@v2
 
-      # Update Manifest (Path修正)
+      # Update Manifest (修正: PRの時はスキップする)
       - name: Update Kubernetes resources
+        if: github.event_name != 'pull_request'
         run: |
-          # パス修正: 対象のkustomization.yamlがある場所へ移動
           cd ${{ env.MANIFEST_PATH }}
-          
-          # Image Tag書き換え
           kustomize edit set image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.sha_short }}
-          
           cat kustomization.yaml
 
-      # Commit & Push (Path修正)
+      # Commit & Push (修正: PRの時はスキップする)
       - name: Commit and Push Manifest changes
+        if: github.event_name != 'pull_request'
         run: |
           git config --global user.name "${{ env.GIT_USER_NAME }}"
           git config --global user.email "${{ env.GIT_USER_EMAIL }}"
           
-          # パス修正: git status / add の対象パスを変更
           TARGET_FILE="${{ env.MANIFEST_PATH }}/kustomization.yaml"
           
           if [[ -n $(git status -s $TARGET_FILE) ]]; then

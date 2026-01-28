@@ -1,23 +1,39 @@
-# Build Stage
-# --platform=$BUILDPLATFORM を追加することで、
-# ターゲットがARM64であっても、ビルドにはランナーのネイティブ(AMD64)なGoイメージを使用
-FROM --platform=$BUILDPLATFORM golang:1.25 as builder
+# syntax=docker/dockerfile:1
+
+# 1. Build Stage
+# バージョンは Operator と合わせて 1.24 にしておきます（1.25は未リリースでエラーになります）
+FROM --platform=$BUILDPLATFORM golang:1.25 AS builder
 
 WORKDIR /app
-COPY go.mod ./
-# COPY go.sum ./
-# RUN go mod download
 
+# 依存関係のダウンロード
+COPY go.mod go.sum ./
+
+# 【重要】ここにもキャッシュマウントを追加！
+# これがないと、次のステップのマウントによってダウンロード済みファイルが隠蔽され、再DLが発生します
+RUN --mount=type=cache,target=/go/pkg/mod/ \
+    go mod download
+
+# ソースコードのコピー
 COPY . .
 
+# 2. Cross Compilation
 ARG TARGETOS
 ARG TARGETARCH
-RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o gearpit-app .
 
-# Production Stage
-FROM gcr.io/distroless/static-debian12:nonroot
+# ビルド実行
+# ここでもマウントを使うことで、ビルド済みオブジェクトを再利用します
+RUN --mount=type=cache,target=/go/pkg/mod/ \
+    --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -ldflags="-w -s" -o server main.go
+
+# 3. Production Stage
+FROM gcr.io/distroless/static:nonroot
+
 WORKDIR /
-COPY --from=builder /app/gearpit-app .
-USER 65532:65532
+COPY --from=builder /app/server .
 
-ENTRYPOINT ["/gearpit-app"]
+EXPOSE 8080
+
+USER 65532:65532
+ENTRYPOINT ["/server"]

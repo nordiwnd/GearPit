@@ -1,0 +1,54 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: gearpit-previews
+  namespace: argocd
+spec:
+  # GitHubのPRをポーリングして動的にアプリを生成するジェネレータ
+  generators:
+    - pullRequest:
+        github:
+          owner: nordiwnd
+          repo: gearpit
+          tokenRef:
+            secretName: github-token
+            key: token
+          # 特定のラベルが付いたPRのみデプロイする場合（任意）
+          # labels:
+          #   - preview
+        requeueAfterSeconds: 60
+
+  template:
+    metadata:
+      name: 'preview-pr-{{number}}'
+      namespace: argocd
+    spec:
+      project: default
+      source:
+        repoURL: 'https://github.com/nordiwnd/gearpit.git'
+        targetRevision: '{{head_sha}}' # PRの最新コミットを使う
+        path: manifests/apps/gearpit-core/overlays/preview # Overlayを指定
+        
+        kustomize:
+          images:
+            - 'ghcr.io/nordiwnd/gearpit-app=ghcr.io/nordiwnd/gearpit-app:{{head_short_sha}}'
+          namespace: 'pr{{number}}'
+          patches:
+            - target:
+                kind: Ingress
+                name: gearpit-ingress
+              patch: |-
+                - op: replace
+                  path: /spec/rules/0/host
+                  value: pr{{number}}.192.168.40.100.nip.io
+
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: 'pr{{number}}'
+      
+      syncPolicy:
+        automated:
+          prune: true      # PRが閉じられたらリソースを削除
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
