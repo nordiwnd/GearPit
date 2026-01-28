@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gearpit-web
+  labels:
+    app: gearpit-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gearpit-web
+  template:
+    metadata:
+      labels:
+        app: gearpit-web
+    spec:
+      imagePullSecrets:
+        - name: ghcr-creds
+      containers:
+        - name: web
+          image: ghcr.io/nordiwnd/gearpit-web:latest # Web用イメージ
+          ports:
+            - containerPort: 3000
+          # Client Componentでブラウザから直接叩くので、ここでの環境変数は必須ではありませんが、
+          # Server Sideから叩く場合は NEXT_PUBLIC_API_URL などが必要になります
