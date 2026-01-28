@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: gearpit-skeleton
+  name: gearpit-app
   labels:
-    app: gearpit-skeleton
+    app: gearpit-app
 spec:
   replicas: 1
   revisionHistoryLimit: 3
   selector:
     matchLabels:
-      app: gearpit-skeleton
+      app: gearpit-app
   template:
     metadata:
       labels:
-        app: gearpit-skeleton
+        app: gearpit-app
     spec:
       imagePullSecrets:
         - name: ghcr-creds
@@ -31,10 +31,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: gearpit-skeleton-svc
+  name: gearpit-app-svc
 spec:
   selector:
-    app: gearpit-skeleton
+    app: gearpit-app
   ports:
     - protocol: TCP
       port: 80

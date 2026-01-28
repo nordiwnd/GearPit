@@ -28,7 +28,7 @@ secretGenerator:
 patches:
   - target:
       kind: Deployment
-      name: gearpit-skeleton
+      name: gearpit-app
     patch: |-
       - op: add
         path: /spec/template/spec/containers/0/envFrom
