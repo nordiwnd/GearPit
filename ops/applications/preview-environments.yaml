@@ -31,7 +31,7 @@ spec:
         
         kustomize:
           images:
-            - 'ghcr.io/nordiwnd/gearpit-app=ghcr.io/nordiwnd/gearpit-app:{{head_short_sha}}'
+            - 'ghcr.io/nordiwnd/gearpit-app=ghcr.io/nordiwnd/gearpit-app:{{head_sha}}'
           namespace: 'pr{{number}}'
           patches:
             - target:
