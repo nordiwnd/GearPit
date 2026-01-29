@@ -23,11 +23,11 @@ spec:
       source:
         repoURL: 'https://github.com/nordiwnd/gearpit.git'
         targetRevision: '{{head_sha}}'
-        path: manifests/apps/gearpit-core/overlays/preview # 作成したOverlayを指定
+        path: manifests/apps/gearpit-core/overlays/preview
         kustomize:
           images:
             - 'ghcr.io/nordiwnd/gearpit-app=ghcr.io/nordiwnd/gearpit-app:{{head_sha}}'
-          namespace: 'pr{{number}}' # 名前空間をPRごとに分離
+          namespace: 'pr{{number}}'
           patches:
             # Backend Ingress Patch
             - target:
@@ -73,11 +73,11 @@ spec:
       source:
         repoURL: 'https://github.com/nordiwnd/gearpit.git'
         targetRevision: '{{head_sha}}'
-        path: manifests/apps/gearpit-web/overlays/preview # Web用Overlay
+        path: manifests/apps/gearpit-web/overlays/preview
         kustomize:
           images:
             - 'ghcr.io/nordiwnd/gearpit-web=ghcr.io/nordiwnd/gearpit-web:{{head_sha}}'
-          namespace: 'pr{{number}}' # 同じPR番号なら同じ名前空間に入れる
+          namespace: 'pr{{number}}'
           patches:
             # Frontend Ingress Patch
             - target:
@@ -87,14 +87,17 @@ spec:
                 - op: replace
                   path: /spec/rules/0/host
                   value: web-pr{{number}}.192.168.40.100.nip.io
+            
             # Backend URL Injection Patch
             - target:
                 kind: Deployment
                 name: gearpit-web
               patch: |-
                 - op: replace
-                  path: /spec/template/spec/containers/0/env/0/value
-                  value: "http://api-pr{{number}}.192.168.40.100.nip.io"
+                  path: /spec/template/spec/containers/0/env/0
+                  value:
+                    name: BACKEND_URL # 名前も書き換える
+                    value: "http://api-pr{{number}}.192.168.40.100.nip.io"
       destination:
         server: https://kubernetes.default.svc
         namespace: 'pr{{number}}'
