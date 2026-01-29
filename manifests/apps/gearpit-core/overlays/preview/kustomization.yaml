@@ -8,39 +8,41 @@ resources:
 commonLabels:
   variant: preview
 
-# 1. DB接続情報とPostgres初期化情報をまとめてSecretにする
 secretGenerator:
   - name: gearpit-db-secret
     literals:
-      # Postgresコンテナ用
       - POSTGRES_USER=gearpit
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=gearpit
-      # Goアプリ用
       - DB_USER=gearpit
       - DB_PASSWORD=password
       - DB_NAME=gearpit
-      - DB_HOST=gearpit-db-preview # ← Service名に合わせる
+      - DB_HOST=gearpit-db-preview
       - DB_PORT=5432
       - SSL_MODE=disable
+      - PORT=8080
 
-# 2. 生成されたSecretをDeploymentに注入する
 patches:
-  # Goアプリ (BaseのDeployment名に合わせる)
+  # Gearpit App (Backend)
   - target:
       kind: Deployment
-      name: gearpit-skeleton # ← gearpit-app から修正
+      name: gearpit-skeleton # Baseの名前
     patch: |-
+      # 1. 既存の env を削除 (これが邪魔している)
+      - op: remove
+        path: /spec/template/spec/containers/0/env
+
+      # 2. Secret から環境変数を一括注入
       - op: add
         path: /spec/template/spec/containers/0/envFrom
         value:
           - secretRef:
               name: gearpit-db-secret
 
-  # DB (EphemeralのDeployment名に合わせる)
+  # Gearpit DB (Preview)
   - target:
       kind: Deployment
-      name: gearpit-db-preview # ← gearpit-db から修正
+      name: gearpit-db-preview
     patch: |-
       - op: add
         path: /spec/template/spec/containers/0/envFrom
