@@ -18,8 +18,9 @@ spec:
         - name: ghcr-creds
       containers:
         - name: web
-          image: ghcr.io/nordiwnd/gearpit-web:latest # Web用イメージ
+          image: ghcr.io/nordiwnd/gearpit-web:latest
           ports:
             - containerPort: 3000
-          # Client Componentでブラウザから直接叩くので、ここでの環境変数は必須ではありませんが、
-          # Server Sideから叩く場合は NEXT_PUBLIC_API_URL などが必要になります
+          env: # 追加
+            - name: NEXT_PUBLIC_API_URL
+              value: "http://gearpit.local/api"

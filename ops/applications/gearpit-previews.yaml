@@ -87,6 +87,14 @@ spec:
                 - op: replace
                   path: /spec/rules/0/host
                   value: web-pr{{number}}.192.168.40.100.nip.io
+            # Backend URL Injection Patch
+            - target:
+                kind: Deployment
+                name: gearpit-web
+              patch: |-
+                - op: replace
+                  path: /spec/template/spec/containers/0/env/0/value
+                  value: "http://api-pr{{number}}.192.168.40.100.nip.io"
       destination:
         server: https://kubernetes.default.svc
         namespace: 'pr{{number}}'

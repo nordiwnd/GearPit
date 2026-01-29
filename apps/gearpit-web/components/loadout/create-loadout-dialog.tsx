@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+// import axios from 'axios'; // 削除
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -27,6 +27,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
+import { api } from "@/lib/api"; // 追加
 
 // ギアデータの型
 type Gear = {
@@ -55,7 +56,8 @@ export function CreateLoadoutDialog({ onSuccess }: Props) {
   // ダイアログが開いたときにギア一覧を取得
   useEffect(() => {
     if (open) {
-      axios.get('http://localhost:8080/api/v1/gears')
+      // 修正: apiクライアントを使用
+      api.get('/api/v1/gears')
         .then(res => setGears(res.data.items || []))
         .catch(console.error);
     }
@@ -79,7 +81,8 @@ export function CreateLoadoutDialog({ onSuccess }: Props) {
         quantity: 1 // MVPでは数量1固定
       }));
 
-      await axios.post('http://localhost:8080/api/v1/loadouts', {
+      // 修正: apiクライアントを使用
+      await api.post('/api/v1/loadouts', {
         name: values.name,
         items: itemsPayload,
         kitIds: [] // MVPではKitは空

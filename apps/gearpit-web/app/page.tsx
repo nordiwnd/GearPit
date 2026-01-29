@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import axios from 'axios';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge"; // バッジコンポーネントも使うとかっこいい
-import { AddGearDialog } from "@/components/inventory/add-gear-dialog"; // 作成したコンポーネント
+import { Badge } from "@/components/ui/badge"; 
+import { AddGearDialog } from "@/components/inventory/add-gear-dialog";
+import { api } from "@/lib/api"; // 作成した共通クライアント
 
 // APIレスポンスの型定義
 type Gear = {
@@ -22,7 +22,7 @@ export default function Home() {
 
   // データ取得関数
   const fetchGears = useCallback(() => {
-    axios.get('http://localhost:8080/api/v1/gears')
+    api.get('/api/v1/gears')
       .then((res) => {
         setGears(res.data.items || []);
       })

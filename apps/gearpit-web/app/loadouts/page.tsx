@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import axios from 'axios';
+// import axios from 'axios'; // 削除
 import { format } from 'date-fns';
 import { CreateLoadoutDialog } from "@/components/loadout/create-loadout-dialog";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Scale, Calendar } from "lucide-react";
+import { api } from "@/lib/api"; // 追加
 
 type Loadout = {
   id: string;
@@ -20,7 +21,8 @@ export default function LoadoutPage() {
   const [loadouts, setLoadouts] = useState<Loadout[]>([]);
 
   const fetchLoadouts = useCallback(() => {
-    axios.get('http://localhost:8080/api/v1/loadouts')
+    // 修正: apiクライアントを使用
+    api.get('/api/v1/loadouts')
       .then(res => setLoadouts(res.data.loadouts || []))
       .catch(console.error);
   }, []);

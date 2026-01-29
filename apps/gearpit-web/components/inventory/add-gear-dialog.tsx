@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import axios from 'axios';
+// import axios from 'axios'; // 削除
 import { Plus, Trash2, Loader2 } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { api } from "@/lib/api"; // 追加
 
 // バリデーションスキーマ
 const formSchema = z.object({
@@ -78,7 +79,8 @@ export function AddGearDialog({ onSuccess }: Props) {
         return acc;
       }, {} as Record<string, any>);
 
-      await axios.post('http://localhost:8080/api/v1/gears', {
+      // 修正: apiクライアントを使用し、URLを相対パスに
+      await api.post('/api/v1/gears', {
         name: values.name,
         brand: values.brand,
         weightGram: values.weightGram,
@@ -145,7 +147,6 @@ export function AddGearDialog({ onSuccess }: Props) {
                   <FormItem>
                     <FormLabel>Weight (g)</FormLabel>
                     <FormControl>
-                      {/* 修正箇所: valueの型を明示的に指定 */}
                       <Input 
                         type="number" 
                         placeholder="0"
