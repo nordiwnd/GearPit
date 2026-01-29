@@ -26,7 +26,7 @@ patches:
   # Gearpit App (Backend)
   - target:
       kind: Deployment
-      name: gearpit-skeleton # Baseの名前
+      name: gearpit-app
     patch: |-
       # 1. 既存の env を削除 (これが邪魔している)
       - op: remove
