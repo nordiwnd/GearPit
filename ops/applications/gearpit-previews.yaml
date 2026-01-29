@@ -1,0 +1,109 @@
+# --- Backend (Core) ---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: gearpit-previews-core
+  namespace: argocd
+spec:
+  generators:
+    - pullRequest:
+        github:
+          owner: nordiwnd
+          repo: gearpit
+          tokenRef:
+            secretName: github-token
+            key: token
+        requeueAfterSeconds: 60
+  template:
+    metadata:
+      name: 'preview-core-pr-{{number}}'
+      namespace: argocd
+    spec:
+      project: default
+      source:
+        repoURL: 'https://github.com/nordiwnd/gearpit.git'
+        targetRevision: '{{head_sha}}'
+        path: manifests/apps/gearpit-core/overlays/preview
+        kustomize:
+          images:
+            - 'ghcr.io/nordiwnd/gearpit-app=ghcr.io/nordiwnd/gearpit-app:{{head_sha}}'
+          namespace: 'pr{{number}}'
+          patches:
+            # Backend Ingress Patch
+            - target:
+                kind: Ingress
+                name: gearpit-ingress
+              patch: |-
+                - op: replace
+                  path: /spec/rules/0/host
+                  value: api-pr{{number}}.192.168.40.100.nip.io
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: 'pr{{number}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+
+---
+# --- Frontend (Web) ---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: gearpit-previews-web
+  namespace: argocd
+spec:
+  generators:
+    - pullRequest:
+        github:
+          owner: nordiwnd
+          repo: gearpit
+          tokenRef:
+            secretName: github-token
+            key: token
+        requeueAfterSeconds: 60
+  template:
+    metadata:
+      name: 'preview-web-pr-{{number}}'
+      namespace: argocd
+    spec:
+      project: default
+      source:
+        repoURL: 'https://github.com/nordiwnd/gearpit.git'
+        targetRevision: '{{head_sha}}'
+        path: manifests/apps/gearpit-web/overlays/preview
+        kustomize:
+          images:
+            - 'ghcr.io/nordiwnd/gearpit-web=ghcr.io/nordiwnd/gearpit-web:{{head_sha}}'
+          namespace: 'pr{{number}}'
+          patches:
+            # Frontend Ingress Patch
+            - target:
+                kind: Ingress
+                name: gearpit-web-ingress
+              patch: |-
+                - op: replace
+                  path: /spec/rules/0/host
+                  value: web-pr{{number}}.192.168.40.100.nip.io
+            
+            # Backend URL Injection Patch
+            - target:
+                kind: Deployment
+                name: gearpit-web
+              patch: |-
+                - op: replace
+                  path: /spec/template/spec/containers/0/env/0
+                  value:
+                    name: BACKEND_URL # 名前も書き換える
+                    value: "http://gearpit-app-svc.pr{{number}}.svc.cluster.local:80"
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: 'pr{{number}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true

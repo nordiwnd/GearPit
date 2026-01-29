@@ -7,6 +7,7 @@ import (
 
 	"github.com/nordiwnd/gearpit/apps/gearpit-core/internal/handler"
 	"github.com/nordiwnd/gearpit/apps/gearpit-core/internal/infrastructure"
+	"github.com/rs/cors" // ← 【重要】これを追加
 )
 
 func main() {
@@ -27,6 +28,7 @@ func main() {
 	gearHandler := handler.NewGearHandler(db)
 	loadoutHandler := handler.NewLoadoutHandler(db)
 	kitHandler := handler.NewKitHandler(db)
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -36,13 +38,27 @@ func main() {
 	// 3. API Routes
 	mux.HandleFunc("POST /api/v1/gears", gearHandler.CreateItem)
 	mux.HandleFunc("GET /api/v1/gears", gearHandler.ListItems)
+
 	mux.HandleFunc("POST /api/v1/loadouts", loadoutHandler.CreateLoadout)
 	mux.HandleFunc("GET /api/v1/loadouts", loadoutHandler.ListLoadouts)
-	// Kit Routes
+
 	mux.HandleFunc("POST /api/v1/kits", kitHandler.CreateKit)
 	mux.HandleFunc("GET /api/v1/kits", kitHandler.ListKits)
+
+	// 【追加】 CORS設定
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:3000", "https://gearpit.io"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Content-Type", "Authorization"},
+		AllowCredentials: true,
+		Debug:            true,
+	})
+
+	// ハンドラーをラップ
+	handler := c.Handler(mux)
+
 	log.Printf("Server starting on port %s", os.Getenv("PORT"))
-	if err := http.ListenAndServe(":"+os.Getenv("PORT"), mux); err != nil {
+	if err := http.ListenAndServe(":"+os.Getenv("PORT"), handler); err != nil {
 		log.Fatalf("Server failed: %v", err)
 	}
 }
