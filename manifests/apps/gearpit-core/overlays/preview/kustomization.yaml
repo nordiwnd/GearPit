@@ -8,44 +8,51 @@ resources:
 commonLabels:
   variant: preview
 
-secretGenerator:
-  - name: gearpit-db-secret
-    literals:
-      - POSTGRES_USER=gearpit
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=gearpit
-      - DB_USER=gearpit
-      - DB_PASSWORD=password
-      - DB_NAME=gearpit
-      - DB_HOST=gearpit-db-preview
-      - DB_PORT=5432
-      - SSL_MODE=disable
-      - PORT=8080
-
 patches:
-  # Gearpit App (Backend)
   - target:
       kind: Deployment
       name: gearpit-app
     patch: |-
-      # 1. 既存の env を削除 (これが邪魔している)
-      - op: remove
-        path: /spec/template/spec/containers/0/env
-
-      # 2. Secret から環境変数を一括注入
-      - op: add
-        path: /spec/template/spec/containers/0/envFrom
-        value:
-          - secretRef:
-              name: gearpit-db-secret
-
-  # Gearpit DB (Preview)
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: gearpit-skeleton
+      spec:
+        template:
+          spec:
+            containers:
+              - name: app
+                # ここで環境変数を明示的に上書きします
+                env:
+                  - name: DB_HOST
+                    value: "gearpit-db-preview"
+                  - name: DB_USER
+                    value: "gearpit"
+                  - name: DB_PASSWORD
+                    value: "password"
+                  - name: DB_NAME
+                    value: "gearpit"
+                  - name: DB_PORT
+                    value: "5432"
+  
+  # DB
   - target:
       kind: Deployment
       name: gearpit-db-preview
     patch: |-
-      - op: add
-        path: /spec/template/spec/containers/0/envFrom
-        value:
-          - secretRef:
-              name: gearpit-db-secret
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: gearpit-db-preview
+      spec:
+        template:
+          spec:
+            containers:
+              - name: postgres
+                env:
+                  - name: POSTGRES_USER
+                    value: "gearpit"
+                  - name: POSTGRES_PASSWORD
+                    value: "password"
+                  - name: POSTGRES_DB
+                    value: "gearpit"
