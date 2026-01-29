@@ -97,7 +97,7 @@ spec:
                   path: /spec/template/spec/containers/0/env/0
                   value:
                     name: BACKEND_URL # 名前も書き換える
-                    value: "http://api-pr{{number}}.192.168.40.100.nip.io"
+                    value: "http://gearpit-app-svc.pr{{number}}.svc.cluster.local:80"
       destination:
         server: https://kubernetes.default.svc
         namespace: 'pr{{number}}'
