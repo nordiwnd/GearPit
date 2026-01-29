@@ -21,6 +21,6 @@ spec:
           image: ghcr.io/nordiwnd/gearpit-web:latest
           ports:
             - containerPort: 3000
-          env: # 追加
-            - name: NEXT_PUBLIC_API_URL
-              value: "http://gearpit.local/api"
+          env:
+            - name: BACKEND_URL
+              value: "http://gearpit-app-svc:80"

@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gearpit-db-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gearpit-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gearpit-db
+  template:
+    metadata:
+      labels:
+        app: gearpit-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: "gearpit"
+            - name: POSTGRES_PASSWORD
+              value: "password"
+            - name: POSTGRES_DB
+              value: "gearpit"
+            # マウント直下にデータを置くと権限エラーになることがあるためサブディレクトリを指定
+            - name: PGDATA
+              value: "/var/lib/postgresql/data/pgdata"
+          volumeMounts:
+            - name: db-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: db-data
+          persistentVolumeClaim:
+            claimName: gearpit-db-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  # Deploymentの環境変数 DB_HOST と一致させる名前
+  name: gearpit-db-svc
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    app: gearpit-db

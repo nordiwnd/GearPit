@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
 - deployment.yaml
 - ingress.yaml
+- postgres.yaml
 images:
 - name: ghcr.io/nordiwnd/gearpit-app
   newName: ghcr.io/nordiwnd/gearpit-app

@@ -15,8 +15,6 @@ spec:
       labels:
         app: gearpit-app
     spec:
-      # imagePullSecrets:
-      #   - name: ghcr-creds
       containers:
         - name: app
           image: ghcr.io/nordiwnd/gearpit-app:latest
@@ -27,17 +25,20 @@ spec:
             limits:
               memory: "128Mi"
               cpu: "250m"
-          # env:
-          #   - name: DB_HOST
-          #     value: "postgres-postgresql.default.svc.cluster.local"
-          #   - name: DB_USER
-          #     value: "gearpit"
-          #   - name: DB_PASSWORD
-          #     value: "password"
-          #   - name: DB_NAME
-          #     value: "gearpit"
-          #   - name: PORT
-          #     value: "8080"
+          env:
+            # DB接続情報 (Base/本番用)
+            - name: DB_USER
+              value: "gearpit"
+            - name: DB_PASSWORD
+              value: "password"
+            - name: DB_NAME
+              value: "gearpit"
+            - name: DB_HOST
+              value: "gearpit-db-svc" 
+            - name: DB_PORT
+              value: "5432"
+            - name: SSL_MODE
+              value: "disable"
 ---
 apiVersion: v1
 kind: Service
