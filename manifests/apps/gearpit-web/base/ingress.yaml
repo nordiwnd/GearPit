@@ -6,7 +6,8 @@ metadata:
     kubernetes.io/ingress.class: "traefik"
 spec:
   rules:
-    - http:
+    - host: gearpit.192.168.40.100.nip.io
+      http:
         paths:
           - path: /
             pathType: Prefix
