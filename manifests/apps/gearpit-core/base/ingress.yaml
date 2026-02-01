@@ -14,6 +14,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: gearpit-core-svc
+                name: gearpit-app-svc
                 port:
                   number: 80
