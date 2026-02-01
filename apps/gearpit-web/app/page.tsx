@@ -1,99 +1,83 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge"; 
-import { AddGearDialog } from "@/components/inventory/add-gear-dialog";
-import { api } from "@/lib/api"; // 作成した共通クライアント
-
-// APIレスポンスの型定義
-type Gear = {
-  id: string;
-  name: string;
-  brand: string;
-  weightGram: number;
-  tags?: string[];
-  properties?: Record<string, any>;
-};
+import { useEffect, useState } from "react";
+import { api, GearItem } from "@/lib/api";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { AddGearDialog } from "@/components/inventory/add-gear-dialog"; // 追加
 
 export default function Home() {
-  const [gears, setGears] = useState<Gear[]>([]);
-  const [error, setError] = useState('');
+  const [items, setItems] = useState<GearItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // データ取得関数
-  const fetchGears = useCallback(() => {
-    api.get('/api/v1/gears')
-      .then((res) => {
-        setGears(res.data.items || []);
-      })
-      .catch((err) => {
-        console.error(err);
-        setError('Failed to fetch data from Backend');
-      });
+  const loadItems = async () => {
+    try {
+      setLoading(true);
+      const data = await api.getItems();
+      setItems(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadItems();
   }, []);
 
-  // 初回ロード
-  useEffect(() => {
-    fetchGears();
-  }, [fetchGears]);
-
   return (
-    <div className="min-h-screen p-8 bg-zinc-50">
-      <div className="max-w-6xl mx-auto">
-        
-        {/* Header Area */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-zinc-800">GearPit Inventory</h1>
-            <p className="text-zinc-500">Manage your gears for hiking, skiing, and more.</p>
-          </div>
-          {/* Add Dialog */}
-          <AddGearDialog onSuccess={fetchGears} />
+    <main className="container mx-auto py-8 space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+           <h1 className="text-3xl font-bold tracking-tight">My Gear Inventory</h1>
+           <p className="text-muted-foreground">Manage your hiking and skiing equipment.</p>
         </div>
         
-        {error && <p className="text-red-500 mb-4">{error}</p>}
+        {/* ダイアログ配置: 登録完了時に loadItems を呼ぶ */}
+        <AddGearDialog onSuccess={loadItems} />
+      </div>
 
-        {/* List Area */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {gears.map((gear) => (
-            <Card key={gear.id} className="hover:shadow-md transition-shadow">
+      {loading ? (
+        <div className="text-center py-10">Loading...</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {items.map((item) => (
+            <Card key={item.id}>
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-start">
                   <div>
-                     <p className="text-xs text-zinc-500 uppercase font-bold tracking-wider">{gear.brand}</p>
-                     <CardTitle className="text-lg">{gear.name}</CardTitle>
+                    <p className="text-sm text-muted-foreground">{item.brand}</p>
+                    <CardTitle className="text-lg">{item.name}</CardTitle>
                   </div>
-                  <span className="font-mono text-sm bg-zinc-100 px-2 py-1 rounded">
-                    {gear.weightGram}g
-                  </span>
+                  <Badge variant="secondary">{item.category}</Badge>
                 </div>
               </CardHeader>
               <CardContent>
-                {/* Properties (JSONB) Display */}
-                {gear.properties && Object.keys(gear.properties).length > 0 && (
-                  <div className="mb-3 space-y-1">
-                    {Object.entries(gear.properties).map(([key, value]) => (
-                      <div key={key} className="text-sm flex justify-between border-b border-zinc-100 pb-1">
-                        <span className="text-zinc-500">{key}:</span>
-                        <span className="font-medium text-zinc-700">{String(value)}</span>
-                      </div>
-                    ))}
+                <div className="text-sm space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Weight:</span>
+                    <span className="font-medium">{item.weightGram}g</span>
                   </div>
-                )}
-
-                {/* Tags Display */}
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {gear.tags?.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="text-xs font-normal">
-                      #{tag}
-                    </Badge>
-                  ))}
+                  
+                  {/* JSONBプロパティの表示 (整形) */}
+                  {item.properties && Object.keys(item.properties).length > 0 && (
+                    <div className="bg-muted/30 p-2 rounded mt-2 space-y-1">
+                      {Object.entries(item.properties).map(([k, v]) => (
+                        <div key={k} className="flex justify-between text-xs">
+                           <span className="text-muted-foreground capitalize">{k.replace('_', ' ')}:</span>
+                           <span>{String(v)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
-      </div>
-    </div>
+      )}
+    </main>
   );
 }
