@@ -20,8 +20,8 @@ func main() {
 
 	// 2. Handler初期化
 	gearHandler := handler.NewGearHandler(db)
-	loadoutHandler := handler.NewLoadoutHandler(db) // 有効化
-	// kitHandler := handler.NewKitHandler(db)     // Kitはまだコメントアウトのまま
+	loadoutHandler := handler.NewLoadoutHandler(db)
+	kitHandler := handler.NewKitHandler(db)
 
 	// 3. ルーティング (Go 1.22 ServeMux)
 	mux := http.NewServeMux()
@@ -45,6 +45,13 @@ func main() {
 	mux.HandleFunc("GET /loadouts/{id}", loadoutHandler.GetLoadout)
 	mux.HandleFunc("PUT /loadouts/{id}", loadoutHandler.UpdateLoadout)
 	mux.HandleFunc("DELETE /loadouts/{id}", loadoutHandler.DeleteLoadout)
+
+	// Kits Routes (追加)
+	mux.HandleFunc("GET /kits", kitHandler.ListKits)
+	mux.HandleFunc("POST /kits", kitHandler.CreateKit)
+	mux.HandleFunc("GET /kits/{id}", kitHandler.GetKit)
+	mux.HandleFunc("PUT /kits/{id}", kitHandler.UpdateKit)
+	mux.HandleFunc("DELETE /kits/{id}", kitHandler.DeleteKit)
 
 	// 4. Middleware (CORS)
 	c := cors.New(cors.Options{

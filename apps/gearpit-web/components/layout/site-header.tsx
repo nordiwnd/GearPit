@@ -1,25 +1,30 @@
 import Link from "next/link";
-import { Package, Layers } from "lucide-react";
+import { Package2, ListTodo, Layers } from "lucide-react"; // Layersを追加
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
-        <div className="mr-4 flex">
+        <div className="mr-4 hidden md:flex">
           <Link href="/" className="mr-6 flex items-center space-x-2">
-            <span className="font-bold text-xl text-zinc-800">GearPit</span>
+            <Package2 className="h-6 w-6" />
+            <span className="hidden font-bold sm:inline-block">
+              GearPit
+            </span>
           </Link>
           <nav className="flex items-center space-x-6 text-sm font-medium">
-            <Link href="/" className="flex items-center transition-colors hover:text-zinc-800 text-zinc-600">
-              <Package className="mr-2 h-4 w-4" />
-              Inventory
+            <Link href="/" className="flex items-center transition-colors hover:text-foreground/80 text-foreground/60">
+              <Package2 className="mr-2 h-4 w-4" /> Inventory
             </Link>
-            <Link href="/loadouts" className="flex items-center transition-colors hover:text-zinc-800 text-zinc-600">
-              <Layers className="mr-2 h-4 w-4" />
-              Loadouts
+            <Link href="/loadouts" className="flex items-center transition-colors hover:text-foreground/80 text-foreground/60">
+              <ListTodo className="mr-2 h-4 w-4" /> Loadouts
+            </Link>
+            <Link href="/kits" className="flex items-center transition-colors hover:text-foreground/80 text-foreground/60">
+              <Layers className="mr-2 h-4 w-4" /> Kits
             </Link>
           </nav>
         </div>
+        {/* ... */}
       </div>
     </header>
   );

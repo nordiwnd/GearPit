@@ -32,6 +32,15 @@ export interface Loadout {
   updatedAt: string;
 }
 
+// Kit Type
+export interface Kit {
+  id: string;
+  name: string;
+  itemIds: string[]; // シンプルなID配列
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Search Params
 export interface SearchParams {
   q?: string;
@@ -139,5 +148,51 @@ export const api = {
       method: 'DELETE',
     });
     if (!res.ok) throw new Error('Failed to delete loadout');
+  },
+  
+  // --- Kit Methods ---
+  async getKits(): Promise<Kit[]> {
+    const res = await fetch(`${API_BASE_URL}/kits`, { 
+      cache: 'no-store',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (!res.ok) throw new Error('Failed to fetch kits');
+    return res.json();
+  },
+
+  async getKit(id: string): Promise<Kit> {
+    const res = await fetch(`${API_BASE_URL}/kits/${id}`, { 
+      cache: 'no-store',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (!res.ok) throw new Error('Failed to fetch kit');
+    return res.json();
+  },
+
+  async createKit(data: Partial<Kit>): Promise<Kit> {
+    const res = await fetch(`${API_BASE_URL}/kits`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to create kit');
+    return res.json();
+  },
+
+  async updateKit(id: string, data: Partial<Kit>): Promise<Kit> {
+    const res = await fetch(`${API_BASE_URL}/kits/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to update kit');
+    return res.json();
+  },
+
+  async deleteKit(id: string): Promise<void> {
+    const res = await fetch(`${API_BASE_URL}/kits/${id}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) throw new Error('Failed to delete kit');
   }
 };
