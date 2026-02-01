@@ -1,99 +1,119 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge"; 
+import { useEffect, useState } from "react";
+import { api, GearItem } from "@/lib/api";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { AddGearDialog } from "@/components/inventory/add-gear-dialog";
-import { api } from "@/lib/api"; // 作成した共通クライアント
-
-// APIレスポンスの型定義
-type Gear = {
-  id: string;
-  name: string;
-  brand: string;
-  weightGram: number;
-  tags?: string[];
-  properties?: Record<string, any>;
-};
+import { Pencil, Trash2 } from "lucide-react"; // アイコン追加
 
 export default function Home() {
-  const [gears, setGears] = useState<Gear[]>([]);
-  const [error, setError] = useState('');
+  const [items, setItems] = useState<GearItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // データ取得関数
-  const fetchGears = useCallback(() => {
-    api.get('/api/v1/gears')
-      .then((res) => {
-        setGears(res.data.items || []);
-      })
-      .catch((err) => {
-        console.error(err);
-        setError('Failed to fetch data from Backend');
-      });
+  const loadItems = async () => {
+    try {
+      setLoading(true);
+      const data = await api.getItems();
+      setItems(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadItems();
   }, []);
 
-  // 初回ロード
-  useEffect(() => {
-    fetchGears();
-  }, [fetchGears]);
+  // 削除ハンドラ
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this item?")) return;
+    try {
+      await api.deleteItem(id);
+      // 成功したら一覧から除去 (再取得より高速)
+      setItems((prev) => prev.filter((item) => item.id !== id));
+    } catch (error) {
+      alert("削除に失敗しました");
+    }
+  };
 
   return (
-    <div className="min-h-screen p-8 bg-zinc-50">
-      <div className="max-w-6xl mx-auto">
-        
-        {/* Header Area */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-zinc-800">GearPit Inventory</h1>
-            <p className="text-zinc-500">Manage your gears for hiking, skiing, and more.</p>
-          </div>
-          {/* Add Dialog */}
-          <AddGearDialog onSuccess={fetchGears} />
+    <main className="container mx-auto py-8 space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+           <h1 className="text-3xl font-bold tracking-tight">My Gear Inventory</h1>
+           <p className="text-muted-foreground">Manage your hiking and skiing equipment.</p>
         </div>
         
-        {error && <p className="text-red-500 mb-4">{error}</p>}
+        {/* 新規登録ボタン */}
+        <AddGearDialog onSuccess={loadItems} />
+      </div>
 
-        {/* List Area */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {gears.map((gear) => (
-            <Card key={gear.id} className="hover:shadow-md transition-shadow">
+      {loading ? (
+        <div className="text-center py-10">Loading...</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {items.map((item) => (
+            <Card key={item.id} className="relative group">
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-start">
                   <div>
-                     <p className="text-xs text-zinc-500 uppercase font-bold tracking-wider">{gear.brand}</p>
-                     <CardTitle className="text-lg">{gear.name}</CardTitle>
+                    <p className="text-sm text-muted-foreground">{item.brand}</p>
+                    <CardTitle className="text-lg">{item.name}</CardTitle>
                   </div>
-                  <span className="font-mono text-sm bg-zinc-100 px-2 py-1 rounded">
-                    {gear.weightGram}g
-                  </span>
+                  <Badge variant="secondary">{item.category}</Badge>
                 </div>
               </CardHeader>
               <CardContent>
-                {/* Properties (JSONB) Display */}
-                {gear.properties && Object.keys(gear.properties).length > 0 && (
-                  <div className="mb-3 space-y-1">
-                    {Object.entries(gear.properties).map(([key, value]) => (
-                      <div key={key} className="text-sm flex justify-between border-b border-zinc-100 pb-1">
-                        <span className="text-zinc-500">{key}:</span>
-                        <span className="font-medium text-zinc-700">{String(value)}</span>
-                      </div>
-                    ))}
+                <div className="text-sm space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Weight:</span>
+                    <span className="font-medium">{item.weightGram}g</span>
                   </div>
-                )}
-
-                {/* Tags Display */}
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {gear.tags?.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="text-xs font-normal">
-                      #{tag}
-                    </Badge>
-                  ))}
+                  
+                  {item.properties && Object.keys(item.properties).length > 0 && (
+                    <div className="bg-muted/30 p-2 rounded mt-2 space-y-1">
+                      {Object.entries(item.properties).map(([k, v]) => (
+                        <div key={k} className="flex justify-between text-xs">
+                           <span className="text-muted-foreground capitalize">{k.replace('_', ' ')}:</span>
+                           <span>{String(v)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </CardContent>
+
+              {/* Action Buttons (Hoverで表示、Mobileは常時表示推奨だが簡易化) */}
+              <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 p-1 rounded backdrop-blur-sm">
+                {/* 編集ボタン: Dialogをトリガーとして使用 */}
+                <AddGearDialog 
+                  itemToEdit={item} 
+                  onSuccess={loadItems}
+                  trigger={
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:text-blue-600">
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  }
+                />
+                
+                {/* 削除ボタン */}
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 text-red-500 hover:text-red-600"
+                  onClick={() => handleDelete(item.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </Card>
           ))}
         </div>
-      </div>
-    </div>
+      )}
+    </main>
   );
 }

@@ -4,6 +4,7 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/nordiwnd/gearpit/apps/gearpit-core/internal/domain"
 	"gorm.io/gorm"
@@ -17,74 +18,102 @@ func NewLoadoutHandler(db *gorm.DB) *LoadoutHandler {
 	return &LoadoutHandler{DB: db}
 }
 
-type CreateLoadoutRequest struct {
-	Name   string               `json:"name"`
-	Items  []domain.LoadoutItem `json:"items"`
-	KitIDs []string             `json:"kitIds"`
-}
-
+// CreateLoadout: 作成
 func (h *LoadoutHandler) CreateLoadout(w http.ResponseWriter, r *http.Request) {
-	var req CreateLoadoutRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+	var loadout domain.Loadout
+	if err := json.NewDecoder(r.Body).Decode(&loadout); err != nil {
+		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
 
-	finalItems := req.Items
-
-	// Expand Kits
-	if len(req.KitIDs) > 0 {
-		var kits []domain.Kit
-		if err := h.DB.Where("id IN ?", req.KitIDs).Find(&kits).Error; err == nil {
-			for _, kit := range kits {
-				for _, itemId := range kit.ItemIDs {
-					finalItems = append(finalItems, domain.LoadoutItem{
-						ItemID:    itemId,
-						Quantity:  1,
-						IsChecked: false,
-					})
-				}
-			}
-		}
-	}
-
-	// Calculate Total Weight
-	totalWeight := 0
-	for _, loadoutItem := range finalItems {
-		var item domain.Item
-		if err := h.DB.First(&item, "id = ?", loadoutItem.ItemID).Error; err == nil {
-			qty := loadoutItem.Quantity
-			if qty <= 0 {
-				qty = 1
-			}
-			totalWeight += item.WeightGram * qty
-		}
-	}
-
-	// Build & Save
-	loadout := domain.Loadout{
-		Name:        req.Name,
-		Items:       finalItems,
-		TotalWeight: totalWeight,
-	}
-
-	if result := h.DB.Create(&loadout); result.Error != nil {
-		http.Error(w, result.Error.Error(), http.StatusInternalServerError)
+	if loadout.Name == "" {
+		http.Error(w, "Name is required", http.StatusBadRequest)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	if err := h.DB.Create(&loadout).Error; err != nil {
+		http.Error(w, "Failed to create loadout", http.StatusInternalServerError)
+		return
+	}
+
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(loadout)
 }
 
-// ListLoadouts
+// ListLoadouts: 一覧取得
 func (h *LoadoutHandler) ListLoadouts(w http.ResponseWriter, r *http.Request) {
 	var loadouts []domain.Loadout
-	if result := h.DB.Find(&loadouts); result.Error != nil {
-		http.Error(w, result.Error.Error(), http.StatusInternalServerError)
+	// 新しい順に取得
+	if err := h.DB.Order("created_at DESC").Find(&loadouts).Error; err != nil {
+		http.Error(w, "Failed to fetch loadouts", http.StatusInternalServerError)
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]any{"loadouts": loadouts})
+	json.NewEncoder(w).Encode(loadouts)
+}
+
+// GetLoadout: 詳細取得
+func (h *LoadoutHandler) GetLoadout(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		id = strings.TrimPrefix(r.URL.Path, "/loadouts/")
+	}
+
+	var loadout domain.Loadout
+	if err := h.DB.First(&loadout, "id = ?", id).Error; err != nil {
+		http.Error(w, "Loadout not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(loadout)
+}
+
+// UpdateLoadout: 更新
+func (h *LoadoutHandler) UpdateLoadout(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		id = strings.TrimPrefix(r.URL.Path, "/loadouts/")
+	}
+
+	var existing domain.Loadout
+	if err := h.DB.First(&existing, "id = ?", id).Error; err != nil {
+		http.Error(w, "Loadout not found", http.StatusNotFound)
+		return
+	}
+
+	var updateData domain.Loadout
+	if err := json.NewDecoder(r.Body).Decode(&updateData); err != nil {
+		http.Error(w, "Invalid input", http.StatusBadRequest)
+		return
+	}
+
+	// 更新処理 (Name, Items, TotalWeight)
+	existing.Name = updateData.Name
+	existing.Items = updateData.Items
+	existing.TotalWeight = updateData.TotalWeight
+
+	if err := h.DB.Save(&existing).Error; err != nil {
+		http.Error(w, "Failed to update loadout", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(existing)
+}
+
+// DeleteLoadout: 削除
+func (h *LoadoutHandler) DeleteLoadout(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		id = strings.TrimPrefix(r.URL.Path, "/loadouts/")
+	}
+
+	if err := h.DB.Delete(&domain.Loadout{}, "id = ?", id).Error; err != nil {
+		http.Error(w, "Failed to delete loadout", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

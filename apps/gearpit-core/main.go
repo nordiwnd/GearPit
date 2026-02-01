@@ -1,3 +1,4 @@
+// apps/gearpit-core/main.go
 package main
 
 import (
@@ -7,64 +8,60 @@ import (
 
 	"github.com/nordiwnd/gearpit/apps/gearpit-core/internal/handler"
 	"github.com/nordiwnd/gearpit/apps/gearpit-core/internal/infrastructure"
-	"github.com/rs/cors" // ← 【重要】これを追加
+	"github.com/rs/cors"
 )
 
 func main() {
-	setEnvDefault("DB_HOST", "localhost")
-	setEnvDefault("DB_USER", "gearpit")
-	setEnvDefault("DB_PASSWORD", "password")
-	setEnvDefault("DB_NAME", "gearpit")
-	setEnvDefault("DB_PORT", "5432")
-	setEnvDefault("PORT", "8080")
-
-	// 1. DB Connection
+	// 1. DB接続
 	db, err := infrastructure.NewDB()
 	if err != nil {
-		log.Fatalf("Failed to connect to DB: %v", err)
+		log.Fatalf("failed to initialize database: %v", err)
 	}
 
-	// 2. Handlers
+	// 2. Handler初期化
 	gearHandler := handler.NewGearHandler(db)
-	loadoutHandler := handler.NewLoadoutHandler(db)
-	kitHandler := handler.NewKitHandler(db)
+	loadoutHandler := handler.NewLoadoutHandler(db) // 有効化
+	// kitHandler := handler.NewKitHandler(db)     // Kitはまだコメントアウトのまま
 
+	// 3. ルーティング (Go 1.22 ServeMux)
 	mux := http.NewServeMux()
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+
+	// Health Check
+	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("GearPit API is running"))
+		w.Write([]byte("OK"))
 	})
 
-	// 3. API Routes
-	mux.HandleFunc("POST /api/v1/gears", gearHandler.CreateItem)
-	mux.HandleFunc("GET /api/v1/gears", gearHandler.ListItems)
+	// --- Items Routes ---
+	mux.HandleFunc("GET /items", gearHandler.ListItems)
+	mux.HandleFunc("POST /items", gearHandler.CreateItem)
+	mux.HandleFunc("GET /items/{id}", gearHandler.GetItem)
+	mux.HandleFunc("PUT /items/{id}", gearHandler.UpdateItem)
+	mux.HandleFunc("DELETE /items/{id}", gearHandler.DeleteItem)
 
-	mux.HandleFunc("POST /api/v1/loadouts", loadoutHandler.CreateLoadout)
-	mux.HandleFunc("GET /api/v1/loadouts", loadoutHandler.ListLoadouts)
+	// --- Loadouts Routes (追加) ---
+	mux.HandleFunc("GET /loadouts", loadoutHandler.ListLoadouts)
+	mux.HandleFunc("POST /loadouts", loadoutHandler.CreateLoadout)
+	mux.HandleFunc("GET /loadouts/{id}", loadoutHandler.GetLoadout)
+	mux.HandleFunc("PUT /loadouts/{id}", loadoutHandler.UpdateLoadout)
+	mux.HandleFunc("DELETE /loadouts/{id}", loadoutHandler.DeleteLoadout)
 
-	mux.HandleFunc("POST /api/v1/kits", kitHandler.CreateKit)
-	mux.HandleFunc("GET /api/v1/kits", kitHandler.ListKits)
-
-	// 【追加】 CORS設定
+	// 4. Middleware (CORS)
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000", "https://gearpit.io"},
+		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,
-		Debug:            true,
 	})
-
-	// ハンドラーをラップ
 	handler := c.Handler(mux)
 
-	log.Printf("Server starting on port %s", os.Getenv("PORT"))
-	if err := http.ListenAndServe(":"+os.Getenv("PORT"), handler); err != nil {
-		log.Fatalf("Server failed: %v", err)
+	// 5. サーバー起動
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
 	}
-}
-
-func setEnvDefault(key, value string) {
-	if os.Getenv(key) == "" {
-		os.Setenv(key, value)
+	log.Printf("Server starting on port %s...", port)
+	if err := http.ListenAndServe(":"+port, handler); err != nil {
+		log.Fatalf("Server failed: %v", err)
 	}
 }

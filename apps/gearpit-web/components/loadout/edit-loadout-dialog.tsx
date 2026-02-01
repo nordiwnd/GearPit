@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { api } from "@/lib/api";
+import { api, Loadout } from "@/lib/api";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -25,57 +25,63 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Plus } from "lucide-react";
+import { Pencil } from "lucide-react";
 
-// バリデーションスキーマ
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
 });
 
-interface CreateLoadoutDialogProps {
+interface EditLoadoutDialogProps {
+  loadout: Loadout;
   onSuccess: () => void;
 }
 
-export function CreateLoadoutDialog({ onSuccess }: CreateLoadoutDialogProps) {
+export function EditLoadoutDialog({ loadout, onSuccess }: EditLoadoutDialogProps) {
   const [open, setOpen] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
+      name: loadout.name,
     },
   });
 
+  // ダイアログが開いたとき、または対象が変わったときにフォームをリセット
+  useEffect(() => {
+    if (open) {
+      form.reset({ name: loadout.name });
+    }
+  }, [open, loadout, form]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      // API呼び出し: itemsは空で作成
-      await api.createLoadout({
+      // 既存のitemsやtotalWeightは維持しつつ、名前だけ更新
+      // (将来的にアイテム編集もここで行うなら payload を拡張する)
+      await api.updateLoadout(loadout.id, {
+        ...loadout,
         name: values.name,
-        items: [], 
-        totalWeightGram: 0
       });
       
-      form.reset();
       setOpen(false);
-      onSuccess(); // 一覧リロード
+      onSuccess();
     } catch (error) {
-      console.error("Failed to create loadout", error);
-      alert("作成に失敗しました");
+      console.error("Failed to update loadout", error);
+      alert("更新に失敗しました");
     }
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" /> Create Loadout
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
+          <Pencil className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Create New Loadout</DialogTitle>
+          <DialogTitle>Edit Loadout</DialogTitle>
           <DialogDescription>
-            Give your loadout a name (e.g., "Ski Trip Niseko").
+            Change the name of your loadout.
           </DialogDescription>
         </DialogHeader>
 
@@ -88,14 +94,14 @@ export function CreateLoadoutDialog({ onSuccess }: CreateLoadoutDialogProps) {
                 <FormItem>
                   <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Day Hike Packing" {...field} />
+                    <Input {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             <DialogFooter>
-              <Button type="submit">Create</Button>
+              <Button type="submit">Save Changes</Button>
             </DialogFooter>
           </form>
         </Form>
