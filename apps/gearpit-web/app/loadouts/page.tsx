@@ -1,15 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation"; // 追加
 import { api, Loadout } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { CreateLoadoutDialog } from "@/components/loadout/create-loadout-dialog";
-// 追加: 編集ダイアログ
 import { EditLoadoutDialog } from "@/components/loadout/edit-loadout-dialog";
 
 export default function LoadoutsPage() {
+  const router = useRouter(); // ルーターフック
   const [loadouts, setLoadouts] = useState<Loadout[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -28,12 +29,10 @@ export default function LoadoutsPage() {
     fetchLoadouts();
   }, []);
 
-  // 削除ハンドラ
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this loadout?")) return;
     try {
       await api.deleteLoadout(id);
-      // 再取得せずにStateから消すことで高速化
       setLoadouts((prev) => prev.filter((l) => l.id !== id));
     } catch (error) {
       console.error(error);
@@ -58,8 +57,13 @@ export default function LoadoutsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {loadouts.map((loadout) => (
-            <Card key={loadout.id} className="relative group hover:border-primary/50 transition-colors">
-              <CardHeader className="pb-2 pr-12"> {/* pr-12: ボタンと被らないように余白確保 */}
+            <Card 
+              key={loadout.id} 
+              className="relative group hover:border-primary/50 transition-colors cursor-pointer"
+              // カード全体をクリックしたら詳細画面へ遷移
+              onClick={() => router.push(`/loadouts/${loadout.id}`)}
+            >
+              <CardHeader className="pb-2 pr-12">
                 <CardTitle className="truncate" title={loadout.name}>
                   {loadout.name}
                 </CardTitle>
@@ -75,20 +79,18 @@ export default function LoadoutsPage() {
                 </div>
               </CardContent>
 
-              {/* Action Buttons: 右上に配置 */}
-              <div className="absolute top-2 right-2 flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity bg-background/80 rounded-md backdrop-blur-sm p-1">
-                {/* 編集ボタン */}
+              {/* Action Buttons: 親のonClick(遷移)を止めるためdivで囲う */}
+              <div 
+                className="absolute top-2 right-2 flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity bg-background/80 rounded-md backdrop-blur-sm p-1"
+                onClick={(e) => e.stopPropagation()} // ここ重要
+              >
                 <EditLoadoutDialog loadout={loadout} onSuccess={fetchLoadouts} />
                 
-                {/* 削除ボタン */}
                 <Button 
                   variant="ghost" 
                   size="icon" 
                   className="h-8 w-8 text-muted-foreground hover:text-red-500"
-                  onClick={(e) => {
-                    e.stopPropagation(); // カードクリック時の遷移などを防ぐ
-                    handleDelete(loadout.id);
-                  }}
+                  onClick={() => handleDelete(loadout.id)}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>

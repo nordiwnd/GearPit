@@ -103,6 +103,16 @@ export const api = {
     if (!res.ok) throw new Error('Failed to fetch loadouts');
     return res.json();
   },
+  // --- 追加: 単一取得用 ---
+  async getLoadout(id: string): Promise<Loadout> {
+    const res = await fetch(`${API_BASE_URL}/loadouts/${id}`, { 
+      cache: 'no-store',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (!res.ok) throw new Error('Failed to fetch loadout');
+    return res.json();
+  },
+  // -----------------------
 
   async createLoadout(data: Partial<Loadout>): Promise<Loadout> {
     const res = await fetch(`${API_BASE_URL}/loadouts`, {
