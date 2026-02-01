@@ -1,3 +1,4 @@
+// apps/gearpit-core/main.go
 package main
 
 import (
@@ -19,8 +20,8 @@ func main() {
 
 	// 2. Handler初期化
 	gearHandler := handler.NewGearHandler(db)
-	// kitHandler := handler.NewKitHandler(db)     // 後ほど実装
-	// loadoutHandler := handler.NewLoadoutHandler(db) // 後ほど実装
+	loadoutHandler := handler.NewLoadoutHandler(db) // 有効化
+	// kitHandler := handler.NewKitHandler(db)     // Kitはまだコメントアウトのまま
 
 	// 3. ルーティング (Go 1.22 ServeMux)
 	mux := http.NewServeMux()
@@ -31,16 +32,23 @@ func main() {
 		w.Write([]byte("OK"))
 	})
 
-	// Items Routes
+	// --- Items Routes ---
 	mux.HandleFunc("GET /items", gearHandler.ListItems)
 	mux.HandleFunc("POST /items", gearHandler.CreateItem)
 	mux.HandleFunc("GET /items/{id}", gearHandler.GetItem)
 	mux.HandleFunc("PUT /items/{id}", gearHandler.UpdateItem)
 	mux.HandleFunc("DELETE /items/{id}", gearHandler.DeleteItem)
 
+	// --- Loadouts Routes (追加) ---
+	mux.HandleFunc("GET /loadouts", loadoutHandler.ListLoadouts)
+	mux.HandleFunc("POST /loadouts", loadoutHandler.CreateLoadout)
+	mux.HandleFunc("GET /loadouts/{id}", loadoutHandler.GetLoadout)
+	mux.HandleFunc("PUT /loadouts/{id}", loadoutHandler.UpdateLoadout)
+	mux.HandleFunc("DELETE /loadouts/{id}", loadoutHandler.DeleteLoadout)
+
 	// 4. Middleware (CORS)
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"}, // 開発中は全許可、本番では環境変数で制御推奨
+		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,

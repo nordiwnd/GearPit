@@ -1,6 +1,8 @@
 // apps/gearpit-web/lib/api.ts
 
-// 1. 型定義 (GoのStructと同期)
+// --- Types ---
+
+// GearItem (既存)
 export interface GearItem {
   id: string;
   name: string;
@@ -8,25 +10,42 @@ export interface GearItem {
   weightGram: number;
   isConsumable: boolean;
   category: string;
-  // JSONBプロパティ: 柔軟なKeyValue
   properties?: Record<string, any>;
   tags?: string[];
   createdAt: string;
   updatedAt: string;
 }
 
-// 検索クエリ用型
+// Loadout (追加)
+export interface LoadoutItem {
+  itemId: string;
+  quantity: number;
+  isChecked: boolean;
+}
+
+export interface Loadout {
+  id: string;
+  name: string;
+  items: LoadoutItem[];
+  totalWeightGram: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Search Params
 export interface SearchParams {
-  q?: string;           // 名前・ブランド検索
-  category?: string;    // カテゴリ
-  [key: string]: any;   // p_xxx (プロパティ検索) 用
+  q?: string;
+  category?: string;
+  [key: string]: any;
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
-// 2. APIクライアント
+// --- API Client ---
+
 export const api = {
-  // 一覧取得
+  // --- Gear Items Methods ---
+  
   async getItems(params?: SearchParams): Promise<GearItem[]> {
     const url = new URL(`${API_BASE_URL}/items`);
     
@@ -37,7 +56,7 @@ export const api = {
     }
 
     const res = await fetch(url.toString(), { 
-      cache: 'no-store', // 常に最新を取得
+      cache: 'no-store',
       headers: { 'Content-Type': 'application/json' }
     });
 
@@ -45,7 +64,6 @@ export const api = {
     return res.json();
   },
 
-  // 新規作成
   async createItem(item: Partial<GearItem>): Promise<GearItem> {
     const res = await fetch(`${API_BASE_URL}/items`, {
       method: 'POST',
@@ -57,11 +75,59 @@ export const api = {
     return res.json();
   },
 
-  // 削除
+  async updateItem(id: string, item: Partial<GearItem>): Promise<GearItem> {
+    const res = await fetch(`${API_BASE_URL}/items/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(item),
+    });
+
+    if (!res.ok) throw new Error('Failed to update item');
+    return res.json();
+  },
+
   async deleteItem(id: string): Promise<void> {
     const res = await fetch(`${API_BASE_URL}/items/${id}`, {
       method: 'DELETE',
     });
     if (!res.ok) throw new Error('Failed to delete item');
+  },
+
+  // --- Loadout Methods (New) ---
+
+  async getLoadouts(): Promise<Loadout[]> {
+    const res = await fetch(`${API_BASE_URL}/loadouts`, { 
+      cache: 'no-store', // 常に最新を取得
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (!res.ok) throw new Error('Failed to fetch loadouts');
+    return res.json();
+  },
+
+  async createLoadout(data: Partial<Loadout>): Promise<Loadout> {
+    const res = await fetch(`${API_BASE_URL}/loadouts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to create loadout');
+    return res.json();
+  },
+
+  async updateLoadout(id: string, data: Partial<Loadout>): Promise<Loadout> {
+    const res = await fetch(`${API_BASE_URL}/loadouts/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to update loadout');
+    return res.json();
+  },
+
+  async deleteLoadout(id: string): Promise<void> {
+    const res = await fetch(`${API_BASE_URL}/loadouts/${id}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) throw new Error('Failed to delete loadout');
   }
 };

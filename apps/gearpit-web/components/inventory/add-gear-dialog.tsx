@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { api } from "@/lib/api";
+import { api, GearItem } from "@/lib/api";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -33,23 +33,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// 1. バリデーションスキーマ
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
   brand: z.string().min(1, "Brand is required"),
   weightGram: z.coerce.number().min(0),
   category: z.string().min(1, "Category is required"),
-  // z.record(key, value)
-  properties: z.record(z.string(), z.any()).optional(), 
+  properties: z.record(z.string(), z.any()).optional(),
 });
 
 interface AddGearDialogProps {
   onSuccess: () => void;
+  itemToEdit?: GearItem; // 編集対象 (あれば編集モード)
+  trigger?: React.ReactNode; // トリガーボタンのカスタマイズ用
 }
 
-export function AddGearDialog({ onSuccess }: AddGearDialogProps) {
+export function AddGearDialog({ onSuccess, itemToEdit, trigger }: AddGearDialogProps) {
   const [open, setOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const isEditMode = !!itemToEdit;
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -58,10 +59,36 @@ export function AddGearDialog({ onSuccess }: AddGearDialogProps) {
       brand: "",
       weightGram: 0,
       category: "",
-      // Fix: TypeScriptにこれが汎用オブジェクトであることを伝える
       properties: {} as Record<string, any>,
     },
   });
+
+  // ダイアログが開いたとき、または編集対象が変わったときにフォームを初期化
+  useEffect(() => {
+    if (open) {
+      if (itemToEdit) {
+        // 編集モード: 既存データをセット
+        form.reset({
+          name: itemToEdit.name,
+          brand: itemToEdit.brand,
+          weightGram: itemToEdit.weightGram,
+          category: itemToEdit.category,
+          properties: itemToEdit.properties || {},
+        });
+        setSelectedCategory(itemToEdit.category);
+      } else {
+        // 新規作成モード: リセット
+        form.reset({
+          name: "",
+          brand: "",
+          weightGram: 0,
+          category: "",
+          properties: {},
+        });
+        setSelectedCategory("");
+      }
+    }
+  }, [open, itemToEdit, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
@@ -70,34 +97,42 @@ export function AddGearDialog({ onSuccess }: AddGearDialogProps) {
         properties: processProperties(values.category, values.properties),
       };
 
-      // @ts-ignore
-      await api.createItem(payload);
+      if (isEditMode && itemToEdit) {
+        // Update
+        // @ts-ignore
+        await api.updateItem(itemToEdit.id, payload);
+      } else {
+        // Create
+        // @ts-ignore
+        await api.createItem(payload);
+      }
       
       form.reset();
       setOpen(false);
       onSuccess();
     } catch (error) {
-      console.error("Failed to create item", error);
-      alert("登録に失敗しました");
+      console.error("Failed to save item", error);
+      alert("保存に失敗しました");
     }
   }
 
   const handleCategoryChange = (val: string) => {
     setSelectedCategory(val);
     form.setValue("category", val);
+    // カテゴリ変更時はプロパティをリセット（編集モードでもカテゴリを変えるならリセットすべき）
     form.setValue("properties", {});
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>+ Add Gear</Button>
+        {trigger ? trigger : <Button>+ Add Gear</Button>}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New Gear</DialogTitle>
+          <DialogTitle>{isEditMode ? "Edit Gear" : "Add New Gear"}</DialogTitle>
           <DialogDescription>
-            Add a new item to your inventory.
+            {isEditMode ? "Update the details of your gear." : "Add a new item to your inventory."}
           </DialogDescription>
         </DialogHeader>
 
@@ -111,7 +146,7 @@ export function AddGearDialog({ onSuccess }: AddGearDialogProps) {
                   <FormItem>
                     <FormLabel>Brand</FormLabel>
                     <FormControl>
-                      <Input placeholder="Arc'teryx" {...field} value={field.value ?? ''} />
+                      <Input placeholder="Brand" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -124,7 +159,7 @@ export function AddGearDialog({ onSuccess }: AddGearDialogProps) {
                   <FormItem>
                     <FormLabel>Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Alpha SV" {...field} value={field.value ?? ''} />
+                      <Input placeholder="Name" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -139,7 +174,7 @@ export function AddGearDialog({ onSuccess }: AddGearDialogProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
-                    <Select onValueChange={handleCategoryChange} defaultValue={field.value}>
+                    <Select onValueChange={handleCategoryChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select category" />
@@ -165,7 +200,6 @@ export function AddGearDialog({ onSuccess }: AddGearDialogProps) {
                       <Input 
                         type="number" 
                         {...field} 
-                        // Fix: 明示的にanyキャストして安全に渡す
                         value={(field.value as any) ?? ''} 
                       />
                     </FormControl>
@@ -180,13 +214,12 @@ export function AddGearDialog({ onSuccess }: AddGearDialogProps) {
                 <h4 className="text-sm font-medium mb-3 text-muted-foreground">
                   {selectedCategory.toUpperCase()} Specifics
                 </h4>
-                {/* フォームオブジェクトを渡して動的フィールドを描画 */}
                 {renderCategoryFields(selectedCategory, form)}
               </div>
             )}
 
             <DialogFooter>
-              <Button type="submit">Save Item</Button>
+              <Button type="submit">{isEditMode ? "Update" : "Create"}</Button>
             </DialogFooter>
           </form>
         </Form>
@@ -195,9 +228,7 @@ export function AddGearDialog({ onSuccess }: AddGearDialogProps) {
   );
 }
 
-// --- Helper Functions ---
-
-// form: any でRHFの厳格な型チェックをバイパス（動的フィールド用）
+// Helper Functions (前回と同じ)
 function renderCategoryFields(category: string, form: any) {
   switch (category) {
     case "ski":
@@ -209,12 +240,13 @@ function renderCategoryFields(category: string, form: any) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Type</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value || ""}>
                   <FormControl><SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger></FormControl>
                   <SelectContent>
                     <SelectItem value="board">Ski Board</SelectItem>
                     <SelectItem value="boots">Boots</SelectItem>
                     <SelectItem value="binding">Bindings</SelectItem>
+                    <SelectItem value="safety">Safety</SelectItem>
                   </SelectContent>
                 </Select>
               </FormItem>
@@ -230,7 +262,6 @@ function renderCategoryFields(category: string, form: any) {
                   <Input 
                     type="number" 
                     {...field} 
-                    // Fix: field.valueが {} と推論されるのを防ぐ
                     value={(field.value as any) ?? ''} 
                   />
                 </FormControl>
@@ -242,13 +273,13 @@ function renderCategoryFields(category: string, form: any) {
     case "camp":
       return (
         <div className="grid grid-cols-2 gap-4">
-          <FormField
+           <FormField
             control={form.control}
             name="properties.sub_category"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Type</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value || ""}>
                   <FormControl><SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger></FormControl>
                   <SelectContent>
                     <SelectItem value="tent">Tent</SelectItem>
@@ -264,7 +295,7 @@ function renderCategoryFields(category: string, form: any) {
             name="properties.capacity_person"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Capacity (Person)</FormLabel>
+                <FormLabel>Capacity</FormLabel>
                 <FormControl>
                   <Input 
                     type="number" 
@@ -286,12 +317,10 @@ function processProperties(category: string, rawProps: any) {
   if (!rawProps) return {};
   const props = { ...rawProps };
   const numberFields = ["length_cm", "width_mm", "capacity_person", "flex"];
-  
   Object.keys(props).forEach(key => {
     if (numberFields.includes(key) && props[key]) {
       props[key] = Number(props[key]);
     }
   });
-
   return props;
 }
