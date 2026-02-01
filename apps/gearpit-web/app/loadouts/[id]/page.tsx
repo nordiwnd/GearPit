@@ -1,20 +1,20 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { useParams } from "next/navigation";
-import { useRouter } from "next/navigation"; // ルーター追加
+import { useParams, useRouter } from "next/navigation";
 import { api, Loadout, GearItem, LoadoutItem } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Minus, Plus, Trash2, Search, ArrowLeft } from "lucide-react";
-import Link from "next/link";
 import { ScrollArea } from "@/components/ui/scroll-area";
+// 追加: Kitインポート用ダイアログ
+import { ImportKitDialog } from "@/components/loadout/import-kit-dialog";
 
 export default function LoadoutDetailPage() {
   const params = useParams();
-  const router = useRouter(); // ルーター
+  const router = useRouter();
   const id = params.id as string;
 
   const [loadout, setLoadout] = useState<Loadout | null>(null);
@@ -63,7 +63,7 @@ export default function LoadoutDetailPage() {
 
   // --- Actions ---
 
-  // アイテム追加・更新処理
+  // アイテム追加・更新処理 (ImportKitDialogからも呼ばれる)
   const updateLoadoutItems = async (newItems: LoadoutItem[]) => {
     if (!loadout) return;
 
@@ -78,7 +78,7 @@ export default function LoadoutDetailPage() {
     setLoadout(updatedLoadout);
 
     try {
-      // 修正: 部分更新ではなく、updatedLoadout全体を送る (名前が消えるバグの修正)
+      // 名前などが消えないよう、updatedLoadout全体を送る
       await api.updateLoadout(loadout.id, updatedLoadout);
     } catch (err) {
       console.error("Failed to save loadout", err);
@@ -125,17 +125,27 @@ export default function LoadoutDetailPage() {
 
   return (
     <main className="container mx-auto py-6 h-[calc(100vh-4rem)] flex flex-col">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => router.push('/loadouts')}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold">{loadout.name}</h1>
-          <p className="text-muted-foreground">
-            Total Weight: <span className="font-medium text-foreground">{loadout.totalWeightGram}g</span>
-             / {loadout.items?.length || 0} Items
-          </p>
+      {/* Header: Importボタンを追加するために justify-between に変更 */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => router.push('/loadouts')}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold">{loadout.name}</h1>
+            <p className="text-muted-foreground">
+              Total Weight: <span className="font-medium text-foreground">{loadout.totalWeightGram}g</span>
+               / {loadout.items?.length || 0} Items
+            </p>
+          </div>
+        </div>
+
+        {/* 追加: Kitインポートボタン */}
+        <div className="flex gap-2">
+           <ImportKitDialog 
+             currentItems={loadout.items || []} 
+             onImport={updateLoadoutItems} 
+           />
         </div>
       </div>
 
@@ -151,7 +161,7 @@ export default function LoadoutDetailPage() {
               <div className="divide-y">
                 {loadoutItemsWithDetails.length === 0 && (
                    <p className="p-8 text-center text-muted-foreground text-sm">
-                     List is empty. Add items from the right.
+                     List is empty. Add items from the right or import a kit.
                    </p>
                 )}
                 {loadoutItemsWithDetails.map((item) => (
