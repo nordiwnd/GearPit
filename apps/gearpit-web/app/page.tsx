@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { AddGearDialog } from "@/components/inventory/add-gear-dialog";
 import { api } from "@/lib/api"; 
 
-// APIレスポンスの型定義
+// APIレスポンスの型定義 s
 type Gear = {
   id: string;
   name: string;
