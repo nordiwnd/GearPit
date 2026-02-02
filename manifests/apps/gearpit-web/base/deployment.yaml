@@ -24,5 +24,3 @@ spec:
           env:
             - name: BACKEND_URL
               value: "http://gearpit-app-svc:80"
-            - name: NEXT_PUBLIC_API_URL
-              value: "http://gearpit-app-svc:80"

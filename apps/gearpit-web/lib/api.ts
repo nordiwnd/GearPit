@@ -2,7 +2,7 @@
 
 // --- Types ---
 
-// GearItem (既存)
+// GearItem
 export interface GearItem {
   id: string;
   name: string;
@@ -16,7 +16,7 @@ export interface GearItem {
   updatedAt: string;
 }
 
-// Loadout (追加)
+// Loadout
 export interface LoadoutItem {
   itemId: string;
   quantity: number;
@@ -48,7 +48,33 @@ export interface SearchParams {
   [key: string]: any;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+// --- URL Helper ---
+
+// バックエンドへのプレフィックス (next.config.tsのrewrites設定と合わせる)
+const API_PREFIX = '/api';
+
+/**
+ * 環境（ブラウザ or サーバー）に応じて適切なURLを生成するヘルパー関数
+ */
+const createUrl = (path: string, params?: SearchParams): string => {
+  // ブラウザ実行時は window.location.origin (現在のオリジン) を使用
+  // SSR実行時は localhost:3000 (または環境変数で指定されたホスト) を使用
+  const baseUrl = typeof window !== 'undefined' 
+    ? window.location.origin 
+    : (process.env.INTERNAL_WEB_URL || 'http://localhost:3000');
+
+  const url = new URL(`${baseUrl}${API_PREFIX}${path}`);
+
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        url.searchParams.append(key, String(value));
+      }
+    });
+  }
+
+  return url.toString();
+};
 
 // --- API Client ---
 
@@ -56,15 +82,9 @@ export const api = {
   // --- Gear Items Methods ---
   
   async getItems(params?: SearchParams): Promise<GearItem[]> {
-    const url = new URL(`${API_BASE_URL}/items`);
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value) url.searchParams.append(key, String(value));
-      });
-    }
+    const url = createUrl('/items', params);
 
-    const res = await fetch(url.toString(), { 
+    const res = await fetch(url, { 
       cache: 'no-store',
       headers: { 'Content-Type': 'application/json' }
     });
@@ -74,7 +94,8 @@ export const api = {
   },
 
   async createItem(item: Partial<GearItem>): Promise<GearItem> {
-    const res = await fetch(`${API_BASE_URL}/items`, {
+    const url = createUrl('/items');
+    const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(item),
@@ -85,7 +106,8 @@ export const api = {
   },
 
   async updateItem(id: string, item: Partial<GearItem>): Promise<GearItem> {
-    const res = await fetch(`${API_BASE_URL}/items/${id}`, {
+    const url = createUrl(`/items/${id}`);
+    const res = await fetch(url, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(item),
@@ -96,35 +118,38 @@ export const api = {
   },
 
   async deleteItem(id: string): Promise<void> {
-    const res = await fetch(`${API_BASE_URL}/items/${id}`, {
+    const url = createUrl(`/items/${id}`);
+    const res = await fetch(url, {
       method: 'DELETE',
     });
     if (!res.ok) throw new Error('Failed to delete item');
   },
 
-  // --- Loadout Methods (New) ---
+  // --- Loadout Methods ---
 
   async getLoadouts(): Promise<Loadout[]> {
-    const res = await fetch(`${API_BASE_URL}/loadouts`, { 
-      cache: 'no-store', // 常に最新を取得
+    const url = createUrl('/loadouts');
+    const res = await fetch(url, { 
+      cache: 'no-store', 
       headers: { 'Content-Type': 'application/json' }
     });
     if (!res.ok) throw new Error('Failed to fetch loadouts');
     return res.json();
   },
-  // --- 追加: 単一取得用 ---
+
   async getLoadout(id: string): Promise<Loadout> {
-    const res = await fetch(`${API_BASE_URL}/loadouts/${id}`, { 
+    const url = createUrl(`/loadouts/${id}`);
+    const res = await fetch(url, { 
       cache: 'no-store',
       headers: { 'Content-Type': 'application/json' }
     });
     if (!res.ok) throw new Error('Failed to fetch loadout');
     return res.json();
   },
-  // -----------------------
 
   async createLoadout(data: Partial<Loadout>): Promise<Loadout> {
-    const res = await fetch(`${API_BASE_URL}/loadouts`, {
+    const url = createUrl('/loadouts');
+    const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -134,7 +159,8 @@ export const api = {
   },
 
   async updateLoadout(id: string, data: Partial<Loadout>): Promise<Loadout> {
-    const res = await fetch(`${API_BASE_URL}/loadouts/${id}`, {
+    const url = createUrl(`/loadouts/${id}`);
+    const res = await fetch(url, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -144,15 +170,18 @@ export const api = {
   },
 
   async deleteLoadout(id: string): Promise<void> {
-    const res = await fetch(`${API_BASE_URL}/loadouts/${id}`, {
+    const url = createUrl(`/loadouts/${id}`);
+    const res = await fetch(url, {
       method: 'DELETE',
     });
     if (!res.ok) throw new Error('Failed to delete loadout');
   },
   
   // --- Kit Methods ---
+
   async getKits(): Promise<Kit[]> {
-    const res = await fetch(`${API_BASE_URL}/kits`, { 
+    const url = createUrl('/kits');
+    const res = await fetch(url, { 
       cache: 'no-store',
       headers: { 'Content-Type': 'application/json' }
     });
@@ -161,7 +190,8 @@ export const api = {
   },
 
   async getKit(id: string): Promise<Kit> {
-    const res = await fetch(`${API_BASE_URL}/kits/${id}`, { 
+    const url = createUrl(`/kits/${id}`);
+    const res = await fetch(url, { 
       cache: 'no-store',
       headers: { 'Content-Type': 'application/json' }
     });
@@ -170,7 +200,8 @@ export const api = {
   },
 
   async createKit(data: Partial<Kit>): Promise<Kit> {
-    const res = await fetch(`${API_BASE_URL}/kits`, {
+    const url = createUrl('/kits');
+    const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -180,7 +211,8 @@ export const api = {
   },
 
   async updateKit(id: string, data: Partial<Kit>): Promise<Kit> {
-    const res = await fetch(`${API_BASE_URL}/kits/${id}`, {
+    const url = createUrl(`/kits/${id}`);
+    const res = await fetch(url, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -190,7 +222,8 @@ export const api = {
   },
 
   async deleteKit(id: string): Promise<void> {
-    const res = await fetch(`${API_BASE_URL}/kits/${id}`, {
+    const url = createUrl(`/kits/${id}`);
+    const res = await fetch(url, {
       method: 'DELETE',
     });
     if (!res.ok) throw new Error('Failed to delete kit');
