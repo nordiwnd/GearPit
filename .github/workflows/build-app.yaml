@@ -25,7 +25,7 @@ jobs:
       contents: write
       packages: write
     strategy:
-      # Git競合を防ぐため直列実行
+      # Git競合を防ぐため直列実行w
       max-parallel: 1
       fail-fast: false
       matrix:
