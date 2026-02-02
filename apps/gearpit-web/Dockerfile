@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-# 1. Build Base (Host Architecture)
+# 1. Build Base (Host Architecture) s
 FROM --platform=$BUILDPLATFORM node:20-alpine AS base
 
 # 2. Deps Stage (AMD64)

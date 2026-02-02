@@ -18,7 +18,7 @@ func main() {
 	setEnvDefault("DB_PORT", "5432")
 	setEnvDefault("PORT", "8080")
 
-	// 1. DB Connection s
+	// 1. DB Connection
 	db, err := infrastructure.NewDB()
 	if err != nil {
 		log.Fatalf("Failed to connect to DB: %v", err)
