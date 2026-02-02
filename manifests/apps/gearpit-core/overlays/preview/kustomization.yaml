@@ -3,56 +3,11 @@ kind: Kustomization
 
 resources:
   - ../../base
-  - postgres-ephemeral.yaml
 
-commonLabels:
-  variant: preview
-
+# Preview環境用のパッチ適用
 patches:
-  - target:
-      kind: Deployment
-      name: gearpit-app
-    patch: |-
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: gearpit-skeleton
-      spec:
-        template:
-          spec:
-            containers:
-              - name: app
-                # ここで環境変数を明示的に上書きします
-                env:
-                  - name: DB_HOST
-                    value: "gearpit-db-preview"
-                  - name: DB_USER
-                    value: "gearpit"
-                  - name: DB_PASSWORD
-                    value: "password"
-                  - name: DB_NAME
-                    value: "gearpit"
-                  - name: DB_PORT
-                    value: "5432"
-  
-  # DB
-  - target:
-      kind: Deployment
-      name: gearpit-db-preview
-    patch: |-
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: gearpit-db-preview
-      spec:
-        template:
-          spec:
-            containers:
-              - name: postgres
-                env:
-                  - name: POSTGRES_USER
-                    value: "gearpit"
-                  - name: POSTGRES_PASSWORD
-                    value: "password"
-                  - name: POSTGRES_DB
-                    value: "gearpit"
+  - path: postgres-patch.yaml
+    target:
+      group: apps
+      kind: StatefulSet
+      name: gearpit-db

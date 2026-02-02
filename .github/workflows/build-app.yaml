@@ -6,6 +6,11 @@ on:
     paths:
       - "apps/**"
       - ".github/workflows/build-app.yaml"
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - "apps/**"
+      - ".github/workflows/build-app.yaml"
   workflow_dispatch:
 
 env:
@@ -20,7 +25,7 @@ jobs:
       contents: write
       packages: write
     strategy:
-      # 重要: Gitへの書き込み競合を防ぐため直列実行にする
+      # Git競合を防ぐため直列実行
       max-parallel: 1
       fail-fast: false
       matrix:
@@ -28,11 +33,13 @@ jobs:
           - app: gearpit-core
             context: ./apps/gearpit-core
             image: nordiwnd/gearpit-app
-            manifest_path: manifests/apps/gearpit-core/base
+            # 本番用Overlayのパスを指定
+            manifest_path: manifests/apps/gearpit-core/overlays/main
           - app: gearpit-web
             context: ./apps/gearpit-web
             image: nordiwnd/gearpit-web
-            manifest_path: manifests/apps/gearpit-web/base
+            # 本番用Overlayのパスを指定
+            manifest_path: manifests/apps/gearpit-web/overlays/main
 
     steps:
       - name: Checkout repository
@@ -52,6 +59,11 @@ jobs:
         if: steps.changes.outputs.src == 'true'
         id: vars
         run: echo "sha_full=${{ github.sha }}" >> $GITHUB_OUTPUT
+
+      - name: Get PR Number
+        if: github.event_name == 'pull_request'
+        id: pr
+        run: echo "num=${{ github.event.number }}" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
         if: steps.changes.outputs.src == 'true'
@@ -74,24 +86,24 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ matrix.image }}:latest
             ${{ env.REGISTRY }}/${{ matrix.image }}:${{ steps.vars.outputs.sha_full }}
+            ${{ github.event_name == 'pull_request' && format('{0}/{1}:pr-{2}', env.REGISTRY, matrix.image, steps.pr.outputs.num) || '' }}
           cache-from: type=gha,scope=${{ matrix.app }}
           cache-to: type=gha,mode=max,scope=${{ matrix.app }}
 
       - name: Setup Kustomize
-        if: steps.changes.outputs.src == 'true'
+        if: steps.changes.outputs.src == 'true' && github.event_name != 'pull_request'
         uses: imranismail/setup-kustomize@v2
 
+      # Mainブランチの時のみ、本番用Overlay(main)のマニフェストを更新
       - name: Update Manifest and Push
-        if: steps.changes.outputs.src == 'true'
+        if: steps.changes.outputs.src == 'true' && github.event_name != 'pull_request'
         run: |
           git config --global user.name "${{ env.GIT_USER_NAME }}"
           git config --global user.email "${{ env.GIT_USER_EMAIL }}"
           
-          echo "Updating manifest for ${{ matrix.app }}..."
-          
-          # リトライループ
-          for i in {1..5}; do
-            # 常に最新をプルしてから変更を適用
+          # リトライ処理
+          for i in {1..3}; do
+            echo "Attempt $i: Updating manifest for ${{ matrix.app }}..."
             git pull origin main --rebase
             
             cd ${{ github.workspace }}/${{ matrix.manifest_path }}
@@ -99,20 +111,20 @@ jobs:
             
             cd ${{ github.workspace }}
             
-            if [[ -z $(git status -s) ]]; then
-              echo "No changes to commit."
-              break
-            fi
-            
-            git add .
-            git commit -m "ops: update ${{ matrix.app }} image to ${{ steps.vars.outputs.sha_full }} [skip ci]"
-            
-            if git push origin main; then
-              echo "Success."
-              break
+            if [[ -n $(git status -s) ]]; then
+              git add .
+              git commit -m "ops: update ${{ matrix.app }} image to ${{ steps.vars.outputs.sha_full }} [skip ci]"
+              
+              if git push origin main; then
+                echo "Successfully updated manifest."
+                break
+              else
+                echo "Push failed. Retrying..."
+                git reset --hard HEAD~1
+                sleep $((RANDOM % 5 + 2))
+              fi
             else
-              echo "Push failed (concurrent update?), retrying ($i/5)..."
-              git reset --hard HEAD~1
-              sleep $((RANDOM % 5 + 2))
+              echo "No changes needed."
+              break
             fi
           done

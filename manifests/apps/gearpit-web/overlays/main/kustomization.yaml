@@ -3,4 +3,7 @@ kind: Kustomization
 
 resources:
   - ../../base
-# WebはDBがないためパッチは現在不要
+
+images:
+  - name: ghcr.io/nordiwnd/gearpit-web
+    newTag: latest

@@ -22,17 +22,18 @@ spec:
       project: default
       source:
         repoURL: 'https://github.com/nordiwnd/gearpit.git'
-        targetRevision: '{{head_sha}}'
+        targetRevision: '{{head_sha}}' # マニフェスト自体のバージョンはCommit Hashに追従
         path: manifests/apps/gearpit-core/overlays/preview
         kustomize:
           images:
-            - 'ghcr.io/nordiwnd/gearpit-app=ghcr.io/nordiwnd/gearpit-app:{{head_sha}}'
+            # 重要: CIで生成される Mutable Tag (pr-123) を指定してHash不一致を回避
+            - 'ghcr.io/nordiwnd/gearpit-app=ghcr.io/nordiwnd/gearpit-app:pr-{{number}}'
           namespace: 'pr{{number}}'
           patches:
-            # Backend Ingress Patch
+            # Backend Ingress Patch (動的ホスト名)
             - target:
                 kind: Ingress
-                name: gearpit-ingress
+                name: gearpit-ingress # base/ingress.yaml の名前と一致させること
               patch: |-
                 - op: replace
                   path: /spec/rules/0/host
@@ -76,19 +77,20 @@ spec:
         path: manifests/apps/gearpit-web/overlays/preview
         kustomize:
           images:
-            - 'ghcr.io/nordiwnd/gearpit-web=ghcr.io/nordiwnd/gearpit-web:{{head_sha}}'
+            # 重要: CIで生成される Mutable Tag (pr-123) を指定
+            - 'ghcr.io/nordiwnd/gearpit-web=ghcr.io/nordiwnd/gearpit-web:pr-{{number}}'
           namespace: 'pr{{number}}'
           patches:
             # Frontend Ingress Patch
             - target:
                 kind: Ingress
-                name: gearpit-web-ingress
+                name: gearpit-web-ingress # base/ingress.yaml の名前と一致させること
               patch: |-
                 - op: replace
                   path: /spec/rules/0/host
                   value: web-pr{{number}}.192.168.40.100.nip.io
             
-            # Backend URL Injection Patch
+            # Backend URL Injection Patch (動的接続先)
             - target:
                 kind: Deployment
                 name: gearpit-web
@@ -96,7 +98,8 @@ spec:
                 - op: replace
                   path: /spec/template/spec/containers/0/env/0
                   value:
-                    name: BACKEND_URL # 名前も書き換える
+                    name: BACKEND_URL
+                    # Service名はCoreのService定義名(gearpit-app-svc)に合わせる
                     value: "http://gearpit-app-svc.pr{{number}}.svc.cluster.local:80"
       destination:
         server: https://kubernetes.default.svc

@@ -8,7 +8,8 @@ spec:
   source:
     repoURL: https://github.com/nordiwnd/GearPit.git
     targetRevision: main
-    path: manifests/apps/gearpit-web/base
+    # パス変更: base -> overlays/main
+    path: manifests/apps/gearpit-web/overlays/main
   destination:
     server: https://kubernetes.default.svc
     namespace: default

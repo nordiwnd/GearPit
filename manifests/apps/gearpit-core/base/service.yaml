@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: gearpit-app-svc
+spec:
+  selector:
+    app: gearpit-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080

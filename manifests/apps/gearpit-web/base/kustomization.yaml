@@ -4,7 +4,3 @@ resources:
   - deployment.yaml
   - service.yaml
   - ingress.yaml
-images:
-  - name: ghcr.io/nordiwnd/gearpit-web
-    newName: ghcr.io/nordiwnd/gearpit-web
-    newTag: latest

@@ -8,13 +8,14 @@ spec:
   source:
     repoURL: https://github.com/nordiwnd/GearPit.git
     targetRevision: main
-    path: manifests/apps/gearpit-core/base
+    # パス変更: base -> overlays/main
+    path: manifests/apps/gearpit-core/overlays/main
   destination:
     server: https://kubernetes.default.svc
     namespace: default
   syncPolicy:
     automated:
-      prune: true      # Gitから消えたリソースはk8sからも消す
-      selfHeal: true   # 手動でk8sを変更されても、Gitの状態に強制的に戻す
+      prune: true
+      selfHeal: true
     syncOptions:
       - CreateNamespace=true
