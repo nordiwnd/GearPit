@@ -2,8 +2,9 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - ../../base
+- ../../base
 
 images:
-  - name: ghcr.io/nordiwnd/gearpit-web
-    newTag: latest
+- name: ghcr.io/nordiwnd/gearpit-web
+  newName: ghcr.io/nordiwnd/gearpit-web
+  newTag: 930022b0c3c993cdbfb604807cdcb2daa27a3636
