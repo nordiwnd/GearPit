@@ -6,12 +6,6 @@ on:
     paths:
       - "apps/**"
       - ".github/workflows/build-app.yaml"
-  pull_request:
-    branches: [ "main" ]
-    # マニフェスト変更のみでもPreview環境を更新するため、フィルタはあえて広めに設定
-    # paths: 
-    #   - "apps/**"
-    #   - ".github/workflows/build-app.yaml"
   workflow_dispatch:
 
 env:
@@ -26,15 +20,15 @@ jobs:
       contents: write
       packages: write
     strategy:
+      # 重要: Gitへの書き込み競合を防ぐため直列実行にする
+      max-parallel: 1
       fail-fast: false
       matrix:
         include:
-          # Backend (Core) - 既存のイメージ名 nordiwnd/gearpit-app を維持
           - app: gearpit-core
             context: ./apps/gearpit-core
             image: nordiwnd/gearpit-app
             manifest_path: manifests/apps/gearpit-core/base
-          # Frontend (Web) - 新規追加
           - app: gearpit-web
             context: ./apps/gearpit-web
             image: nordiwnd/gearpit-web
@@ -43,8 +37,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      # 変更検知: そのアプリ(context)に変更があったかチェック
       - name: Check for changes
         uses: dorny/paths-filter@v2
         id: changes
@@ -53,22 +48,11 @@ jobs:
             src:
               - '${{ matrix.context }}/**'
 
-      # Full SHA の設定 (あなたのロジックを維持)
-      # 変更があった場合のみ実行
       - name: Set Full SHA
         if: steps.changes.outputs.src == 'true'
         id: vars
-        run: |
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-            echo "sha_full=${{ github.event.pull_request.head.sha }}" >> $GITHUB_OUTPUT
-          else
-            echo "sha_full=${{ github.sha }}" >> $GITHUB_OUTPUT
-          fi
+        run: echo "sha_full=${{ github.sha }}" >> $GITHUB_OUTPUT
 
-      - name: Set up QEMU
-        if: steps.changes.outputs.src == 'true'
-        uses: docker/setup-qemu-action@v3
-      
       - name: Set up Docker Buildx
         if: steps.changes.outputs.src == 'true'
         uses: docker/setup-buildx-action@v3
@@ -81,7 +65,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Build & Pushs
       - name: Build and push Docker image
         if: steps.changes.outputs.src == 'true'
         uses: docker/build-push-action@v5
@@ -91,48 +74,45 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ matrix.image }}:latest
             ${{ env.REGISTRY }}/${{ matrix.image }}:${{ steps.vars.outputs.sha_full }}
-          labels: |
-            org.opencontainers.image.source=https://github.com/${{ github.repository }}
-          platforms: linux/amd64,linux/arm64
-          # キャッシュスコープをアプリごとに分離
           cache-from: type=gha,scope=${{ matrix.app }}
           cache-to: type=gha,mode=max,scope=${{ matrix.app }}
 
       - name: Setup Kustomize
-        if: steps.changes.outputs.src == 'true' && github.event_name != 'pull_request'
+        if: steps.changes.outputs.src == 'true'
         uses: imranismail/setup-kustomize@v2
 
-      # Update Manifest (PR以外)
-      - name: Update Kubernetes resources
-        if: steps.changes.outputs.src == 'true' && github.event_name != 'pull_request'
+      - name: Update Manifest and Push
+        if: steps.changes.outputs.src == 'true'
         run: |
-          # Manifestディレクトリがなければスキップ (webの初回など)
-          if [ -d "${{ matrix.manifest_path }}" ]; then
-            cd ${{ matrix.manifest_path }}
-            # Full SHA で更新
-            kustomize edit set image ${{ env.REGISTRY }}/${{ matrix.image }}=${{ env.REGISTRY }}/${{ matrix.image }}:${{ steps.vars.outputs.sha_full }}
-            cat kustomization.yaml
-          else
-            echo "Manifest directory not found, skipping update."
-          fi
-
-      # Commit & Push (PR以外)
-      - name: Commit and Push Manifest changes
-        if: steps.changes.outputs.src == 'true' && github.event_name != 'pull_request'
-        run: |
-          if [ -d "${{ matrix.manifest_path }}" ]; then
-            git config --global user.name "${{ env.GIT_USER_NAME }}"
-            git config --global user.email "${{ env.GIT_USER_EMAIL }}"
-            
-            # 並行ジョブでの競合を避けるため pull --rebase
+          git config --global user.name "${{ env.GIT_USER_NAME }}"
+          git config --global user.email "${{ env.GIT_USER_EMAIL }}"
+          
+          echo "Updating manifest for ${{ matrix.app }}..."
+          
+          # リトライループ
+          for i in {1..5}; do
+            # 常に最新をプルしてから変更を適用
             git pull origin main --rebase
             
-            TARGET_FILE="${{ matrix.manifest_path }}/kustomization.yaml"
-            if [[ -n $(git status -s $TARGET_FILE) ]]; then
-              git add $TARGET_FILE
-              git commit -m "ops: update ${{ matrix.app }} image tag to ${{ steps.vars.outputs.sha_full }} [skip ci]"
-              git push origin main
-            else
-              echo "No changes to commit"
+            cd ${{ github.workspace }}/${{ matrix.manifest_path }}
+            kustomize edit set image ${{ env.REGISTRY }}/${{ matrix.image }}=${{ env.REGISTRY }}/${{ matrix.image }}:${{ steps.vars.outputs.sha_full }}
+            
+            cd ${{ github.workspace }}
+            
+            if [[ -z $(git status -s) ]]; then
+              echo "No changes to commit."
+              break
             fi
-          fi
+            
+            git add .
+            git commit -m "ops: update ${{ matrix.app }} image to ${{ steps.vars.outputs.sha_full }} [skip ci]"
+            
+            if git push origin main; then
+              echo "Success."
+              break
+            else
+              echo "Push failed (concurrent update?), retrying ($i/5)..."
+              git reset --hard HEAD~1
+              sleep $((RANDOM % 5 + 2))
+            fi
+          done
