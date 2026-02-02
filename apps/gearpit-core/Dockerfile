@@ -1,7 +1,6 @@
 # syntax=docker/dockerfile:1
 
 # 1. Build Stage
-# バージョンは Operator と合わせて 1.24 にしておきます（1.25は未リリースでエラーになります）
 FROM --platform=$BUILDPLATFORM golang:1.25 AS builder
 
 WORKDIR /app
@@ -9,7 +8,6 @@ WORKDIR /app
 # 依存関係のダウンロード
 COPY go.mod go.sum ./
 
-# 【重要】ここにもキャッシュマウントを追加！
 # これがないと、次のステップのマウントによってダウンロード済みファイルが隠蔽され、再DLが発生します
 RUN --mount=type=cache,target=/go/pkg/mod/ \
     go mod download
