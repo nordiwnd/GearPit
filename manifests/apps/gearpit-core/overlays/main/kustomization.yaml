@@ -2,9 +2,10 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - ../../base
+- ../../base
 
 # CI/CDによって自動更新される画像タグ
 images:
-  - name: ghcr.io/nordiwnd/gearpit-app
-    newTag: latest # 初期値(CIが書き換えます)
+- name: ghcr.io/nordiwnd/gearpit-app
+  newName: ghcr.io/nordiwnd/gearpit-app
+  newTag: 930022b0c3c993cdbfb604807cdcb2daa27a3636
