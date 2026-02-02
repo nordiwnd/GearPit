@@ -7,7 +7,7 @@ import (
 
 	"github.com/nordiwnd/gearpit/apps/gearpit-core/internal/handler"
 	"github.com/nordiwnd/gearpit/apps/gearpit-core/internal/infrastructure"
-	"github.com/rs/cors" // ← 【重要】これを追加
+	"github.com/rs/cors"
 )
 
 func main() {

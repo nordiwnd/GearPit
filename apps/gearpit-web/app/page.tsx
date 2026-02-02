@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge"; 
 import { AddGearDialog } from "@/components/inventory/add-gear-dialog";
-import { api } from "@/lib/api"; // 作成した共通クライアント
+import { api } from "@/lib/api"; 
 
 // APIレスポンスの型定義
 type Gear = {
