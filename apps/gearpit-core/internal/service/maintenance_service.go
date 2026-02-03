@@ -45,3 +45,22 @@ func (s *maintenanceService) GetLogsForItem(ctx context.Context, itemID string) 
 func (s *maintenanceService) DeleteLog(ctx context.Context, id string) error {
 	return s.repo.Delete(ctx, id)
 }
+
+func (s *maintenanceService) UpdateLog(ctx context.Context, id, logDateStr, actionTaken string, cost int) (*domain.MaintenanceLog, error) {
+	log, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	logDate, err := time.Parse("2006-01-02", logDateStr)
+	if err == nil {
+		log.LogDate = logDate
+	}
+	log.ActionTaken = actionTaken
+	log.Cost = cost
+
+	if err := s.repo.Update(ctx, log); err != nil {
+		return nil, err
+	}
+	return log, nil
+}

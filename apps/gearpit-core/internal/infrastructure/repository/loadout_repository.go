@@ -86,9 +86,19 @@ func (r *loadoutRepository) Update(ctx context.Context, loadout *domain.Loadout)
 	return nil
 }
 
-// Delete performs soft delete.
+// Delete performs a cleanup of associations before soft deleting the loadout.
 func (r *loadoutRepository) Delete(ctx context.Context, id string) error {
-	if err := r.db.WithContext(ctx).Delete(&domain.Loadout{}, "id = ?", id).Error; err != nil {
+	var loadout domain.Loadout
+	if err := r.db.WithContext(ctx).First(&loadout, "id = ?", id).Error; err != nil {
+		return err
+	}
+
+	// 1. 中間テーブル（Items, Kits）の関連付けを解除 (Clear)
+	r.db.WithContext(ctx).Model(&loadout).Association("Items").Clear()
+	r.db.WithContext(ctx).Model(&loadout).Association("Kits").Clear()
+
+	// 2. Loadout本体を削除 (Soft Delete)
+	if err := r.db.WithContext(ctx).Delete(&loadout).Error; err != nil {
 		return fmt.Errorf("failed to delete loadout: %w", err)
 	}
 	return nil

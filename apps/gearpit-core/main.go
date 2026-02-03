@@ -175,6 +175,8 @@ func main() {
 	})
 	mux.HandleFunc("/api/v1/maintenance/", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
+		case http.MethodPut:
+			maintenanceHandler.UpdateLog(w, r)
 		case http.MethodDelete:
 			maintenanceHandler.DeleteLog(w, r)
 		case http.MethodOptions:

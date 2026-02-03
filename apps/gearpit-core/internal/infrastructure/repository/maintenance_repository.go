@@ -37,3 +37,18 @@ func (r *maintenanceRepository) Delete(ctx context.Context, id string) error {
 	}
 	return nil
 }
+
+func (r *maintenanceRepository) Update(ctx context.Context, log *domain.MaintenanceLog) error {
+	if err := r.db.WithContext(ctx).Save(log).Error; err != nil {
+		return fmt.Errorf("failed to update maintenance log: %w", err)
+	}
+	return nil
+}
+
+func (r *maintenanceRepository) GetByID(ctx context.Context, id string) (*domain.MaintenanceLog, error) {
+	var log domain.MaintenanceLog
+	if err := r.db.WithContext(ctx).First(&log, "id = ?", id).Error; err != nil {
+		return nil, fmt.Errorf("maintenance log not found: %w", err)
+	}
+	return &log, nil
+}
