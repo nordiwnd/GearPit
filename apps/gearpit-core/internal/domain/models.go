@@ -8,88 +8,70 @@ import (
 	"gorm.io/gorm"
 )
 
-// Item: ギア単体
+// BaseModel provides UUID v7 PK and standard timestamps for all entities.
+type BaseModel struct {
+	ID        string         `gorm:"primaryKey;type:uuid" json:"id"`
+	CreatedAt time.Time      `json:"createdAt"`
+	UpdatedAt time.Time      `json:"updatedAt"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+}
+
+// BeforeCreate is a GORM hook to generate UUID v7 automatically.
+func (b *BaseModel) BeforeCreate(tx *gorm.DB) (err error) {
+	if b.ID == "" {
+		// UUID v7 is time-ordered, excellent for Postgres B-Tree indexes.
+		id, err := uuid.NewV7()
+		if err != nil {
+			return err
+		}
+		b.ID = id.String()
+	}
+	return nil
+}
+
+// Item represents a single piece of gear.
 type Item struct {
-	ID           string `json:"id" gorm:"primaryKey;type:uuid"`
-	Name         string `json:"name" gorm:"not null"`
-	Brand        string `json:"brand" gorm:"not null"`
-	WeightGram   int    `json:"weightGram"`   // 0 = Unknown
-	IsConsumable bool   `json:"isConsumable"` // 食品、燃料など
+	BaseModel
+	Name        string `gorm:"type:varchar(255);not null" json:"name"`
+	Description string `gorm:"type:text" json:"description"`
+	WeightGram  int    `gorm:"not null;default:0" json:"weightGram"`
+	// Tags uses Postgres text[] array.
+	Tags pq.StringArray `gorm:"type:text[]" json:"tags"`
+	// Properties uses JSONB with GIN index for schema-less specs (e.g. "size", "capacity").
+	Properties map[string]any `gorm:"type:jsonb;serializer:json;index:,type:gin" json:"properties"`
 
-	// カテゴリ (Top Level Filtering用)
-	// ex: "ski", "mountaineering", "camp"
-	Category string `json:"category" gorm:"index;not null"`
-
-	// 柔軟なスペック格納用 (Polymorphic Properties)
-	// GIN Indexにより、JSON内部のキー("sub_category", "length_cm"等)で高速検索可能
-	Properties map[string]any `json:"properties,omitempty" gorm:"type:jsonb;serializer:json;index:type:gin"`
-
-	Tags pq.StringArray `json:"tags" gorm:"type:text[]"`
-
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
-
-	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`
+	// Relations
+	Kits            []Kit            `gorm:"many2many:kit_items;" json:"kits,omitempty"`
+	MaintenanceLogs []MaintenanceLog `json:"maintenanceLogs,omitempty"`
 }
 
-// Kit: 持ち物セット (例: "バックカントリー基本セット")
+// Kit is a reusable collection of Items.
 type Kit struct {
-	ID   string `json:"id" gorm:"primaryKey;type:uuid"`
-	Name string `json:"name" gorm:"not null"`
+	BaseModel
+	Name        string `gorm:"type:varchar(255);not null" json:"name"`
+	Description string `gorm:"type:text" json:"description"`
 
-	ItemIDs pq.StringArray `json:"itemIds" gorm:"type:text[]"`
-
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	// Relations
+	Items []Item `gorm:"many2many:kit_items;" json:"items,omitempty"`
 }
 
-// Loadout: 実際の登山計画ごとのパッキングリスト (Kit + 追加アイテム)
+// Loadout is the final packing list for a specific activity.
 type Loadout struct {
-	ID          string        `json:"id" gorm:"primaryKey;type:uuid"`
-	Name        string        `json:"name" gorm:"not null"`
-	Items       []LoadoutItem `json:"items" gorm:"serializer:json"`
-	TotalWeight int           `json:"totalWeightGram"`
-	CreatedAt   time.Time     `json:"createdAt"`
-	UpdatedAt   time.Time     `json:"updatedAt"`
+	BaseModel
+	Name         string    `gorm:"type:varchar(255);not null" json:"name"`
+	ActivityType string    `gorm:"type:varchar(100);not null" json:"activityType"` // e.g., "Skiing", "Camping"
+	EventDate    time.Time `json:"eventDate"`
+
+	// Relations
+	Kits  []Kit  `gorm:"many2many:loadout_kits;" json:"kits,omitempty"`
+	Items []Item `gorm:"many2many:loadout_items;" json:"items,omitempty"`
 }
 
-type LoadoutItem struct {
-	ItemID    string `json:"itemId"`
-	Quantity  int    `json:"quantity"`
-	IsChecked bool   `json:"isChecked"`
-}
-
-// --- Hooks (UUID v7 Generation) ---
-
-func (i *Item) BeforeCreate(tx *gorm.DB) (err error) {
-	if i.ID == "" {
-		v7, err := uuid.NewV7()
-		if err != nil {
-			return err
-		}
-		i.ID = v7.String()
-	}
-	return
-}
-
-func (k *Kit) BeforeCreate(tx *gorm.DB) (err error) {
-	if k.ID == "" {
-		v7, err := uuid.NewV7()
-		if err != nil {
-			return err
-		}
-		k.ID = v7.String()
-	}
-	return
-}
-
-func (l *Loadout) BeforeCreate(tx *gorm.DB) (err error) {
-	if l.ID == "" {
-		v7, err := uuid.NewV7()
-		if err != nil {
-			return err
-		}
-		l.ID = v7.String()
-	}
-	return
+// MaintenanceLog tracks repair and maintenance history for an Item.
+type MaintenanceLog struct {
+	BaseModel
+	ItemID      string    `gorm:"type:uuid;not null;index" json:"itemId"`
+	LogDate     time.Time `gorm:"not null" json:"logDate"`
+	ActionTaken string    `gorm:"type:text;not null" json:"actionTaken"`
+	Cost        int       `json:"cost"` // in base currency (e.g., JPY)
 }
