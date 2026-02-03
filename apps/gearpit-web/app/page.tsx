@@ -1,5 +1,7 @@
 import { gearApi } from "@/lib/api";
 import { AddGearDialog } from "@/components/inventory/add-gear-dialog";
+import { EditGearDialog } from "@/components/inventory/edit-gear-dialog";
+import { SearchBar } from "@/components/inventory/search-bar";
 import {
   Table,
   TableBody,
@@ -10,14 +12,25 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
-// Next.js 15 Server Component: Fetches data directly on the server
-export default async function InventoryPage() {
-  // Fetch items from the Go backend
-  const items = await gearApi.listItems();
+// Next.js 15: Search Params type definition
+interface Props {
+  searchParams: Promise<{ tag?: string; category?: string; brand?: string }>;
+}
+
+export default async function InventoryPage({ searchParams }: Props) {
+  // Await search params in Next.js 15
+  const filters = await searchParams;
+
+  // Fetch items from Go backend with filters applied
+  const items = await gearApi.listItems({
+    tag: filters.tag,
+    category: filters.category,
+    brand: filters.brand,
+  });
 
   return (
     <main className="container mx-auto py-8 px-4 md:px-8 space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Gear Inventory</h1>
           <p className="text-muted-foreground mt-1">
@@ -27,7 +40,12 @@ export default async function InventoryPage() {
         <AddGearDialog />
       </div>
 
-      <div className="rounded-md border bg-card">
+      {/* 検索バーの追加 */}
+      <div className="bg-card border rounded-md p-4">
+        <SearchBar />
+      </div>
+
+      <div className="rounded-md border bg-card overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -35,6 +53,8 @@ export default async function InventoryPage() {
               <TableHead>Category / Brand</TableHead>
               <TableHead className="text-right">Weight (g)</TableHead>
               <TableHead className="hidden md:table-cell">Tags</TableHead>
+              {/* アクション列を追加 */}
+              <TableHead className="w-[80px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -57,12 +77,16 @@ export default async function InventoryPage() {
                       </Badge>
                     ))}
                   </TableCell>
+                  <TableCell className="text-right">
+                    {/* 編集・削除ボタンの追加 */}
+                    <EditGearDialog item={item} />
+                  </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center">
-                  No gear registered yet. Click "Add Gear" to start.
+                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                  No gear matches your criteria.
                 </TableCell>
               </TableRow>
             )}
