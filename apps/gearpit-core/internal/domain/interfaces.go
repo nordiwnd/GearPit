@@ -28,3 +28,34 @@ type GearService interface {
 	UpdateItem(ctx context.Context, id string, name, description string, weight int, tags []string, properties map[string]any) (*Item, error)
 	DeleteItem(ctx context.Context, id string) error
 }
+
+// --- Kit Interfaces ---
+
+type KitRepository interface {
+	Create(ctx context.Context, kit *Kit) error
+	GetByID(ctx context.Context, id string) (*Kit, error)
+	ListAll(ctx context.Context) ([]Kit, error)
+	// Association operations
+	AddItemsToKit(ctx context.Context, kitID string, itemIDs []string) error
+}
+
+type KitService interface {
+	CreateKit(ctx context.Context, name, description string, itemIDs []string) (*Kit, error)
+	GetKit(ctx context.Context, id string) (*Kit, error)
+	ListKits(ctx context.Context) ([]Kit, error)
+}
+
+// --- Loadout Interfaces ---
+
+type LoadoutRepository interface {
+	Create(ctx context.Context, loadout *Loadout) error
+	GetByID(ctx context.Context, id string) (*Loadout, error)
+	ListAll(ctx context.Context) ([]Loadout, error)
+	SetAssociations(ctx context.Context, loadoutID string, kitIDs, itemIDs []string) error
+}
+
+type LoadoutService interface {
+	CreateLoadout(ctx context.Context, name, activityType string, kitIDs, itemIDs []string) (*Loadout, error)
+	GetLoadout(ctx context.Context, id string) (*Loadout, error)
+	ListLoadouts(ctx context.Context) ([]Loadout, error)
+}

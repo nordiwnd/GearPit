@@ -55,6 +55,13 @@ func main() {
 	gearRepo := repository.NewGearRepository(db)
 	gearService := service.NewGearService(gearRepo)
 	gearHandler := handler.NewGearHandler(gearService)
+	kitRepo := repository.NewKitRepository(db)
+	kitService := service.NewKitService(kitRepo)
+	kitHandler := handler.NewKitHandler(kitService)
+
+	loadoutRepo := repository.NewLoadoutRepository(db)
+	loadoutService := service.NewLoadoutService(loadoutRepo)
+	loadoutHandler := handler.NewLoadoutHandler(loadoutService)
 
 	// Router setup
 	mux := http.NewServeMux()
@@ -85,6 +92,48 @@ func main() {
 			w.WriteHeader(http.StatusOK)
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	// Kit Routes
+	mux.HandleFunc("/api/v1/kits", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			kitHandler.ListKits(w, r)
+		case http.MethodPost:
+			kitHandler.CreateKit(w, r)
+		case http.MethodOptions:
+			w.WriteHeader(http.StatusOK)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+	mux.HandleFunc("/api/v1/kits/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			kitHandler.GetKit(w, r)
+		} else if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+		}
+	})
+
+	// Loadout Routes
+	mux.HandleFunc("/api/v1/loadouts", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			loadoutHandler.ListLoadouts(w, r)
+		case http.MethodPost:
+			loadoutHandler.CreateLoadout(w, r)
+		case http.MethodOptions:
+			w.WriteHeader(http.StatusOK)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+	mux.HandleFunc("/api/v1/loadouts/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			loadoutHandler.GetLoadout(w, r)
+		} else if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
 		}
 	})
 

@@ -1,32 +1,37 @@
-// apps/gearpit-core/internal/handler/kit_handler.go
 package handler
 
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/nordiwnd/gearpit/apps/gearpit-core/internal/domain"
-	"gorm.io/gorm"
 )
 
 type KitHandler struct {
-	DB *gorm.DB
+	service domain.KitService
 }
 
-func NewKitHandler(db *gorm.DB) *KitHandler {
-	return &KitHandler{DB: db}
+func NewKitHandler(s domain.KitService) *KitHandler {
+	return &KitHandler{service: s}
 }
 
-// CreateKit: "Coffee Set" = [Burner, Gas, Mug]
+type KitRequest struct {
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	ItemIDs     []string `json:"itemIds"`
+}
+
 func (h *KitHandler) CreateKit(w http.ResponseWriter, r *http.Request) {
-	var kit domain.Kit
-	if err := json.NewDecoder(r.Body).Decode(&kit); err != nil {
+	var req KitRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
-	if result := h.DB.Create(&kit); result.Error != nil {
-		http.Error(w, result.Error.Error(), http.StatusInternalServerError)
+	kit, err := h.service.CreateKit(r.Context(), req.Name, req.Description, req.ItemIDs)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -36,12 +41,25 @@ func (h *KitHandler) CreateKit(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *KitHandler) ListKits(w http.ResponseWriter, r *http.Request) {
-	var kits []domain.Kit
-	if result := h.DB.Find(&kits); result.Error != nil {
-		http.Error(w, result.Error.Error(), http.StatusInternalServerError)
+	kits, err := h.service.ListKits(r.Context())
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]any{"kits": kits})
+	json.NewEncoder(w).Encode(kits)
+}
+
+func (h *KitHandler) GetKit(w http.ResponseWriter, r *http.Request) {
+	id := strings.TrimPrefix(r.URL.Path, "/api/v1/kits/")
+
+	kit, err := h.service.GetKit(r.Context(), id)
+	if err != nil {
+		http.Error(w, "Internal server error or Not found", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(kit)
 }
