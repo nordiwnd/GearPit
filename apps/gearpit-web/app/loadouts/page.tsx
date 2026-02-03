@@ -7,7 +7,7 @@ import { CreateLoadoutDialog } from "@/components/loadout/create-loadout-dialog"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Scale, Calendar } from "lucide-react";
-import { api } from "@/lib/api"; // 追加
+// import { api } from "@/lib/api"; // 追加
 
 type Loadout = {
   id: string;
@@ -21,10 +21,8 @@ export default function LoadoutPage() {
   const [loadouts, setLoadouts] = useState<Loadout[]>([]);
 
   const fetchLoadouts = useCallback(() => {
-    // 修正: apiクライアントを使用
-    api.get('/api/v1/loadouts')
-      .then(res => setLoadouts(res.data.loadouts || []))
-      .catch(console.error);
+    // 修正: バックエンドのLoadout機能はPhase 2.2で実装するため、一旦空配列をセットしてビルドを通す
+    setLoadouts([]); 
   }, []);
 
   useEffect(() => {

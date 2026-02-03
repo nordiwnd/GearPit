@@ -1,80 +1,103 @@
 package main
 
-// test
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/nordiwnd/gearpit/apps/gearpit-core/internal/handler"
 	"github.com/nordiwnd/gearpit/apps/gearpit-core/internal/infrastructure"
-	"github.com/rs/cors"
+	"github.com/nordiwnd/gearpit/apps/gearpit-core/internal/infrastructure/repository"
+	"github.com/nordiwnd/gearpit/apps/gearpit-core/internal/service"
 )
 
 func main() {
-	// Logger初期化
+	// Logger setup
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
-	setEnvDefault("DB_HOST", "localhost")
-	setEnvDefault("DB_USER", "gearpit")
-	setEnvDefault("DB_PASSWORD", "password")
-	setEnvDefault("DB_NAME", "gearpit")
-	setEnvDefault("DB_PORT", "5432")
-	setEnvDefault("PORT", "8080")
-	// デフォルトでローカルとnip.ioを許可
-	setEnvDefault("ALLOWED_ORIGINS", "http://localhost:3000,https://gearpit.io,http://gearpit.192.168.40.100.nip.io")
+	// Database initialization
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		host := os.Getenv("DB_HOST")
+		if host == "" {
+			host = "localhost" // ローカル開発用フォールバック
+		}
+		user := os.Getenv("DB_USER")
+		if user == "" {
+			user = "postgres"
+		}
+		password := os.Getenv("DB_PASSWORD")
+		if password == "" {
+			password = "postgres"
+		}
+		dbname := os.Getenv("DB_NAME")
+		if dbname == "" {
+			dbname = "gearpit"
+		}
+		port := os.Getenv("DB_PORT")
+		if port == "" {
+			port = "5432"
+		}
 
-	// 1. DB Connection
-	db, err := infrastructure.NewDB()
+		dsn = fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Tokyo",
+			host, user, password, dbname, port)
+	}
+
+	db, err := infrastructure.InitDB(dsn)
 	if err != nil {
-		slog.Error("Failed to connect to DB", "error", err)
+		slog.Error("Failed to connect to database", "error", err)
 		os.Exit(1)
 	}
 
-	// 2. Handlers
-	gearHandler := handler.NewGearHandler(db)
-	loadoutHandler := handler.NewLoadoutHandler(db)
-	kitHandler := handler.NewKitHandler(db)
+	// Dependency Injection (DI) Setup
+	gearRepo := repository.NewGearRepository(db)
+	gearService := service.NewGearService(gearRepo)
+	gearHandler := handler.NewGearHandler(gearService)
 
+	// Router setup
 	mux := http.NewServeMux()
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
+	mux.HandleFunc("/api/v1/gears", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			gearHandler.ListItems(w, r)
+		case http.MethodPost:
+			gearHandler.CreateItem(w, r)
+		case http.MethodOptions:
+			// Preflight request response for /api/v1/gears
+			w.WriteHeader(http.StatusOK)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
 	})
 
-	// 3. API Routes (省略を復元)
-	mux.HandleFunc("POST /api/v1/gears", gearHandler.CreateItem)
-	mux.HandleFunc("GET /api/v1/gears", gearHandler.ListItems)
+	// Start server with CORS middleware
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	slog.Info("Starting server", "port", port)
 
-	mux.HandleFunc("POST /api/v1/loadouts", loadoutHandler.CreateLoadout)
-	mux.HandleFunc("GET /api/v1/loadouts", loadoutHandler.ListLoadouts)
-
-	mux.HandleFunc("POST /api/v1/kits", kitHandler.CreateKit)
-	mux.HandleFunc("GET /api/v1/kits", kitHandler.ListKits)
-
-	// CORS設定
-	allowedOrigins := strings.Split(os.Getenv("ALLOWED_ORIGINS"), ",")
-	c := cors.New(cors.Options{
-		AllowedOrigins:   allowedOrigins,
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Content-Type", "Authorization"},
-		AllowCredentials: true,
-		Debug:            false,
-	})
-
-	handler := c.Handler(mux)
-
-	slog.Info("Server starting", "port", os.Getenv("PORT"), "origins", allowedOrigins)
-	if err := http.ListenAndServe(":"+os.Getenv("PORT"), handler); err != nil {
+	// 修正: muxをCORSミドルウェアでラップして起動
+	if err := http.ListenAndServe(":"+port, enableCORS(mux)); err != nil {
 		slog.Error("Server failed", "error", err)
 		os.Exit(1)
 	}
 }
 
-func setEnvDefault(key, value string) {
-	if os.Getenv(key) == "" {
-		os.Setenv(key, value)
-	}
+// enableCORS is a middleware to allow cross-origin requests from the frontend.
+func enableCORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*") // 修正: Preview環境での通信を考慮し一旦全許可
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }

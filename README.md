@@ -1,12 +1,3 @@
-あ、なるほど！一つ前の出力では、私が「Zettelkasten」のREADMEだと勘違いして回答してしまいましたね。失礼いたしました。
-
-改めまして、ご提示いただいた 「現在の GearPit の README」 をベースに、これまでに策定した最新のバージョン情報（Go 1.25.6 など）や作成した設計指示書（docs/00〜04）へのリンクを組み込んで、AIがより深く理解できる**「最強のインデックス（README）」**へと校正しました。
-
-AI（LLM）が読みやすいようにXMLタグの構造を整理し、人間にとってもナビゲーションしやすい形に整えています。
-
-README.md
-Markdown
-
 # GearPit 🏔️🏍️🖥️
 
 ![Project Status](https://img.shields.io/badge/status-active_development-success)
