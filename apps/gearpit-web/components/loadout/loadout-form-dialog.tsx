@@ -1,11 +1,12 @@
-'use client';
+"use client";
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation'; // 追加: router.refresh()用
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Plus, Loader2 } from 'lucide-react';
+import { Plus, Loader2, Pencil } from 'lucide-react';
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
-import { gearApi, GearItem, loadoutApi } from "@/lib/api"; 
+import { gearApi, GearItem, loadoutApi, Loadout } from "@/lib/api"; 
 
 const formSchema = z.object({
   name: z.string().min(1, "Loadout name is required"),
@@ -23,11 +24,19 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export function CreateLoadoutDialog() {
+interface Props {
+  loadoutToEdit?: Loadout; // 編集モードの場合はこれを渡す
+  trigger?: React.ReactNode;
+}
+
+export function LoadoutFormDialog({ loadoutToEdit, trigger }: Props) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [gears, setGears] = useState<GearItem[]>([]);
-  const router = useRouter(); // 追加
+  const router = useRouter();
+
+  // 編集モードかどうか
+  const isEdit = !!loadoutToEdit;
 
   useEffect(() => {
     if (open) {
@@ -38,29 +47,45 @@ export function CreateLoadoutDialog() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      activityType: "",
-      selectedItemIds: [],
+      name: loadoutToEdit?.name || "",
+      activityType: loadoutToEdit?.activityType || "",
+      selectedItemIds: loadoutToEdit?.items?.map(i => i.id) || [],
     },
   });
+
+  // Dialogが開くたびにFormをリセット（特に編集→新規作成の切り替え時など考慮）
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        name: loadoutToEdit?.name || "",
+        activityType: loadoutToEdit?.activityType || "",
+        selectedItemIds: loadoutToEdit?.items?.map(i => i.id) || [],
+      });
+    }
+  }, [open, loadoutToEdit, form]);
 
   const onSubmit = async (values: FormValues) => {
     setLoading(true);
     try {
-      // API呼び出し
-      await loadoutApi.create({
+      const payload = {
         name: values.name,
         activityType: values.activityType,
-        kitIds: [], // 今回はシンプルにアイテム直指定のみとする
+        kitIds: [],
         itemIds: values.selectedItemIds,
-      });
+      };
 
-      form.reset();
+      if (isEdit && loadoutToEdit) {
+        await loadoutApi.update(loadoutToEdit.id, payload);
+        toast.success("Loadout updated successfully");
+      } else {
+        await loadoutApi.create(payload);
+        toast.success("Loadout created successfully");
+      }
+
       setOpen(false);
-      router.refresh(); // 追加: 画面の再描画をトリガー
+      router.refresh();
     } catch (error) {
-      console.error(error);
-      alert("Failed to create loadout.");
+      toast.error(isEdit ? "Failed to update loadout" : "Failed to create loadout");
     } finally {
       setLoading(false);
     }
@@ -69,17 +94,19 @@ export function CreateLoadoutDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" /> Create Loadout
-        </Button>
+        {trigger ? trigger : (
+          <Button>
+            <Plus className="mr-2 h-4 w-4" /> Create Loadout
+          </Button>
+        )}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh]">
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Create New Loadout</DialogTitle>
+          <DialogTitle>{isEdit ? "Edit Loadout" : "Create New Loadout"}</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 flex-1 flex flex-col min-h-0">
             <div className="grid grid-cols-2 gap-4">
               <FormField control={form.control} name="name" render={({ field }) => (
                 <FormItem><FormLabel>Name</FormLabel><FormControl><Input placeholder="Ex: Summer Hike 2026" {...field} /></FormControl><FormMessage /></FormItem>
@@ -89,9 +116,9 @@ export function CreateLoadoutDialog() {
               )} />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 flex-1 flex flex-col min-h-0">
               <FormLabel>Select Gears</FormLabel>
-              <div className="border rounded-md p-4 h-[300px] overflow-y-auto bg-zinc-50/50">
+              <div className="border rounded-md p-4 overflow-y-auto bg-zinc-50/50 flex-1">
                 <FormField control={form.control} name="selectedItemIds" render={() => (
                   <div className="space-y-2">
                     {gears.map((gear) => (
@@ -117,7 +144,7 @@ export function CreateLoadoutDialog() {
 
             <div className="flex justify-end pt-2">
               <Button type="submit" disabled={loading}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Save Loadout
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} {isEdit ? "Save Changes" : "Create Loadout"}
               </Button>
             </div>
           </form>

@@ -55,6 +55,17 @@ func main() {
 	gearRepo := repository.NewGearRepository(db)
 	gearService := service.NewGearService(gearRepo)
 	gearHandler := handler.NewGearHandler(gearService)
+	kitRepo := repository.NewKitRepository(db)
+	kitService := service.NewKitService(kitRepo)
+	kitHandler := handler.NewKitHandler(kitService)
+
+	loadoutRepo := repository.NewLoadoutRepository(db)
+	loadoutService := service.NewLoadoutService(loadoutRepo)
+	loadoutHandler := handler.NewLoadoutHandler(loadoutService)
+
+	maintenanceRepo := repository.NewMaintenanceRepository(db)
+	maintenanceService := service.NewMaintenanceService(maintenanceRepo)
+	maintenanceHandler := handler.NewMaintenanceHandler(maintenanceService)
 
 	// Router setup
 	mux := http.NewServeMux()
@@ -81,6 +92,93 @@ func main() {
 			gearHandler.UpdateItem(w, r)
 		case http.MethodDelete:
 			gearHandler.DeleteItem(w, r)
+		case http.MethodOptions:
+			w.WriteHeader(http.StatusOK)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	// Kit Routes
+	mux.HandleFunc("/api/v1/kits", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			kitHandler.ListKits(w, r)
+		case http.MethodPost:
+			kitHandler.CreateKit(w, r)
+		case http.MethodOptions:
+			w.WriteHeader(http.StatusOK)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+	mux.HandleFunc("/api/v1/kits/", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			kitHandler.GetKit(w, r)
+		case http.MethodOptions:
+			w.WriteHeader(http.StatusOK)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	// Loadout Routes
+	mux.HandleFunc("/api/v1/loadouts", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			loadoutHandler.ListLoadouts(w, r)
+		case http.MethodPost:
+			loadoutHandler.CreateLoadout(w, r)
+		case http.MethodOptions:
+			w.WriteHeader(http.StatusOK)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	mux.HandleFunc("/api/v1/loadouts/", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			loadoutHandler.GetLoadout(w, r)
+		case http.MethodPut:
+			loadoutHandler.UpdateLoadout(w, r)
+		case http.MethodDelete:
+			loadoutHandler.DeleteLoadout(w, r)
+		case http.MethodOptions:
+			w.WriteHeader(http.StatusOK)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	// Maintenance Logs Routes
+	mux.HandleFunc("/api/v1/maintenance", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			maintenanceHandler.AddLog(w, r)
+		case http.MethodOptions:
+			w.WriteHeader(http.StatusOK)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+	mux.HandleFunc("/api/v1/maintenance/item/", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			maintenanceHandler.GetItemLogs(w, r)
+		case http.MethodOptions:
+			w.WriteHeader(http.StatusOK)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+	mux.HandleFunc("/api/v1/maintenance/", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPut:
+			maintenanceHandler.UpdateLog(w, r)
+		case http.MethodDelete:
+			maintenanceHandler.DeleteLog(w, r)
 		case http.MethodOptions:
 			w.WriteHeader(http.StatusOK)
 		default:

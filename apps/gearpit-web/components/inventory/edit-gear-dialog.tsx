@@ -9,6 +9,7 @@ import { Pencil, Loader2, Trash2 } from "lucide-react";
 
 import { gearApi, GearItem } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -24,7 +25,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { toast } from "sonner"; // Toastに変更
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -39,9 +40,10 @@ type FormValues = z.infer<typeof formSchema>;
 
 interface EditGearDialogProps {
   item: GearItem;
+  trigger?: React.ReactNode; // 追加: トリガーを外部から渡せるようにする
 }
 
-export function EditGearDialog({ item }: EditGearDialogProps) {
+export function EditGearDialog({ item, trigger }: EditGearDialogProps) {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
@@ -76,26 +78,10 @@ export function EditGearDialog({ item }: EditGearDialogProps) {
       });
 
       setOpen(false);
-      router.refresh(); // Reload server component data
-    } catch (error) {
-      console.error("Failed to update gear", error);
-      alert("Failed to update gear.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  async function handleDelete() {
-    if (!confirm("Are you sure you want to delete this gear? (It can be restored later by DB admin)")) return;
-    
-    setIsSubmitting(true);
-    try {
-      await gearApi.deleteItem(item.id);
-      setOpen(false);
       router.refresh();
+      toast.success("Gear updated successfully");
     } catch (error) {
-      console.error("Failed to delete gear", error);
-      alert("Failed to delete gear.");
+      toast.error("Failed to update gear");
     } finally {
       setIsSubmitting(false);
     }
@@ -104,9 +90,11 @@ export function EditGearDialog({ item }: EditGearDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <Pencil className="h-4 w-4" />
-        </Button>
+        {trigger ? trigger : (
+          <Button variant="ghost" size="icon">
+            <Pencil className="h-4 w-4" />
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
@@ -132,10 +120,7 @@ export function EditGearDialog({ item }: EditGearDialogProps) {
               <FormItem><FormLabel>Tags (comma-separated)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
             )} />
             
-            <div className="flex justify-between pt-4">
-              <Button type="button" variant="destructive" onClick={handleDelete} disabled={isSubmitting}>
-                <Trash2 className="mr-2 h-4 w-4" /> Delete
-              </Button>
+            <div className="flex justify-end pt-4">
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Changes"}
               </Button>

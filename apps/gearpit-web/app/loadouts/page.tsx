@@ -1,79 +1,188 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback } from 'react';
-// import axios from 'axios'; // 削除
-import { format } from 'date-fns';
-import { CreateLoadoutDialog } from "@/components/loadout/create-loadout-dialog";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { toast } from "sonner";
+import { Scale, Package, Trash2, Pencil, ChevronRight } from "lucide-react";
+
+import { loadoutApi, Loadout } from "@/lib/api"; 
+import { LoadoutFormDialog } from "@/components/loadout/loadout-form-dialog"; // コンポーネント名変更
+import { EditGearDialog } from "@/components/inventory/edit-gear-dialog"; // 詳細表示用
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Scale, Calendar } from "lucide-react";
-// import { api } from "@/lib/api"; // 追加
-
-type Loadout = {
-  id: string;
-  name: string;
-  totalWeightGram: number;
-  items: any[]; // 詳細は省略
-  updatedAt: string;
-};
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle, 
+  AlertDialogTrigger 
+} from "@/components/ui/alert-dialog";
 
 export default function LoadoutPage() {
   const [loadouts, setLoadouts] = useState<Loadout[]>([]);
+  const [selectedLoadout, setSelectedLoadout] = useState<Loadout | null>(null);
+  const router = useRouter();
 
-  const fetchLoadouts = useCallback(() => {
-    // 修正: バックエンドのLoadout機能はPhase 2.2で実装するため、一旦空配列をセットしてビルドを通す
-    setLoadouts([]); 
-  }, []);
+  const fetchLoadouts = async () => {
+    try {
+      const data = await loadoutApi.list();
+      setLoadouts(data || []);
+    } catch (error) { 
+      toast.error("Failed to load loadouts from server");
+    }
+  };
 
-  useEffect(() => {
-    fetchLoadouts();
-  }, [fetchLoadouts]);
+  useEffect(() => { fetchLoadouts(); }, []);
+
+  const executeDelete = async (id: string) => {
+    try {
+      await loadoutApi.delete(id);
+      toast.success("Loadout deleted successfully");
+      setSelectedLoadout(null);
+      fetchLoadouts();
+    } catch (error) { 
+      toast.error("Failed to delete loadout. Please try again.");
+    }
+  };
 
   return (
     <div className="min-h-screen p-8 bg-zinc-50">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+      <div className="max-w-6xl mx-auto space-y-6">
+        
+        <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-zinc-800">My Loadouts</h1>
             <p className="text-zinc-500">Plan your packing lists and optimize weight.</p>
           </div>
-          <CreateLoadoutDialog onSuccess={fetchLoadouts} />
+          <LoadoutFormDialog />
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          {loadouts.map((loadout) => (
-            <Card key={loadout.id} className="hover:border-zinc-400 transition-colors cursor-pointer group">
-              <CardHeader className="pb-3">
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-xl group-hover:text-blue-600 transition-colors">
-                    {loadout.name}
-                  </CardTitle>
-                  
-                  {/* Total Weight Badge */}
-                  <div className="flex items-center bg-zinc-100 px-3 py-1.5 rounded-full border border-zinc-200">
-                    <Scale className="w-4 h-4 mr-2 text-zinc-500" />
-                    <span className="font-mono font-bold text-zinc-900">
-                      {loadout.totalWeightGram.toLocaleString()} g
-                    </span>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center text-sm text-zinc-500 mb-4">
-                  <Calendar className="w-4 h-4 mr-1" />
-                  {format(new Date(loadout.updatedAt), 'yyyy-MM-dd HH:mm')}
-                </div>
-                
-                <div className="flex flex-wrap gap-2">
-                   <Badge variant="outline" className="text-zinc-500">
-                     {loadout.items?.length || 0} Items
-                   </Badge>
-                   {/* 余裕があればここに構成品目のプレビューを表示 */}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="rounded-md border bg-white overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Loadout Name</TableHead>
+                <TableHead>Activity</TableHead>
+                <TableHead>Item Count</TableHead>
+                <TableHead className="text-right">Total Weight (kg)</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loadouts.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                    No loadouts created yet. Click "Create Loadout" to start.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                loadouts.map((loadout) => (
+                  <TableRow 
+                    key={loadout.id} 
+                    className="cursor-pointer hover:bg-zinc-50 transition-colors"
+                    onClick={() => setSelectedLoadout(loadout)}
+                  >
+                    <TableCell className="font-medium text-base">{loadout.name}</TableCell>
+                    <TableCell><Badge variant="secondary">{loadout.activityType}</Badge></TableCell>
+                    <TableCell>
+                      <span className="flex items-center gap-1 text-muted-foreground">
+                        <Package className="h-4 w-4" /> {loadout.items?.length || 0}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right font-mono font-medium">
+                      {(loadout.totalWeightGram / 1000).toFixed(2)} kg
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                        
+                        {/* 編集ボタン: LoadoutFormDialog を再利用 */}
+                        <LoadoutFormDialog 
+                          loadoutToEdit={loadout}
+                          trigger={
+                            <Button variant="ghost" size="icon">
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          } 
+                        />
+                        
+                        {/* 削除ボタン */}
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="hover:text-red-500">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete "{loadout.name}"?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete this loadout? 
+                                <br />
+                                (Note: Your gear items themselves will NOT be deleted from the inventory).
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction className="bg-red-500 hover:bg-red-600" onClick={() => executeDelete(loadout.id)}>
+                                Delete Loadout
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </div>
+
+        {/* 詳細 Sheet */}
+        <Sheet open={!!selectedLoadout} onOpenChange={(open) => !open && setSelectedLoadout(null)}>
+          <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
+            <SheetHeader className="mb-6">
+              <Badge variant="outline" className="w-fit mb-2">{selectedLoadout?.activityType}</Badge>
+              <SheetTitle className="text-2xl">{selectedLoadout?.name}</SheetTitle>
+              <SheetDescription className="flex items-center gap-1 font-mono text-base text-zinc-900 font-medium">
+                <Scale className="h-4 w-4" /> Total Pack Weight: {(Number(selectedLoadout?.totalWeightGram) / 1000).toFixed(2)} kg
+              </SheetDescription>
+            </SheetHeader>
+
+            <div className="space-y-4">
+              <h3 className="font-semibold text-lg flex items-center">
+                <Package className="h-5 w-5 mr-2" /> Packed Gears ({selectedLoadout?.items?.length || 0})
+              </h3>
+              <div className="space-y-2">
+                {selectedLoadout?.items?.map(item => (
+                  // 各ギアを EditGearDialog でラップして詳細表示可能にする
+                  <EditGearDialog 
+                    key={item.id} 
+                    item={item} 
+                    trigger={
+                      <div className="flex justify-between items-center p-3 bg-zinc-50 border rounded-md cursor-pointer hover:bg-zinc-100 transition-colors group">
+                        <div>
+                          <div className="font-medium text-sm text-zinc-800 flex items-center gap-2">
+                            {item.name}
+                            <ChevronRight className="w-3 h-3 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                          <div className="text-xs text-muted-foreground">{item.properties?.brand || "-"}</div>
+                        </div>
+                        <Badge variant="secondary" className="font-mono">{item.weightGram}g</Badge>
+                      </div>
+                    }
+                  />
+                ))}
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
     </div>
   );
