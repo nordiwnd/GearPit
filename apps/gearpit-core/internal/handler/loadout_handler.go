@@ -95,3 +95,30 @@ func toLoadoutResponse(l *domain.Loadout) LoadoutResponse {
 		TotalWeightGram: totalWeight,
 	}
 }
+
+func (h *LoadoutHandler) UpdateLoadout(w http.ResponseWriter, r *http.Request) {
+	id := strings.TrimPrefix(r.URL.Path, "/api/v1/loadouts/")
+	var req LoadoutRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	loadout, err := h.service.UpdateLoadout(r.Context(), id, req.Name, req.ActivityType, req.KitIDs, req.ItemIDs)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(toLoadoutResponse(loadout))
+}
+
+func (h *LoadoutHandler) DeleteLoadout(w http.ResponseWriter, r *http.Request) {
+	id := strings.TrimPrefix(r.URL.Path, "/api/v1/loadouts/")
+	if err := h.service.DeleteLoadout(r.Context(), id); err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}

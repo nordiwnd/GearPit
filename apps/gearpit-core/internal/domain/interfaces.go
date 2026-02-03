@@ -52,12 +52,16 @@ type LoadoutRepository interface {
 	GetByID(ctx context.Context, id string) (*Loadout, error)
 	ListAll(ctx context.Context) ([]Loadout, error)
 	SetAssociations(ctx context.Context, loadoutID string, kitIDs, itemIDs []string) error
+	Update(ctx context.Context, loadout *Loadout) error
+	Delete(ctx context.Context, id string) error
 }
 
 type LoadoutService interface {
 	CreateLoadout(ctx context.Context, name, activityType string, kitIDs, itemIDs []string) (*Loadout, error)
 	GetLoadout(ctx context.Context, id string) (*Loadout, error)
 	ListLoadouts(ctx context.Context) ([]Loadout, error)
+	UpdateLoadout(ctx context.Context, id string, name, activityType string, kitIDs, itemIDs []string) (*Loadout, error)
+	DeleteLoadout(ctx context.Context, id string) error
 }
 
 // --- MaintenanceLog Interfaces ---

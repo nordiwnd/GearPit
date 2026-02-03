@@ -44,3 +44,28 @@ func (s *loadoutService) GetLoadout(ctx context.Context, id string) (*domain.Loa
 func (s *loadoutService) ListLoadouts(ctx context.Context) ([]domain.Loadout, error) {
 	return s.repo.ListAll(ctx)
 }
+
+func (s *loadoutService) UpdateLoadout(ctx context.Context, id string, name, activityType string, kitIDs, itemIDs []string) (*domain.Loadout, error) {
+	loadout, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	loadout.Name = name
+	loadout.ActivityType = activityType
+
+	if err := s.repo.Update(ctx, loadout); err != nil {
+		return nil, fmt.Errorf("service failed to update loadout: %w", err)
+	}
+
+	// Update associations
+	if err := s.repo.SetAssociations(ctx, id, kitIDs, itemIDs); err != nil {
+		return nil, fmt.Errorf("failed to update loadout associations: %w", err)
+	}
+
+	return s.GetLoadout(ctx, id)
+}
+
+func (s *loadoutService) DeleteLoadout(ctx context.Context, id string) error {
+	return s.repo.Delete(ctx, id)
+}

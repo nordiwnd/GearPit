@@ -136,10 +136,15 @@ func main() {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
+
 	mux.HandleFunc("/api/v1/loadouts/", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
 			loadoutHandler.GetLoadout(w, r)
+		case http.MethodPut:
+			loadoutHandler.UpdateLoadout(w, r)
+		case http.MethodDelete:
+			loadoutHandler.DeleteLoadout(w, r)
 		case http.MethodOptions:
 			w.WriteHeader(http.StatusOK)
 		default:

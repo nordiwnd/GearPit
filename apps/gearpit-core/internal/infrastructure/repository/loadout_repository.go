@@ -77,3 +77,19 @@ func (r *loadoutRepository) SetAssociations(ctx context.Context, loadoutID strin
 
 	return tx.Commit().Error
 }
+
+// Update updates basic loadout fields.
+func (r *loadoutRepository) Update(ctx context.Context, loadout *domain.Loadout) error {
+	if err := r.db.WithContext(ctx).Save(loadout).Error; err != nil {
+		return fmt.Errorf("failed to update loadout: %w", err)
+	}
+	return nil
+}
+
+// Delete performs soft delete.
+func (r *loadoutRepository) Delete(ctx context.Context, id string) error {
+	if err := r.db.WithContext(ctx).Delete(&domain.Loadout{}, "id = ?", id).Error; err != nil {
+		return fmt.Errorf("failed to delete loadout: %w", err)
+	}
+	return nil
+}

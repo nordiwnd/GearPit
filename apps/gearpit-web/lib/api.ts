@@ -115,6 +115,21 @@ export const loadoutApi = {
     if (!res.ok) throw new Error(`Failed to create loadout: ${res.statusText}`);
     return res.json();
   },
+  
+  update: async (id: string, payload: CreateLoadoutPayload): Promise<Loadout> => {
+    const res = await fetch(`${getBaseUrl()}/loadouts/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error('Failed to update loadout');
+    return res.json();
+  },
+
+  delete: async (id: string): Promise<void> => {
+    const res = await fetch(`${getBaseUrl()}/loadouts/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Failed to delete loadout');
+  },
 
   list: async (): Promise<Loadout[]> => {
     const res = await fetch(`${getBaseUrl()}/loadouts`, { 
