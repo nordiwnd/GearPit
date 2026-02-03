@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -19,7 +20,29 @@ func main() {
 	// Database initialization
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
-		dsn = "host=localhost user=postgres password=postgres dbname=gearpit port=5432 sslmode=disable TimeZone=Asia/Tokyo"
+		host := os.Getenv("DB_HOST")
+		if host == "" {
+			host = "localhost" // ローカル開発用フォールバック
+		}
+		user := os.Getenv("DB_USER")
+		if user == "" {
+			user = "postgres"
+		}
+		password := os.Getenv("DB_PASSWORD")
+		if password == "" {
+			password = "postgres"
+		}
+		dbname := os.Getenv("DB_NAME")
+		if dbname == "" {
+			dbname = "gearpit"
+		}
+		port := os.Getenv("DB_PORT")
+		if port == "" {
+			port = "5432"
+		}
+
+		dsn = fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Tokyo",
+			host, user, password, dbname, port)
 	}
 
 	db, err := infrastructure.InitDB(dsn)
@@ -66,12 +89,10 @@ func main() {
 // enableCORS is a middleware to allow cross-origin requests from the frontend.
 func enableCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// 開発環境用に localhost:3000 を許可 (本番では環境変数で制御推奨)
-		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+		w.Header().Set("Access-Control-Allow-Origin", "*") // 修正: Preview環境での通信を考慮し一旦全許可
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
-		// OPTIONSメソッド（プリフライトリクエスト）の場合はここで終了
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusOK)
 			return
