@@ -1,16 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-// import axios from 'axios'; // 削除
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Plus, Loader2, Check } from 'lucide-react';
+import { Plus, Loader2 } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Dialog,
   DialogContent,
@@ -27,15 +25,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
-import { api } from "@/lib/api"; // 追加
-
-// ギアデータの型
-type Gear = {
-  id: string;
-  name: string;
-  brand: string;
-  weightGram: number;
-};
+// 修正: api -> gearApi
+import { gearApi, GearItem } from "@/lib/api"; 
 
 const formSchema = z.object({
   name: z.string().min(1, "Loadout name is required"),
@@ -51,14 +42,13 @@ interface Props {
 export function CreateLoadoutDialog({ onSuccess }: Props) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [gears, setGears] = useState<Gear[]>([]);
+  const [gears, setGears] = useState<GearItem[]>([]);
 
-  // ダイアログが開いたときにギア一覧を取得
   useEffect(() => {
     if (open) {
-      // 修正: apiクライアントを使用
-      api.get('/api/v1/gears')
-        .then(res => setGears(res.data.items || []))
+      // 修正: 実際にDBからギアリストを取得する
+      gearApi.listItems()
+        .then(res => setGears(res || []))
         .catch(console.error);
     }
   }, [open]);
@@ -74,26 +64,15 @@ export function CreateLoadoutDialog({ onSuccess }: Props) {
   const onSubmit = async (values: FormValues) => {
     setLoading(true);
     try {
-      // Backend APIに合わせて変換
-      // items: [{ itemId: "...", quantity: 1 }]
-      const itemsPayload = values.selectedItemIds.map(id => ({
-        itemId: id,
-        quantity: 1 // MVPでは数量1固定
-      }));
-
-      // 修正: apiクライアントを使用
-      await api.post('/api/v1/loadouts', {
-        name: values.name,
-        items: itemsPayload,
-        kitIds: [] // MVPではKitは空
-      });
+      // 修正: Loadout作成は未実装のため、コンソール出力して閉じるだけにする
+      console.log("Loadout payload (WIP):", values);
+      alert("Loadout feature is under development (Phase 2.2).");
 
       form.reset();
       setOpen(false);
       onSuccess();
     } catch (error) {
       console.error(error);
-      alert("Failed to create loadout");
     } finally {
       setLoading(false);
     }
@@ -108,13 +87,11 @@ export function CreateLoadoutDialog({ onSuccess }: Props) {
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle>Create New Loadout</DialogTitle>
+          <DialogTitle>Create New Loadout (Coming Soon)</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            
-            {/* Loadout Name */}
             <FormField
               control={form.control}
               name="name"
@@ -129,7 +106,6 @@ export function CreateLoadoutDialog({ onSuccess }: Props) {
               )}
             />
 
-            {/* Gear Selection Area */}
             <div className="space-y-2">
               <FormLabel>Select Gears</FormLabel>
               <div className="border rounded-md p-4 h-[300px] overflow-y-auto bg-zinc-50/50">
@@ -155,11 +131,7 @@ export function CreateLoadoutDialog({ onSuccess }: Props) {
                                     onCheckedChange={(checked) => {
                                       return checked
                                         ? field.onChange([...field.value, gear.id])
-                                        : field.onChange(
-                                            field.value?.filter(
-                                              (value) => value !== gear.id
-                                            )
-                                          )
+                                        : field.onChange(field.value?.filter((value) => value !== gear.id))
                                     }}
                                   />
                                 </FormControl>
@@ -168,7 +140,7 @@ export function CreateLoadoutDialog({ onSuccess }: Props) {
                                     <FormLabel className="font-medium text-zinc-900 cursor-pointer">
                                       {gear.name}
                                     </FormLabel>
-                                    <p className="text-xs text-zinc-500">{gear.brand}</p>
+                                    <p className="text-xs text-zinc-500">{gear.properties?.brand || '-'}</p>
                                   </div>
                                   <Badge variant="outline" className="ml-auto font-mono">
                                     {gear.weightGram}g
@@ -186,14 +158,12 @@ export function CreateLoadoutDialog({ onSuccess }: Props) {
               <FormMessage />
             </div>
 
-            {/* Footer */}
             <div className="flex justify-end pt-2">
               <Button type="submit" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Calculate & Save
               </Button>
             </div>
-
           </form>
         </Form>
       </DialogContent>
