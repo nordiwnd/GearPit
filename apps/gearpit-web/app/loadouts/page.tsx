@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from "sonner";
-import { Scale, Package, Trash2, Pencil } from "lucide-react";
+import { Scale, Package, Trash2, Pencil, ChevronRight } from "lucide-react";
 
 import { loadoutApi, Loadout } from "@/lib/api"; 
-import { CreateLoadoutDialog } from "@/components/loadout/create-loadout-dialog";
+import { LoadoutFormDialog } from "@/components/loadout/loadout-form-dialog"; // コンポーネント名変更
+import { EditGearDialog } from "@/components/inventory/edit-gear-dialog"; // 詳細表示用
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -25,6 +27,7 @@ import {
 export default function LoadoutPage() {
   const [loadouts, setLoadouts] = useState<Loadout[]>([]);
   const [selectedLoadout, setSelectedLoadout] = useState<Loadout | null>(null);
+  const router = useRouter();
 
   const fetchLoadouts = async () => {
     try {
@@ -48,10 +51,6 @@ export default function LoadoutPage() {
     }
   };
 
-  const handleEdit = (loadout: Loadout) => {
-    toast.info(`Edit feature for "${loadout.name}" will be implemented next!`);
-  };
-
   return (
     <div className="min-h-screen p-8 bg-zinc-50">
       <div className="max-w-6xl mx-auto space-y-6">
@@ -61,7 +60,7 @@ export default function LoadoutPage() {
             <h1 className="text-3xl font-bold text-zinc-800">My Loadouts</h1>
             <p className="text-zinc-500">Plan your packing lists and optimize weight.</p>
           </div>
-          <CreateLoadoutDialog />
+          <LoadoutFormDialog />
         </div>
 
         <div className="rounded-md border bg-white overflow-x-auto">
@@ -101,10 +100,18 @@ export default function LoadoutPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(loadout)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
                         
+                        {/* 編集ボタン: LoadoutFormDialog を再利用 */}
+                        <LoadoutFormDialog 
+                          loadoutToEdit={loadout}
+                          trigger={
+                            <Button variant="ghost" size="icon">
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          } 
+                        />
+                        
+                        {/* 削除ボタン */}
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button variant="ghost" size="icon" className="hover:text-red-500">
@@ -122,7 +129,6 @@ export default function LoadoutPage() {
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              {/* 修正箇所: onClickの構文エラーを解消 */}
                               <AlertDialogAction className="bg-red-500 hover:bg-red-600" onClick={() => executeDelete(loadout.id)}>
                                 Delete Loadout
                               </AlertDialogAction>
@@ -138,6 +144,7 @@ export default function LoadoutPage() {
           </Table>
         </div>
 
+        {/* 詳細 Sheet */}
         <Sheet open={!!selectedLoadout} onOpenChange={(open) => !open && setSelectedLoadout(null)}>
           <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
             <SheetHeader className="mb-6">
@@ -154,13 +161,23 @@ export default function LoadoutPage() {
               </h3>
               <div className="space-y-2">
                 {selectedLoadout?.items?.map(item => (
-                  <div key={item.id} className="flex justify-between items-center p-3 bg-zinc-50 border rounded-md">
-                    <div>
-                      <div className="font-medium text-sm text-zinc-800">{item.name}</div>
-                      <div className="text-xs text-muted-foreground">{item.properties?.brand || "-"}</div>
-                    </div>
-                    <Badge variant="secondary" className="font-mono">{item.weightGram}g</Badge>
-                  </div>
+                  // 各ギアを EditGearDialog でラップして詳細表示可能にする
+                  <EditGearDialog 
+                    key={item.id} 
+                    item={item} 
+                    trigger={
+                      <div className="flex justify-between items-center p-3 bg-zinc-50 border rounded-md cursor-pointer hover:bg-zinc-100 transition-colors group">
+                        <div>
+                          <div className="font-medium text-sm text-zinc-800 flex items-center gap-2">
+                            {item.name}
+                            <ChevronRight className="w-3 h-3 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                          <div className="text-xs text-muted-foreground">{item.properties?.brand || "-"}</div>
+                        </div>
+                        <Badge variant="secondary" className="font-mono">{item.weightGram}g</Badge>
+                      </div>
+                    }
+                  />
                 ))}
               </div>
             </div>
