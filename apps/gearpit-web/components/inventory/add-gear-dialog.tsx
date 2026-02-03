@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Plus, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { gearApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,7 @@ type FormValues = z.infer<typeof formSchema>;
 export function AddGearDialog() {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -74,7 +76,7 @@ export function AddGearDialog() {
 
       setOpen(false);
       form.reset();
-      // TODO: 成功後のデータ再取得処理
+      router.refresh();
     } catch (error) {
       console.error("Failed to add gear", error);
       alert("Failed to save gear. Please check backend connection.");

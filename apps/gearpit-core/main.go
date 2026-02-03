@@ -58,14 +58,30 @@ func main() {
 
 	// Router setup
 	mux := http.NewServeMux()
+
+	// 1. Collection routes: /api/v1/gears
 	mux.HandleFunc("/api/v1/gears", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
-			gearHandler.ListItems(w, r)
+			gearHandler.SearchItems(w, r) // 変更: ListItems から SearchItems へ
 		case http.MethodPost:
 			gearHandler.CreateItem(w, r)
 		case http.MethodOptions:
-			// Preflight request response for /api/v1/gears
+			w.WriteHeader(http.StatusOK)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	// 2. Item routes: /api/v1/gears/{id}
+	// Note: Standard net/http requires a trailing slash for subpath matching
+	mux.HandleFunc("/api/v1/gears/", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPut:
+			gearHandler.UpdateItem(w, r)
+		case http.MethodDelete:
+			gearHandler.DeleteItem(w, r)
+		case http.MethodOptions:
 			w.WriteHeader(http.StatusOK)
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
