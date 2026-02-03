@@ -1,8 +1,10 @@
+// apps/gearpit-web/next.config.ts
+
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  // 修正: ブラウザからのAPIリクエストをGoバックエンドへ転送(プロキシ)する設定
+  output: "standalone", // 修正: Dockerビルド用にStandaloneモードを有効化
   async rewrites() {
     return [
       {
