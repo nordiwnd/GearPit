@@ -63,6 +63,10 @@ func main() {
 	loadoutService := service.NewLoadoutService(loadoutRepo)
 	loadoutHandler := handler.NewLoadoutHandler(loadoutService)
 
+	maintenanceRepo := repository.NewMaintenanceRepository(db)
+	maintenanceService := service.NewMaintenanceService(maintenanceRepo)
+	maintenanceHandler := handler.NewMaintenanceHandler(maintenanceService)
+
 	// Router setup
 	mux := http.NewServeMux()
 
@@ -109,10 +113,13 @@ func main() {
 		}
 	})
 	mux.HandleFunc("/api/v1/kits/", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodGet {
+		switch r.Method {
+		case http.MethodGet:
 			kitHandler.GetKit(w, r)
-		} else if r.Method == http.MethodOptions {
+		case http.MethodOptions:
 			w.WriteHeader(http.StatusOK)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
 
@@ -130,10 +137,45 @@ func main() {
 		}
 	})
 	mux.HandleFunc("/api/v1/loadouts/", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodGet {
+		switch r.Method {
+		case http.MethodGet:
 			loadoutHandler.GetLoadout(w, r)
-		} else if r.Method == http.MethodOptions {
+		case http.MethodOptions:
 			w.WriteHeader(http.StatusOK)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	// Maintenance Logs Routes
+	mux.HandleFunc("/api/v1/maintenance", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			maintenanceHandler.AddLog(w, r)
+		case http.MethodOptions:
+			w.WriteHeader(http.StatusOK)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+	mux.HandleFunc("/api/v1/maintenance/item/", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			maintenanceHandler.GetItemLogs(w, r)
+		case http.MethodOptions:
+			w.WriteHeader(http.StatusOK)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+	mux.HandleFunc("/api/v1/maintenance/", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodDelete:
+			maintenanceHandler.DeleteLog(w, r)
+		case http.MethodOptions:
+			w.WriteHeader(http.StatusOK)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
 

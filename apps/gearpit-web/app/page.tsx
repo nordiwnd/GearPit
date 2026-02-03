@@ -2,6 +2,7 @@ import { gearApi } from "@/lib/api";
 import { AddGearDialog } from "@/components/inventory/add-gear-dialog";
 import { EditGearDialog } from "@/components/inventory/edit-gear-dialog";
 import { SearchBar } from "@/components/inventory/search-bar";
+import { MaintenanceDialog } from "@/components/inventory/maintenance-dialog";
 import {
   Table,
   TableBody,
@@ -78,8 +79,12 @@ export default async function InventoryPage({ searchParams }: Props) {
                     ))}
                   </TableCell>
                   <TableCell className="text-right">
-                    {/* 編集・削除ボタンの追加 */}
+                    <div className="flex justify-end items-center gap-1">
+                    {/* メンテナンスボタン */}
+                    <MaintenanceDialog item={item} />
+                    {/* 編集・削除ボタン */}
                     <EditGearDialog item={item} />
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

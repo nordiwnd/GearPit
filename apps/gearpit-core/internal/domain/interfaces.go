@@ -59,3 +59,17 @@ type LoadoutService interface {
 	GetLoadout(ctx context.Context, id string) (*Loadout, error)
 	ListLoadouts(ctx context.Context) ([]Loadout, error)
 }
+
+// --- MaintenanceLog Interfaces ---
+
+type MaintenanceLogRepository interface {
+	Create(ctx context.Context, log *MaintenanceLog) error
+	GetByItemID(ctx context.Context, itemID string) ([]MaintenanceLog, error)
+	Delete(ctx context.Context, id string) error
+}
+
+type MaintenanceLogService interface {
+	AddLog(ctx context.Context, itemID string, logDateStr, actionTaken string, cost int) (*MaintenanceLog, error)
+	GetLogsForItem(ctx context.Context, itemID string) ([]MaintenanceLog, error)
+	DeleteLog(ctx context.Context, id string) error
+}

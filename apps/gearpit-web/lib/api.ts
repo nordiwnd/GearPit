@@ -124,3 +124,49 @@ export const loadoutApi = {
     return res.json();
   }
 };
+
+// --- Maintenance Log API ---
+
+export interface MaintenanceLog {
+  id: string;
+  itemId: string;
+  logDate: string;
+  actionTaken: string;
+  cost: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateMaintenancePayload {
+  itemId: string;
+  logDate: string; // YYYY-MM-DD
+  actionTaken: string;
+  cost: number;
+}
+
+export const maintenanceApi = {
+  getLogsForItem: async (itemId: string): Promise<MaintenanceLog[]> => {
+    const res = await fetch(`${getBaseUrl()}/maintenance/item/${itemId}`, { 
+      cache: 'no-store' 
+    });
+    if (!res.ok) throw new Error('Failed to fetch maintenance logs');
+    return res.json();
+  },
+
+  addLog: async (payload: CreateMaintenancePayload): Promise<MaintenanceLog> => {
+    const res = await fetch(`${getBaseUrl()}/maintenance`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`Failed to add maintenance log: ${res.statusText}`);
+    return res.json();
+  },
+
+  deleteLog: async (id: string): Promise<void> => {
+    const res = await fetch(`${getBaseUrl()}/maintenance/${id}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) throw new Error(`Failed to delete maintenance log: ${res.statusText}`);
+  }
+};
