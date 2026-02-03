@@ -49,6 +49,11 @@ When writing Go code for this project, you **MUST** follow these rules:
 - Handlers MUST respond with appropriate HTTP status codes (200, 201, 400, 500).
 - Handlers MUST NOT expose internal DB error strings directly to the client.
 
+### D. Infrastructure & Kubernetes Integration Rules (ADDED)
+
+- **Database Connection**: Do not rely solely on a monolithic `DATABASE_URL`. The app MUST support dynamic DSN construction from Kubernetes-injected variables (`DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT`).
+- **CORS & Preflight**: The HTTP server MUST implement CORS middleware. It MUST handle `OPTIONS` preflight requests by returning `200 OK` and appropriate `Access-Control-Allow-*` headers to support Next.js Client Components.
+
 ## 4. Examples (DOs and DON'Ts)
 
 ### ❌ BAD: Handler directly accessing GORM (Current State to be fixed)
