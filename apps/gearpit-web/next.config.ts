@@ -1,5 +1,5 @@
 import type { NextConfig } from "next";
-	// Test
+	// Tests
 const nextConfig: NextConfig = {
   output: "standalone",
 };
