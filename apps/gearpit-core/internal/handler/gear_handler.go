@@ -4,23 +4,21 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/nordiwnd/gearpit/apps/gearpit-core/internal/domain"
 	"gorm.io/gorm"
 )
 
-// GearHandler handles HTTP requests for Gear management.
 type GearHandler struct {
 	service domain.GearService
 }
 
-// NewGearHandler creates a handler injected with GearService.
 func NewGearHandler(s domain.GearService) *GearHandler {
 	return &GearHandler{service: s}
 }
 
-// CreateRequest defines the expected JSON payload for creating an item.
-type CreateRequest struct {
+type GearRequest struct {
 	Name        string         `json:"name"`
 	Description string         `json:"description"`
 	WeightGram  int            `json:"weightGram"`
@@ -29,14 +27,9 @@ type CreateRequest struct {
 }
 
 func (h *GearHandler) CreateItem(w http.ResponseWriter, r *http.Request) {
-	var req CreateRequest
+	var req GearRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
-		return
-	}
-
-	if req.Name == "" {
-		http.Error(w, "Name is required", http.StatusBadRequest)
 		return
 	}
 
@@ -51,8 +44,14 @@ func (h *GearHandler) CreateItem(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(item)
 }
 
-func (h *GearHandler) ListItems(w http.ResponseWriter, r *http.Request) {
-	items, err := h.service.ListItems(r.Context())
+func (h *GearHandler) SearchItems(w http.ResponseWriter, r *http.Request) {
+	filter := domain.GearFilter{
+		Tag:      r.URL.Query().Get("tag"),
+		Category: r.URL.Query().Get("category"),
+		Brand:    r.URL.Query().Get("brand"),
+	}
+
+	items, err := h.service.SearchItems(r.Context(), filter)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
@@ -62,12 +61,15 @@ func (h *GearHandler) ListItems(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(items)
 }
 
-func (h *GearHandler) GetItem(w http.ResponseWriter, r *http.Request) {
-	// Assume routing logic (e.g. chi or gorilla/mux) extracts ID from URL.
-	// For standard net/http without router, this is simplified.
-	id := r.URL.Path[len("/api/v1/gears/"):]
+func (h *GearHandler) UpdateItem(w http.ResponseWriter, r *http.Request) {
+	id := strings.TrimPrefix(r.URL.Path, "/api/v1/gears/")
+	var req GearRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
 
-	item, err := h.service.GetItem(r.Context(), id)
+	item, err := h.service.UpdateItem(r.Context(), id, req.Name, req.Description, req.WeightGram, req.Tags, req.Properties)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			http.Error(w, "Item not found", http.StatusNotFound)
@@ -79,4 +81,15 @@ func (h *GearHandler) GetItem(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(item)
+}
+
+func (h *GearHandler) DeleteItem(w http.ResponseWriter, r *http.Request) {
+	id := strings.TrimPrefix(r.URL.Path, "/api/v1/gears/")
+
+	if err := h.service.DeleteItem(r.Context(), id); err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
