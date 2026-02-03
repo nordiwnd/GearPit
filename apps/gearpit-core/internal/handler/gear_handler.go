@@ -2,65 +2,81 @@ package handler
 
 import (
 	"encoding/json"
-	"log/slog"
+	"errors"
 	"net/http"
 
 	"github.com/nordiwnd/gearpit/apps/gearpit-core/internal/domain"
 	"gorm.io/gorm"
 )
 
+// GearHandler handles HTTP requests for Gear management.
 type GearHandler struct {
-	DB *gorm.DB
+	service domain.GearService
 }
 
-// NewGearHandler creates a new instance of GearHandler
-func NewGearHandler(db *gorm.DB) *GearHandler {
-	return &GearHandler{DB: db}
+// NewGearHandler creates a handler injected with GearService.
+func NewGearHandler(s domain.GearService) *GearHandler {
+	return &GearHandler{service: s}
 }
 
-// CreateItem handles the creation of a new gear item
+// CreateRequest defines the expected JSON payload for creating an item.
+type CreateRequest struct {
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	WeightGram  int            `json:"weightGram"`
+	Tags        []string       `json:"tags"`
+	Properties  map[string]any `json:"properties"`
+}
+
 func (h *GearHandler) CreateItem(w http.ResponseWriter, r *http.Request) {
-	var item domain.Item
-
-	// Request Body -> Struct
-	if err := json.NewDecoder(r.Body).Decode(&item); err != nil {
-		slog.Warn("Invalid request payload", "error", err)
+	var req CreateRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
-	// Insert into DB
-	if result := h.DB.Create(&item); result.Error != nil {
-		// 【修正】エラー詳細はログに出力し、レスポンスには含めない
-		slog.Error("Failed to insert item into DB", "error", result.Error.Error())
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	if req.Name == "" {
+		http.Error(w, "Name is required", http.StatusBadRequest)
 		return
 	}
 
-	// Return created item
+	item, err := h.service.CreateItem(r.Context(), req.Name, req.Description, req.WeightGram, req.Tags, req.Properties)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	if err := json.NewEncoder(w).Encode(item); err != nil {
-		slog.Error("Failed to encode response", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-	}
+	json.NewEncoder(w).Encode(item)
 }
 
-// ListItems returns all gear items
 func (h *GearHandler) ListItems(w http.ResponseWriter, r *http.Request) {
-	var items []domain.Item
-
-	// Select * from items
-	if result := h.DB.Find(&items); result.Error != nil {
-		// 【修正】DBエラーの原因特定用ログ
-		slog.Error("Failed to fetch gears from DB", "error", result.Error.Error())
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	items, err := h.service.ListItems(r.Context())
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(map[string]any{"items": items}); err != nil {
-		slog.Error("Failed to encode response", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	json.NewEncoder(w).Encode(items)
+}
+
+func (h *GearHandler) GetItem(w http.ResponseWriter, r *http.Request) {
+	// Assume routing logic (e.g. chi or gorilla/mux) extracts ID from URL.
+	// For standard net/http without router, this is simplified.
+	id := r.URL.Path[len("/api/v1/gears/"):]
+
+	item, err := h.service.GetItem(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			http.Error(w, "Item not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(item)
 }

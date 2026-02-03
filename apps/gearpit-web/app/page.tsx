@@ -1,99 +1,74 @@
-'use client';
-
-import { useEffect, useState, useCallback } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge"; 
+import { gearApi } from "@/lib/api";
 import { AddGearDialog } from "@/components/inventory/add-gear-dialog";
-import { api } from "@/lib/api"; 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
-// APIレスポンスの型定義 s
-type Gear = {
-  id: string;
-  name: string;
-  brand: string;
-  weightGram: number;
-  tags?: string[];
-  properties?: Record<string, any>;
-};
-
-export default function Home() {
-  const [gears, setGears] = useState<Gear[]>([]);
-  const [error, setError] = useState('');
-
-  // データ取得関数
-  const fetchGears = useCallback(() => {
-    api.get('/api/v1/gears')
-      .then((res) => {
-        setGears(res.data.items || []);
-      })
-      .catch((err) => {
-        console.error(err);
-        setError('Failed to fetch data from Backend');
-      });
-  }, []);
-
-  // 初回ロード
-  useEffect(() => {
-    fetchGears();
-  }, [fetchGears]);
+// Next.js 15 Server Component: Fetches data directly on the server
+export default async function InventoryPage() {
+  // Fetch items from the Go backend
+  const items = await gearApi.listItems();
 
   return (
-    <div className="min-h-screen p-8 bg-zinc-50">
-      <div className="max-w-6xl mx-auto">
-        
-        {/* Header Area */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-zinc-800">GearPit Inventory</h1>
-            <p className="text-zinc-500">Manage your gears for hiking, skiing, and more.</p>
-          </div>
-          {/* Add Dialog */}
-          <AddGearDialog onSuccess={fetchGears} />
+    <main className="container mx-auto py-8 px-4 md:px-8 space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Gear Inventory</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage your equipment, specs, and maintenance logs.
+          </p>
         </div>
-        
-        {error && <p className="text-red-500 mb-4">{error}</p>}
-
-        {/* List Area */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {gears.map((gear) => (
-            <Card key={gear.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <div>
-                     <p className="text-xs text-zinc-500 uppercase font-bold tracking-wider">{gear.brand}</p>
-                     <CardTitle className="text-lg">{gear.name}</CardTitle>
-                  </div>
-                  <span className="font-mono text-sm bg-zinc-100 px-2 py-1 rounded">
-                    {gear.weightGram}g
-                  </span>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {/* Properties (JSONB) Display */}
-                {gear.properties && Object.keys(gear.properties).length > 0 && (
-                  <div className="mb-3 space-y-1">
-                    {Object.entries(gear.properties).map(([key, value]) => (
-                      <div key={key} className="text-sm flex justify-between border-b border-zinc-100 pb-1">
-                        <span className="text-zinc-500">{key}:</span>
-                        <span className="font-medium text-zinc-700">{String(value)}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Tags Display */}
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {gear.tags?.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="text-xs font-normal">
-                      #{tag}
-                    </Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <AddGearDialog />
       </div>
-    </div>
+
+      <div className="rounded-md border bg-card">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[200px]">Name</TableHead>
+              <TableHead>Category / Brand</TableHead>
+              <TableHead className="text-right">Weight (g)</TableHead>
+              <TableHead className="hidden md:table-cell">Tags</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {items && items.length > 0 ? (
+              items.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell className="font-medium">{item.name}</TableCell>
+                  <TableCell>
+                    <span className="text-muted-foreground">
+                      {item.properties?.category || "-"} / {item.properties?.brand || "-"}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {item.weightGram}g
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell space-x-1">
+                    {item.tags?.map((tag) => (
+                      <Badge key={tag} variant="secondary">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={4} className="h-24 text-center">
+                  No gear registered yet. Click "Add Gear" to start.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </main>
   );
 }
