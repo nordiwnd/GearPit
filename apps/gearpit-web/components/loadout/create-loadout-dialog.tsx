@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation'; // 追加: router.refresh()用
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -9,47 +10,28 @@ import { Plus, Loader2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
-// 修正: api -> gearApi
-import { gearApi, GearItem } from "@/lib/api"; 
+import { gearApi, GearItem, loadoutApi } from "@/lib/api"; 
 
 const formSchema = z.object({
   name: z.string().min(1, "Loadout name is required"),
-  selectedItemIds: z.array(z.string()).min(1, "Select at least one item"),
+  activityType: z.string().min(1, "Activity type is required"),
+  selectedItemIds: z.array(z.string()),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-interface Props {
-  onSuccess: () => void;
-}
-
-export function CreateLoadoutDialog({ onSuccess }: Props) {
+export function CreateLoadoutDialog() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [gears, setGears] = useState<GearItem[]>([]);
+  const router = useRouter(); // 追加
 
   useEffect(() => {
     if (open) {
-      // 修正: 実際にDBからギアリストを取得する
-      gearApi.listItems()
-        .then(res => setGears(res || []))
-        .catch(console.error);
+      gearApi.listItems().then(res => setGears(res || [])).catch(console.error);
     }
   }, [open]);
 
@@ -57,6 +39,7 @@ export function CreateLoadoutDialog({ onSuccess }: Props) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
+      activityType: "",
       selectedItemIds: [],
     },
   });
@@ -64,15 +47,20 @@ export function CreateLoadoutDialog({ onSuccess }: Props) {
   const onSubmit = async (values: FormValues) => {
     setLoading(true);
     try {
-      // 修正: Loadout作成は未実装のため、コンソール出力して閉じるだけにする
-      console.log("Loadout payload (WIP):", values);
-      alert("Loadout feature is under development (Phase 2.2).");
+      // API呼び出し
+      await loadoutApi.create({
+        name: values.name,
+        activityType: values.activityType,
+        kitIds: [], // 今回はシンプルにアイテム直指定のみとする
+        itemIds: values.selectedItemIds,
+      });
 
       form.reset();
       setOpen(false);
-      onSuccess();
+      router.refresh(); // 追加: 画面の再描画をトリガー
     } catch (error) {
       console.error(error);
+      alert("Failed to create loadout.");
     } finally {
       setLoading(false);
     }
@@ -87,81 +75,49 @@ export function CreateLoadoutDialog({ onSuccess }: Props) {
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle>Create New Loadout (Coming Soon)</DialogTitle>
+          <DialogTitle>Create New Loadout</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Loadout Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: Summer Hike 2026" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField control={form.control} name="name" render={({ field }) => (
+                <FormItem><FormLabel>Name</FormLabel><FormControl><Input placeholder="Ex: Summer Hike 2026" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name="activityType" render={({ field }) => (
+                <FormItem><FormLabel>Activity</FormLabel><FormControl><Input placeholder="Ex: Hiking" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+            </div>
 
             <div className="space-y-2">
               <FormLabel>Select Gears</FormLabel>
               <div className="border rounded-md p-4 h-[300px] overflow-y-auto bg-zinc-50/50">
-                <FormField
-                  control={form.control}
-                  name="selectedItemIds"
-                  render={() => (
-                    <div className="space-y-2">
-                      {gears.map((gear) => (
-                        <FormField
-                          key={gear.id}
-                          control={form.control}
-                          name="selectedItemIds"
-                          render={({ field }) => {
-                            return (
-                              <FormItem
-                                key={gear.id}
-                                className="flex flex-row items-start space-x-3 space-y-0 rounded-md border bg-white p-3 shadow-sm"
-                              >
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(gear.id)}
-                                    onCheckedChange={(checked) => {
-                                      return checked
-                                        ? field.onChange([...field.value, gear.id])
-                                        : field.onChange(field.value?.filter((value) => value !== gear.id))
-                                    }}
-                                  />
-                                </FormControl>
-                                <div className="space-y-1 leading-none flex-1 flex justify-between">
-                                  <div>
-                                    <FormLabel className="font-medium text-zinc-900 cursor-pointer">
-                                      {gear.name}
-                                    </FormLabel>
-                                    <p className="text-xs text-zinc-500">{gear.properties?.brand || '-'}</p>
-                                  </div>
-                                  <Badge variant="outline" className="ml-auto font-mono">
-                                    {gear.weightGram}g
-                                  </Badge>
-                                </div>
-                              </FormItem>
-                            )
-                          }}
-                        />
-                      ))}
-                    </div>
-                  )}
-                />
+                <FormField control={form.control} name="selectedItemIds" render={() => (
+                  <div className="space-y-2">
+                    {gears.map((gear) => (
+                      <FormField key={gear.id} control={form.control} name="selectedItemIds" render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border bg-white p-3 shadow-sm">
+                          <FormControl>
+                            <Checkbox checked={field.value?.includes(gear.id)} onCheckedChange={(checked) => checked ? field.onChange([...field.value, gear.id]) : field.onChange(field.value?.filter((v) => v !== gear.id))} />
+                          </FormControl>
+                          <div className="space-y-1 leading-none flex-1 flex justify-between">
+                            <div>
+                              <FormLabel className="font-medium text-zinc-900 cursor-pointer">{gear.name}</FormLabel>
+                              <p className="text-xs text-zinc-500">{gear.properties?.brand || '-'}</p>
+                            </div>
+                            <Badge variant="outline" className="ml-auto font-mono">{gear.weightGram}g</Badge>
+                          </div>
+                        </FormItem>
+                      )} />
+                    ))}
+                  </div>
+                )} />
               </div>
-              <FormMessage />
             </div>
 
             <div className="flex justify-end pt-2">
               <Button type="submit" disabled={loading}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Calculate & Save
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Save Loadout
               </Button>
             </div>
           </form>

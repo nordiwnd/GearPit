@@ -77,3 +77,50 @@ export const gearApi = {
     if (!res.ok) throw new Error(`Failed to delete gear: ${res.statusText}`);
   }
 };
+
+// --- Loadout API ---
+
+export interface Kit {
+  id: string;
+  name: string;
+  description: string;
+  items?: GearItem[];
+}
+
+export interface Loadout {
+  id: string;
+  name: string;
+  activityType: string;
+  totalWeightGram: number; // バックエンドで計算された総重量
+  kits?: Kit[];
+  items?: GearItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateLoadoutPayload {
+  name: string;
+  activityType: string;
+  kitIds: string[];
+  itemIds: string[];
+}
+
+export const loadoutApi = {
+  create: async (payload: CreateLoadoutPayload): Promise<Loadout> => {
+    const res = await fetch(`${getBaseUrl()}/loadouts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`Failed to create loadout: ${res.statusText}`);
+    return res.json();
+  },
+
+  list: async (): Promise<Loadout[]> => {
+    const res = await fetch(`${getBaseUrl()}/loadouts`, { 
+      cache: 'no-store' 
+    });
+    if (!res.ok) throw new Error('Failed to fetch loadouts');
+    return res.json();
+  }
+};
