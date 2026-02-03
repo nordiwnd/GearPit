@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-// import axios from 'axios'; // 削除
-import { Plus, Trash2, Loader2 } from 'lucide-react';
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Plus, Loader2 } from "lucide-react";
 
+import { gearApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -24,136 +24,103 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { api } from "@/lib/api"; // 追加
+import { Input } from "@/components/ui/input";
 
-// バリデーションスキーマ
+// 修正: weightGram を文字列として定義し、数字のみ許可するバリデーションに変更
 const formSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().min(2, "Name must be at least 2 characters."),
+  description: z.string().optional(),
+  weightGram: z.string().regex(/^\d*$/, "Weight must be a positive number."),
   brand: z.string().optional(),
-  // coerceを使って文字列入力("123")を数値(123)に変換
-  weightGram: z.coerce.number().min(0, "Weight must be 0 or more"),
+  category: z.string().optional(),
   tags: z.string().optional(),
-  properties: z.array(z.object({
-    key: z.string().min(1, "Key required"),
-    value: z.string().min(1, "Value required")
-  }))
 });
 
-// スキーマから型を生成
 type FormValues = z.infer<typeof formSchema>;
 
-interface Props {
-  onSuccess: () => void;
-}
-
-export function AddGearDialog({ onSuccess }: Props) {
+export function AddGearDialog() {
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // ジェネリクス <FormValues> を削除して型推論に任せる
-  const form = useForm({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
+      description: "",
+      weightGram: "", // 修正: 初期値を空文字に変更
       brand: "",
-      weightGram: 0,
+      category: "",
       tags: "",
-      properties: [],
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "properties",
-  });
-
-  const onSubmit = async (values: FormValues) => {
-    setLoading(true);
+  async function onSubmit(data: FormValues) {
+    setIsSubmitting(true);
     try {
-      const tagsArray = values.tags 
-        ? values.tags.split(',').map(t => t.trim()).filter(t => t !== "") 
-        : [];
-
-      const propertiesMap = values.properties.reduce((acc, curr) => {
-        acc[curr.key] = curr.value;
-        return acc;
-      }, {} as Record<string, any>);
-
-      // 修正: apiクライアントを使用し、URLを相対パスに
-      await api.post('/api/v1/gears', {
-        name: values.name,
-        brand: values.brand,
-        weightGram: values.weightGram,
+      const tagsArray = data.tags ? data.tags.split(",").map((t) => t.trim()) : [];
+      // 修正: 送信時に Number() でキャスト
+      const weight = data.weightGram ? Number(data.weightGram) : 0;
+      
+      await gearApi.createItem({
+        name: data.name,
+        description: data.description || "",
+        weightGram: weight, 
         tags: tagsArray,
-        properties: propertiesMap,
+        properties: {
+          brand: data.brand || "",
+          category: data.category || "",
+        },
       });
 
-      form.reset();
       setOpen(false);
-      onSuccess();
+      form.reset();
+      // TODO: 成功後のデータ再取得処理
     } catch (error) {
-      console.error(error);
-      alert("Failed to create gear");
+      console.error("Failed to add gear", error);
+      alert("Failed to save gear. Please check backend connection.");
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
-  };
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button className="w-full md:w-auto">
           <Plus className="mr-2 h-4 w-4" /> Add Gear
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add New Gear</DialogTitle>
+          <DialogDescription>
+            Register a new item to your armory.
+          </DialogDescription>
         </DialogHeader>
-
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Item Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. Atomic Bent 100" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <FormControl><Input placeholder="Ex: Alpha SV" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
               <FormField
                 control={form.control}
                 name="brand"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Brand</FormLabel>
-                    <FormControl><Input placeholder="Ex: Arc'teryx" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="weightGram"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Weight (g)</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="0"
-                        {...field}
-                        value={field.value as number} 
-                        onChange={(e) => field.onChange(e.target.value)}
-                      />
+                      <Input placeholder="e.g. Atomic" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -161,59 +128,54 @@ export function AddGearDialog({ onSuccess }: Props) {
               />
               <FormField
                 control={form.control}
-                name="tags"
+                name="weightGram"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tags (comma separated)</FormLabel>
-                    <FormControl><Input placeholder="climbing, winter" {...field} /></FormControl>
+                    <FormLabel>Weight (g)</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="0" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-
-            {/* Properties Section */}
-            <div className="space-y-2 border-t pt-4">
-              <div className="flex justify-between items-center">
-                <FormLabel>Properties (JSONB)</FormLabel>
-                <Button type="button" variant="outline" size="sm" onClick={() => append({ key: "", value: "" })}>
-                  <Plus className="h-3 w-3 mr-1" /> Add Property
-                </Button>
-              </div>
-              
-              {fields.map((field, index) => (
-                <div key={field.id} className="flex gap-2 items-start">
-                  <FormField
-                    control={form.control}
-                    name={`properties.${index}.key`}
-                    render={({ field }) => (
-                      <FormItem className="flex-1">
-                        <FormControl><Input placeholder="Key (e.g. Size)" {...field} /></FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name={`properties.${index}.value`}
-                    render={({ field }) => (
-                      <FormItem className="flex-1">
-                        <FormControl><Input placeholder="Value (e.g. M)" {...field} /></FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-
-            <div className="pt-4 flex justify-end">
-              <Button type="submit" disabled={loading}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save Item
-              </Button>
-            </div>
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. Skis, Tent" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="tags"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tags (comma-separated)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="ski, winter, freeride" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit" disabled={isSubmitting} className="w-full">
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Item"
+              )}
+            </Button>
           </form>
         </Form>
       </DialogContent>
