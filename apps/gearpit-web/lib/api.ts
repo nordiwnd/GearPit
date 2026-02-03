@@ -1,5 +1,3 @@
-// apps/gearpit-web/lib/api.ts
-
 export interface GearItem {
   id: string;
   name: string;
@@ -21,10 +19,11 @@ export interface CreateGearPayload {
 
 const getBaseUrl = () => {
   if (typeof window === "undefined") {
-    // 修正: Kubernetes Serviceはポート80でListenしているため、:8080 を削除
+    // 1. Server-side (SSR): 直接K8sの内部DNSを叩く
     return process.env.INTERNAL_API_URL || "http://gearpit-app-svc/api/v1";
   }
-  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
+  // 2. Client-side (Browser): 相対パスを使用し、Next.jsのrewrites経由で転送させる
+  return "/api/v1";
 };
 
 export const gearApi = {
