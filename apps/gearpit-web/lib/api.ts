@@ -205,3 +205,29 @@ export const maintenanceApi = {
     if (!res.ok) throw new Error(`Failed to delete maintenance log: ${res.statusText}`);
   }
 };
+
+// --- Dashboard API ---
+
+export interface CategoryStat {
+  category: string;
+  count: number;
+  totalWeight: number;
+}
+
+export interface DashboardStats {
+  totalItems: number;
+  totalWeight: number;
+  totalLoadouts: number;
+  totalCost: number;
+  categoryStats: CategoryStat[];
+}
+
+export const dashboardApi = {
+  getStats: async (): Promise<DashboardStats> => {
+    const res = await fetch(`${getBaseUrl()}/dashboard/stats`, { 
+      cache: 'no-store' 
+    });
+    if (!res.ok) throw new Error('Failed to fetch dashboard stats');
+    return res.json();
+  }
+};
