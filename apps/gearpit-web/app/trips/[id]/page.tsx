@@ -14,8 +14,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AddGearToTripDialog } from "@/components/trip/add-gear-to-trip-dialog";
 import { EditGearDialog } from "@/components/inventory/edit-gear-dialog";
+import { AddGearToTripDialog } from "@/components/trip/add-gear-to-trip-dialog";
+import { AddLoadoutToTripDialog } from "@/components/trip/add-loadout-to-trip-dialog";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ff8042', '#a4de6c'];
 
@@ -89,6 +90,7 @@ export default function TripDetailPage() {
             </div>
             
             <div className="flex gap-2">
+              <AddLoadoutToTripDialog tripId={trip.id} onSuccess={fetchTrip} />
               <AddGearToTripDialog tripId={trip.id} currentItems={trip.items || []} onSuccess={fetchTrip} />
             </div>
           </div>
