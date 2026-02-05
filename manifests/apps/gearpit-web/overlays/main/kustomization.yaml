@@ -7,4 +7,4 @@ resources:
 images:
 - name: ghcr.io/nordiwnd/gearpit-web
   newName: ghcr.io/nordiwnd/gearpit-web
-  newTag: 20028f1529291d36306f6cd416ffdd8565cf8889
+  newTag: 3d260bb866f7cde2eb88207e493bc44696d1dd63
