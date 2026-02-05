@@ -1,16 +1,15 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import { SiteHeader } from "@/components/layout/site-header";
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import './globals.css';
 import { Toaster } from "@/components/ui/sonner";
-import { ThemeProvider } from "@/components/theme-provider"
-import { ModeToggle } from "@/components/mode-toggle"
+import { ThemeProvider } from "@/components/theme-provider";
+import { Navbar } from "@/components/layout/navbar"; // 追加
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: "GearPit",
-  description: "Gear Configuration Manager",
+  title: 'GearPit',
+  description: 'Manage your outdoor gear inventory and pack weight.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -23,12 +22,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             enableSystem
             disableTransitionOnChange
           >
-            {/* ヘッダー領域として右上に配置 */}
-            <div className="absolute top-4 right-4 z-50">
-              <ModeToggle />
-            </div>
+            {/* Navbarを追加 */}
+            <Navbar />
             
-            {children}
+            <main>
+              {children}
+            </main>
+            
             <Toaster richColors position="bottom-right" />
         </ThemeProvider>
       </body>
