@@ -80,3 +80,27 @@ type MaintenanceLogService interface {
 	UpdateLog(ctx context.Context, id, logDateStr, actionTaken string, cost int) (*MaintenanceLog, error)
 	DeleteLog(ctx context.Context, id string) error
 }
+
+// --- Dashboard Interfaces & Structs ---
+
+type CategoryStat struct {
+	Category    string `json:"category"`
+	Count       int    `json:"count"`
+	TotalWeight int    `json:"totalWeight"`
+}
+
+type DashboardStats struct {
+	TotalItems    int64          `json:"totalItems"`
+	TotalWeight   int            `json:"totalWeight"`
+	TotalLoadouts int64          `json:"totalLoadouts"`
+	TotalCost     int            `json:"totalCost"`
+	CategoryStats []CategoryStat `json:"categoryStats"`
+}
+
+type DashboardRepository interface {
+	GetStats(ctx context.Context) (*DashboardStats, error)
+}
+
+type DashboardService interface {
+	GetDashboardStats(ctx context.Context) (*DashboardStats, error)
+}

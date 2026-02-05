@@ -67,6 +67,10 @@ func main() {
 	maintenanceService := service.NewMaintenanceService(maintenanceRepo)
 	maintenanceHandler := handler.NewMaintenanceHandler(maintenanceService)
 
+	dashboardRepo := repository.NewDashboardRepository(db)
+	dashboardService := service.NewDashboardService(dashboardRepo)
+	dashboardHandler := handler.NewDashboardHandler(dashboardService)
+
 	// Router setup
 	mux := http.NewServeMux()
 
@@ -179,6 +183,18 @@ func main() {
 			maintenanceHandler.UpdateLog(w, r)
 		case http.MethodDelete:
 			maintenanceHandler.DeleteLog(w, r)
+		case http.MethodOptions:
+			w.WriteHeader(http.StatusOK)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	// Dashboard Routes
+	mux.HandleFunc("/api/v1/dashboard/stats", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			dashboardHandler.GetStats(w, r)
 		case http.MethodOptions:
 			w.WriteHeader(http.StatusOK)
 		default:
