@@ -1,0 +1,149 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { format, parseISO } from "date-fns";
+import { MapPin, Calendar, Trash2, Pencil, Package } from "lucide-react";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+
+import { tripApi, Trip } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { TripFormDialog } from "@/components/trip/trip-form-dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { 
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger 
+} from "@/components/ui/alert-dialog";
+
+export default function TripsPage() {
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  const fetchTrips = async () => {
+    try {
+      const data = await tripApi.list();
+      setTrips(data || []);
+    } catch (error) {
+      toast.error("Failed to load trips");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchTrips(); }, []);
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      await tripApi.delete(id);
+      toast.success("Trip plan deleted");
+      fetchTrips();
+    } catch (error) {
+      toast.error("Failed to delete trip");
+    }
+  };
+
+  return (
+    <div className="min-h-screen p-8 bg-zinc-50 dark:bg-zinc-950 transition-colors">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-zinc-800 dark:text-zinc-50">Trip Plans</h1>
+            <p className="text-zinc-500 dark:text-zinc-400">Manage your expeditions and packing lists.</p>
+          </div>
+          <TripFormDialog onSuccess={fetchTrips} />
+        </div>
+
+        <div className="rounded-md border bg-white dark:bg-zinc-900 dark:border-zinc-800 overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="dark:border-zinc-800 hover:bg-transparent">
+                <TableHead className="w-[30%]">Trip Name</TableHead>
+                <TableHead>Location</TableHead>
+                <TableHead>Dates</TableHead>
+                <TableHead>Items</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">Loading...</TableCell>
+                </TableRow>
+              ) : trips.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                    No trips planned yet. Click "New Trip Plan" to start.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                trips.map((trip) => (
+                  <TableRow 
+                    key={trip.id} 
+                    className="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 dark:border-zinc-800 transition-colors"
+                    onClick={() => router.push(`/trips/${trip.id}`)}
+                  >
+                    <TableCell className="font-medium text-base dark:text-zinc-200">
+                      {trip.name}
+                      {trip.description && <div className="text-xs text-muted-foreground truncate max-w-[200px]">{trip.description}</div>}
+                    </TableCell>
+                    <TableCell className="dark:text-zinc-300">
+                      {trip.location && <div className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {trip.location}</div>}
+                    </TableCell>
+                    <TableCell className="dark:text-zinc-300">
+                      <div className="flex items-center gap-1 text-sm">
+                        <Calendar className="h-3 w-3 text-muted-foreground" />
+                        {format(parseISO(trip.startDate), "yyyy/MM/dd")}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                       <Badge variant="outline" className="dark:border-zinc-700 dark:text-zinc-400">
+                          <Package className="h-3 w-3 mr-1" /> {trip.items?.length || 0}
+                       </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                        <TripFormDialog 
+                          tripToEdit={trip}
+                          onSuccess={fetchTrips}
+                          trigger={
+                            <Button variant="ghost" size="icon" className="hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                              <Pencil className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                            </Button>
+                          } 
+                        />
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20">
+                              <Trash2 className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete "{trip.name}"?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure? This will delete the trip plan. Items in your inventory remain safe.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction className="bg-red-500 hover:bg-red-600" onClick={(e) => handleDelete(e, trip.id)}>Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+    </div>
+  );
+}

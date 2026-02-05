@@ -1,33 +1,25 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { toast } from "sonner";
-import { Scale, Package, Trash2, Pencil, ChevronRight } from "lucide-react";
+import { Scale, Package, Trash2, Pencil } from "lucide-react";
 
 import { loadoutApi, Loadout } from "@/lib/api"; 
-import { LoadoutFormDialog } from "@/components/loadout/loadout-form-dialog"; // コンポーネント名変更
-import { EditGearDialog } from "@/components/inventory/edit-gear-dialog"; // 詳細表示用
+import { LoadoutFormDialog } from "@/components/loadout/loadout-form-dialog";
+import { EditGearDialog } from "@/components/inventory/edit-gear-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { 
-  AlertDialog, 
-  AlertDialogAction, 
-  AlertDialogCancel, 
-  AlertDialogContent, 
-  AlertDialogDescription, 
-  AlertDialogFooter, 
-  AlertDialogHeader, 
-  AlertDialogTitle, 
-  AlertDialogTrigger 
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger 
 } from "@/components/ui/alert-dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function LoadoutPage() {
   const [loadouts, setLoadouts] = useState<Loadout[]>([]);
   const [selectedLoadout, setSelectedLoadout] = useState<Loadout | null>(null);
-  const router = useRouter();
 
   const fetchLoadouts = async () => {
     try {
@@ -47,27 +39,28 @@ export default function LoadoutPage() {
       setSelectedLoadout(null);
       fetchLoadouts();
     } catch (error) { 
-      toast.error("Failed to delete loadout. Please try again.");
+      toast.error("Failed to delete loadout");
     }
   };
 
   return (
-    <div className="min-h-screen p-8 bg-zinc-50">
-      <div className="max-w-6xl mx-auto space-y-6">
+    // ダークモード背景を統一
+    <div className="min-h-screen p-8 bg-zinc-50 dark:bg-zinc-950 transition-colors">
+      <div className="max-w-7xl mx-auto space-y-6">
         
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-zinc-800">My Loadouts</h1>
-            <p className="text-zinc-500">Plan your packing lists and optimize weight.</p>
+            <h1 className="text-3xl font-bold text-zinc-800 dark:text-zinc-50">My Loadouts</h1>
+            <p className="text-zinc-500 dark:text-zinc-400">Plan your packing lists and optimize weight.</p>
           </div>
-          <LoadoutFormDialog />
+          <LoadoutFormDialog onSuccess={fetchLoadouts} />
         </div>
 
-        <div className="rounded-md border bg-white overflow-x-auto">
+        <div className="rounded-md border bg-white dark:bg-zinc-900 dark:border-zinc-800 overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Loadout Name</TableHead>
+              <TableRow className="dark:border-zinc-800 hover:bg-transparent">
+                <TableHead className="w-[300px]">Loadout Name</TableHead>
                 <TableHead>Activity</TableHead>
                 <TableHead>Item Count</TableHead>
                 <TableHead className="text-right">Total Weight (kg)</TableHead>
@@ -85,46 +78,42 @@ export default function LoadoutPage() {
                 loadouts.map((loadout) => (
                   <TableRow 
                     key={loadout.id} 
-                    className="cursor-pointer hover:bg-zinc-50 transition-colors"
+                    className="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 dark:border-zinc-800 transition-colors"
                     onClick={() => setSelectedLoadout(loadout)}
                   >
-                    <TableCell className="font-medium text-base">{loadout.name}</TableCell>
-                    <TableCell><Badge variant="secondary">{loadout.activityType}</Badge></TableCell>
+                    <TableCell className="font-medium text-base dark:text-zinc-200">{loadout.name}</TableCell>
+                    <TableCell><Badge variant="secondary" className="dark:bg-zinc-800 dark:text-zinc-300">{loadout.activityType}</Badge></TableCell>
                     <TableCell>
                       <span className="flex items-center gap-1 text-muted-foreground">
                         <Package className="h-4 w-4" /> {loadout.items?.length || 0}
                       </span>
                     </TableCell>
-                    <TableCell className="text-right font-mono font-medium">
+                    <TableCell className="text-right font-mono font-medium dark:text-zinc-300">
                       {(loadout.totalWeightGram / 1000).toFixed(2)} kg
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                        
-                        {/* 編集ボタン: LoadoutFormDialog を再利用 */}
                         <LoadoutFormDialog 
                           loadoutToEdit={loadout}
+                          onSuccess={fetchLoadouts}
                           trigger={
-                            <Button variant="ghost" size="icon">
-                              <Pencil className="h-4 w-4" />
+                            <Button variant="ghost" size="icon" className="hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                              <Pencil className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
                             </Button>
                           } 
                         />
                         
-                        {/* 削除ボタン */}
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="hover:text-red-500">
-                              <Trash2 className="h-4 w-4" />
+                            <Button variant="ghost" size="icon" className="hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20">
+                              <Trash2 className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
                               <AlertDialogTitle>Delete "{loadout.name}"?</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Are you sure you want to delete this loadout? 
-                                <br />
-                                (Note: Your gear items themselves will NOT be deleted from the inventory).
+                                Are you sure you want to delete this loadout?
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -144,42 +133,41 @@ export default function LoadoutPage() {
           </Table>
         </div>
 
-        {/* 詳細 Sheet */}
         <Sheet open={!!selectedLoadout} onOpenChange={(open) => !open && setSelectedLoadout(null)}>
-          <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
+          <SheetContent className="w-[400px] sm:w-[540px] flex flex-col h-full bg-white dark:bg-zinc-950 border-l dark:border-zinc-800">
             <SheetHeader className="mb-6">
-              <Badge variant="outline" className="w-fit mb-2">{selectedLoadout?.activityType}</Badge>
-              <SheetTitle className="text-2xl">{selectedLoadout?.name}</SheetTitle>
-              <SheetDescription className="flex items-center gap-1 font-mono text-base text-zinc-900 font-medium">
+              <Badge variant="outline" className="w-fit mb-2 dark:border-zinc-700 dark:text-zinc-400">{selectedLoadout?.activityType}</Badge>
+              <SheetTitle className="text-2xl dark:text-zinc-50">{selectedLoadout?.name}</SheetTitle>
+              <SheetDescription className="flex items-center gap-1 font-mono text-base text-zinc-900 dark:text-zinc-300 font-medium">
                 <Scale className="h-4 w-4" /> Total Pack Weight: {(Number(selectedLoadout?.totalWeightGram) / 1000).toFixed(2)} kg
               </SheetDescription>
             </SheetHeader>
 
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg flex items-center">
+            <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
+              <h3 className="font-semibold text-lg flex items-center dark:text-zinc-200">
                 <Package className="h-5 w-5 mr-2" /> Packed Gears ({selectedLoadout?.items?.length || 0})
               </h3>
-              <div className="space-y-2">
-                {selectedLoadout?.items?.map(item => (
-                  // 各ギアを EditGearDialog でラップして詳細表示可能にする
-                  <EditGearDialog 
-                    key={item.id} 
-                    item={item} 
-                    trigger={
-                      <div className="flex justify-between items-center p-3 bg-zinc-50 border rounded-md cursor-pointer hover:bg-zinc-100 transition-colors group">
-                        <div>
-                          <div className="font-medium text-sm text-zinc-800 flex items-center gap-2">
-                            {item.name}
-                            <ChevronRight className="w-3 h-3 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <ScrollArea className="flex-1 -mx-6 px-6">
+                <div className="space-y-2 pb-8">
+                  {selectedLoadout?.items?.map(item => (
+                    <EditGearDialog 
+                      key={item.id} 
+                      item={item} 
+                      trigger={
+                        <div className="flex justify-between items-center p-3 bg-zinc-50 dark:bg-zinc-900 border dark:border-zinc-800 rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors group">
+                          <div>
+                            <div className="font-medium text-sm text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
+                              {item.name}
+                            </div>
+                            <div className="text-xs text-muted-foreground">{item.properties?.brand || "-"}</div>
                           </div>
-                          <div className="text-xs text-muted-foreground">{item.properties?.brand || "-"}</div>
+                          <Badge variant="secondary" className="font-mono dark:bg-zinc-800 dark:text-zinc-300">{item.weightGram}g</Badge>
                         </div>
-                        <Badge variant="secondary" className="font-mono">{item.weightGram}g</Badge>
-                      </div>
-                    }
-                  />
-                ))}
-              </div>
+                      }
+                    />
+                  ))}
+                </div>
+              </ScrollArea>
             </div>
           </SheetContent>
         </Sheet>

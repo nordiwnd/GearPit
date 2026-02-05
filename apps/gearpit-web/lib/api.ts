@@ -231,3 +231,70 @@ export const dashboardApi = {
     return res.json();
   }
 };
+
+export interface Trip {
+  id: string;
+  name: string;
+  description: string;
+  location: string;
+  startDate: string;
+  endDate: string;
+  items?: GearItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateTripPayload {
+  name: string;
+  description: string;
+  location: string;
+  startDate: string;
+  endDate: string;
+}
+
+export const tripApi = {
+  list: async (): Promise<Trip[]> => {
+    const res = await fetch(`${getBaseUrl()}/trips`, { cache: 'no-store' });
+    if (!res.ok) throw new Error('Failed to fetch trips');
+    return res.json();
+  },
+
+  get: async (id: string): Promise<Trip> => {
+    const res = await fetch(`${getBaseUrl()}/trips/${id}`, { cache: 'no-store' });
+    if (!res.ok) throw new Error('Failed to fetch trip');
+    return res.json();
+  },
+
+  create: async (payload: CreateTripPayload): Promise<Trip> => {
+    const res = await fetch(`${getBaseUrl()}/trips`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error('Failed to create trip');
+    return res.json();
+  },
+
+  delete: async (id: string): Promise<void> => {
+    const res = await fetch(`${getBaseUrl()}/trips/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Failed to delete trip');
+  },
+
+  addItems: async (tripId: string, itemIds: string[]): Promise<void> => {
+    const res = await fetch(`${getBaseUrl()}/trips/${tripId}/items`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ itemIds }),
+    });
+    if (!res.ok) throw new Error('Failed to add items to trip');
+  },
+
+  removeItems: async (tripId: string, itemIds: string[]): Promise<void> => {
+    const res = await fetch(`${getBaseUrl()}/trips/${tripId}/items`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ itemIds }),
+    });
+    if (!res.ok) throw new Error('Failed to remove items from trip');
+  }
+};

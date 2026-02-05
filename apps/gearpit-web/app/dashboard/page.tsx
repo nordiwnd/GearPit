@@ -38,75 +38,53 @@ export default function DashboardPage() {
     .filter(c => c.totalWeight > 0)
     .map(c => ({ name: c.category || "Uncategorized", value: c.totalWeight }));
 
-  return (
-    <div className="min-h-screen p-8 bg-zinc-50 space-y-8">
+return (
+    // bg-zinc-50 dark:bg-zinc-950 に変更
+    <div className="min-h-screen p-8 bg-zinc-50 dark:bg-zinc-950 transition-colors space-y-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header & Nav */}
+        {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-zinc-800">Dashboard</h1>
-            <p className="text-zinc-500">Analytics and insights for your gear.</p>
+            <h1 className="text-3xl font-bold text-zinc-800 dark:text-zinc-50">Dashboard</h1>
+            <p className="text-zinc-500 dark:text-zinc-400">Analytics and insights for your gear.</p>
           </div>
-          <div className="space-x-2">
+          {/* Buttons */}
+          {/* <div className="space-x-2">
             <Link href="/">
-              <Button variant="outline"><Package className="mr-2 h-4 w-4" /> Inventory</Button>
+              <Button variant="outline" className="dark:bg-zinc-900 dark:text-zinc-200 dark:border-zinc-800 dark:hover:bg-zinc-800"><Package className="mr-2 h-4 w-4" /> Inventory</Button>
             </Link>
             <Link href="/loadouts">
-              <Button variant="outline"><Layers className="mr-2 h-4 w-4" /> Loadouts</Button>
+              <Button variant="outline" className="dark:bg-zinc-900 dark:text-zinc-200 dark:border-zinc-800 dark:hover:bg-zinc-800"><Layers className="mr-2 h-4 w-4" /> Loadouts</Button>
             </Link>
-          </div>
+          </div> */}
         </div>
 
-        {/* 1. KPI Cards */}
+        {/* KPI Cards (Cards need dark:bg-zinc-900 dark:border-zinc-800) */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Gears</CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalItems}</div>
-              <p className="text-xs text-muted-foreground">Items in inventory</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Weight</CardTitle>
-              <Scale className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{(stats.totalWeight / 1000).toFixed(2)} kg</div>
-              <p className="text-xs text-muted-foreground">Combined weight</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Loadouts</CardTitle>
-              <Layers className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalLoadouts}</div>
-              <p className="text-xs text-muted-foreground">Created packing lists</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Cost</CardTitle>
-              <IndianRupee className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">¥{stats.totalCost.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">Maintenance expenses</p>
-            </CardContent>
-          </Card>
+          {[
+            { title: "Total Gears", icon: Package, value: stats.totalItems, sub: "Items in inventory" },
+            { title: "Total Weight", icon: Scale, value: `${(stats.totalWeight / 1000).toFixed(2)} kg`, sub: "Combined weight" },
+            { title: "Loadouts", icon: Layers, value: stats.totalLoadouts, sub: "Created packing lists" },
+            { title: "Total Cost", icon: IndianRupee, value: `¥${stats.totalCost.toLocaleString()}`, sub: "Maintenance expenses" },
+          ].map((item, i) => (
+            <Card key={i} className="dark:bg-zinc-900 dark:border-zinc-800">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium dark:text-zinc-200">{item.title}</CardTitle>
+                <item.icon className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold dark:text-zinc-50">{item.value}</div>
+                <p className="text-xs text-muted-foreground">{item.sub}</p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
-        {/* 2. Charts Section */}
+        {/* Charts (Backgrounds updated) */}
         <div className="grid gap-4 md:grid-cols-2">
-          {/* Weight Distribution Pie Chart */}
-          <Card className="col-span-1">
+          <Card className="col-span-1 dark:bg-zinc-900 dark:border-zinc-800">
             <CardHeader>
-              <CardTitle>Weight Distribution by Category</CardTitle>
+              <CardTitle className="dark:text-zinc-200">Weight Distribution by Category</CardTitle>
             </CardHeader>
             <CardContent className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -120,15 +98,16 @@ export default function DashboardPage() {
                     fill="#8884d8"
                     paddingAngle={5}
                     dataKey="value"
+                    stroke="none"
                   >
                     {pieData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip 
-                    // 修正: 引数の型を any に緩和してTSエラーを回避
                     formatter={(value: any) => `${value}g`}
-                    contentStyle={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e4e4e7' }}
+                    contentStyle={{ backgroundColor: 'var(--background)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
+                    itemStyle={{ color: 'var(--foreground)' }}
                   />
                   <Legend verticalAlign="bottom" height={36}/>
                 </PieChart>
@@ -136,24 +115,25 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Item Count Bar Chart */}
-          <Card className="col-span-1">
+          <Card className="col-span-1 dark:bg-zinc-900 dark:border-zinc-800">
             <CardHeader>
-              <CardTitle>Item Count by Category</CardTitle>
+              <CardTitle className="dark:text-zinc-200">Item Count by Category</CardTitle>
             </CardHeader>
             <CardContent className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={stats.categoryStats}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.2} />
                   <XAxis 
                     dataKey="category" 
-                    tick={{fontSize: 12}} 
+                    tick={{fontSize: 12, fill: '#888'}} 
                     tickFormatter={(val) => val || "Other"}
+                    axisLine={false}
+                    tickLine={false}
                   />
-                  <YAxis allowDecimals={false} />
+                  <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{fill: '#888'}} />
                   <Tooltip 
-                    cursor={{fill: '#f4f4f5'}}
-                    contentStyle={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e4e4e7' }}
+                    cursor={{fill: 'rgba(255,255,255,0.05)'}}
+                    contentStyle={{ backgroundColor: 'var(--background)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
                   />
                   <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Items" />
                 </BarChart>
