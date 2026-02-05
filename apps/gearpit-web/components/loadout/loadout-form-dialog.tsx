@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Plus, Loader2, Pencil } from 'lucide-react';
+import { Plus, Loader2 } from 'lucide-react';
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -25,17 +25,18 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface Props {
-  loadoutToEdit?: Loadout; // 編集モードの場合はこれを渡す
+  loadoutToEdit?: Loadout; 
   trigger?: React.ReactNode;
+  onSuccess?: () => void; // ★追加
 }
 
-export function LoadoutFormDialog({ loadoutToEdit, trigger }: Props) {
+// ★ここで onSuccess を受け取る必要があります
+export function LoadoutFormDialog({ loadoutToEdit, trigger, onSuccess }: Props) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [gears, setGears] = useState<GearItem[]>([]);
   const router = useRouter();
 
-  // 編集モードかどうか
   const isEdit = !!loadoutToEdit;
 
   useEffect(() => {
@@ -53,7 +54,6 @@ export function LoadoutFormDialog({ loadoutToEdit, trigger }: Props) {
     },
   });
 
-  // Dialogが開くたびにFormをリセット（特に編集→新規作成の切り替え時など考慮）
   useEffect(() => {
     if (open) {
       form.reset({
@@ -84,6 +84,12 @@ export function LoadoutFormDialog({ loadoutToEdit, trigger }: Props) {
 
       setOpen(false);
       router.refresh();
+      
+      // ★ここで実行
+      if (onSuccess) {
+        onSuccess();
+      }
+
     } catch (error) {
       toast.error(isEdit ? "Failed to update loadout" : "Failed to create loadout");
     } finally {
@@ -118,19 +124,19 @@ export function LoadoutFormDialog({ loadoutToEdit, trigger }: Props) {
 
             <div className="space-y-2 flex-1 flex flex-col min-h-0">
               <FormLabel>Select Gears</FormLabel>
-              <div className="border rounded-md p-4 overflow-y-auto bg-zinc-50/50 flex-1">
+              <div className="border rounded-md p-4 overflow-y-auto bg-zinc-50/50 flex-1 dark:bg-zinc-900/50">
                 <FormField control={form.control} name="selectedItemIds" render={() => (
                   <div className="space-y-2">
                     {gears.map((gear) => (
                       <FormField key={gear.id} control={form.control} name="selectedItemIds" render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border bg-white p-3 shadow-sm">
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border bg-white p-3 shadow-sm dark:bg-zinc-950">
                           <FormControl>
                             <Checkbox checked={field.value?.includes(gear.id)} onCheckedChange={(checked) => checked ? field.onChange([...field.value, gear.id]) : field.onChange(field.value?.filter((v) => v !== gear.id))} />
                           </FormControl>
                           <div className="space-y-1 leading-none flex-1 flex justify-between">
                             <div>
-                              <FormLabel className="font-medium text-zinc-900 cursor-pointer">{gear.name}</FormLabel>
-                              <p className="text-xs text-zinc-500">{gear.properties?.brand || '-'}</p>
+                              <FormLabel className="font-medium cursor-pointer">{gear.name}</FormLabel>
+                              <p className="text-xs text-muted-foreground">{gear.properties?.brand || '-'}</p>
                             </div>
                             <Badge variant="outline" className="ml-auto font-mono">{gear.weightGram}g</Badge>
                           </div>

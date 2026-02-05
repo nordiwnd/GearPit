@@ -104,6 +104,7 @@ export default function LoadoutPage() {
                         {/* 編集ボタン: LoadoutFormDialog を再利用 */}
                         <LoadoutFormDialog 
                           loadoutToEdit={loadout}
+                          onSuccess={fetchLoadouts}
                           trigger={
                             <Button variant="ghost" size="icon">
                               <Pencil className="h-4 w-4" />

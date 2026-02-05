@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/layout/site-header";
 import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/components/theme-provider"
+import { ModeToggle } from "@/components/mode-toggle"
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -11,19 +13,25 @@ export const metadata: Metadata = {
   description: "Gear Configuration Manager",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <SiteHeader /> {/* ヘッダーを追加 */}
-        <main>{children}</main>
-        <Toaster richColors position="bottom-right" /> {/* 追加: 画面右下に通知を表示 */}
+        <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {/* ヘッダー領域として右上に配置 */}
+            <div className="absolute top-4 right-4 z-50">
+              <ModeToggle />
+            </div>
+            
+            {children}
+            <Toaster richColors position="bottom-right" />
+        </ThemeProvider>
       </body>
     </html>
   );
 }
-
