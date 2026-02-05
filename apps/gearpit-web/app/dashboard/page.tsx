@@ -49,14 +49,14 @@ return (
             <p className="text-zinc-500 dark:text-zinc-400">Analytics and insights for your gear.</p>
           </div>
           {/* Buttons */}
-          <div className="space-x-2">
+          {/* <div className="space-x-2">
             <Link href="/">
               <Button variant="outline" className="dark:bg-zinc-900 dark:text-zinc-200 dark:border-zinc-800 dark:hover:bg-zinc-800"><Package className="mr-2 h-4 w-4" /> Inventory</Button>
             </Link>
             <Link href="/loadouts">
               <Button variant="outline" className="dark:bg-zinc-900 dark:text-zinc-200 dark:border-zinc-800 dark:hover:bg-zinc-800"><Layers className="mr-2 h-4 w-4" /> Loadouts</Button>
             </Link>
-          </div>
+          </div> */}
         </div>
 
         {/* KPI Cards (Cards need dark:bg-zinc-900 dark:border-zinc-800) */}
