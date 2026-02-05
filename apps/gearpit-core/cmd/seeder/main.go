@@ -1,11 +1,15 @@
 package main
 
 import (
-	"log/slog"
+	"encoding/json"
+	"fmt"
+	"log"
 	"os"
+	"time"
 
 	"github.com/nordiwnd/gearpit/apps/gearpit-core/internal/domain"
 	"github.com/nordiwnd/gearpit/apps/gearpit-core/internal/infrastructure"
+	"gorm.io/datatypes"
 )
 
 func main() {
@@ -14,44 +18,44 @@ func main() {
 		dsn = "host=localhost user=postgres password=postgres dbname=gearpit port=5432 sslmode=disable TimeZone=Asia/Tokyo"
 	}
 
-	// 修正: NewDB -> InitDB
 	db, err := infrastructure.InitDB(dsn)
 	if err != nil {
-		slog.Error("Failed to init DB", "error", err)
-		return
+		log.Fatal(err)
 	}
 
-	// 修正: Brand, CategoryをProperties (JSONB) に統合
+	// Create generic properties
+	propsMap := map[string]string{"brand": "Montbell", "category": "Clothing"}
+	propsBytes, _ := json.Marshal(propsMap)
+	props := datatypes.JSON(propsBytes)
+
 	items := []domain.Item{
 		{
-			Name:        "Atomic Bent Chetler 100",
-			Description: "All-mountain freeride ski",
-			WeightGram:  1700,
-			Tags:        []string{"ski", "winter", "freeride"},
-			Properties: map[string]any{
-				"brand":    "Atomic",
-				"category": "Ski",
-				"length":   180,
-			},
+			Name:         "Storm Cruiser Jacket",
+			Description:  "Gore-Tex Rain Jacket",
+			Manufacturer: "Montbell",
+			WeightGram:   254,
+			Unit:         "g",
+			Properties:   props, // Tags -> Properties に変更
+			CreatedAt:    time.Now(),
+			UpdatedAt:    time.Now(),
 		},
 		{
-			Name:        "Salomon Shift MNC 13",
-			Description: "Hybrid touring binding",
-			WeightGram:  880,
-			Tags:        []string{"ski", "binding", "touring"},
-			Properties: map[string]any{
-				"brand":    "Salomon",
-				"category": "Binding",
-				"din":      13,
-			},
+			Name:         "Alpine Light Down",
+			Description:  "Warm down jacket",
+			Manufacturer: "Montbell",
+			WeightGram:   380,
+			Unit:         "g",
+			Properties:   props, // Tags -> Properties に変更
+			CreatedAt:    time.Now(),
+			UpdatedAt:    time.Now(),
 		},
 	}
 
 	for _, item := range items {
 		if err := db.Create(&item).Error; err != nil {
-			slog.Error("Failed to seed item", "name", item.Name, "error", err)
+			fmt.Printf("Failed to seed item %s: %v\n", item.Name, err)
 		} else {
-			slog.Info("Seeded item", "name", item.Name, "brand", item.Properties["brand"])
+			fmt.Printf("Seeded item: %s\n", item.Name)
 		}
 	}
 }

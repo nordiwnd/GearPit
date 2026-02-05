@@ -2,8 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
-	"log/slog"
 
 	"github.com/nordiwnd/gearpit/apps/gearpit-core/internal/domain"
 )
@@ -16,26 +14,15 @@ func NewKitService(repo domain.KitRepository) domain.KitService {
 	return &kitService{repo: repo}
 }
 
-func (s *kitService) CreateKit(ctx context.Context, name, description string, itemIDs []string) (*domain.Kit, error) {
+func (s *kitService) CreateKit(ctx context.Context, name, description string) (*domain.Kit, error) {
 	kit := &domain.Kit{
 		Name:        name,
 		Description: description,
 	}
-
 	if err := s.repo.Create(ctx, kit); err != nil {
-		slog.Error("Service failed to create kit", "error", err.Error())
-		return nil, fmt.Errorf("service failed to create kit: %w", err)
+		return nil, err
 	}
-
-	// Associate items if provided
-	if len(itemIDs) > 0 {
-		if err := s.repo.AddItemsToKit(ctx, kit.ID, itemIDs); err != nil {
-			slog.Error("Failed to add items to kit", "kit_id", kit.ID, "error", err.Error())
-			return nil, fmt.Errorf("failed to add items to kit: %w", err)
-		}
-	}
-
-	return s.GetKit(ctx, kit.ID) // Return fully loaded kit
+	return kit, nil
 }
 
 func (s *kitService) GetKit(ctx context.Context, id string) (*domain.Kit, error) {
@@ -43,5 +30,15 @@ func (s *kitService) GetKit(ctx context.Context, id string) (*domain.Kit, error)
 }
 
 func (s *kitService) ListKits(ctx context.Context) ([]domain.Kit, error) {
-	return s.repo.ListAll(ctx)
+	// ListAll ではなく List を呼ぶ
+	return s.repo.List(ctx)
+}
+
+func (s *kitService) AddItemToKit(ctx context.Context, kitID, itemID string) error {
+	// AddItemToKit ではなく AddItem を呼ぶ
+	return s.repo.AddItem(ctx, kitID, itemID)
+}
+
+func (s *kitService) RemoveItemFromKit(ctx context.Context, kitID, itemID string) error {
+	return s.repo.RemoveItem(ctx, kitID, itemID)
 }
