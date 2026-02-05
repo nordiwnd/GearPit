@@ -1,6 +1,9 @@
 package domain
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 // GearFilter defines search criteria for items.
 type GearFilter struct {
@@ -103,4 +106,40 @@ type DashboardRepository interface {
 
 type DashboardService interface {
 	GetDashboardStats(ctx context.Context) (*DashboardStats, error)
+}
+
+// --- Trip (Packing List) ---
+
+type Trip struct {
+	ID          string    `gorm:"type:uuid;default:gen_random_uuid();primaryKey" json:"id"`
+	Name        string    `gorm:"not null" json:"name"`
+	Description string    `json:"description"`
+	StartDate   time.Time `json:"startDate"`
+	EndDate     time.Time `json:"endDate"`
+	Location    string    `json:"location"`
+	Items       []Item    `gorm:"many2many:trip_items;" json:"items,omitempty"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+}
+
+type TripRepository interface {
+	Create(ctx context.Context, trip *Trip) error
+	GetByID(ctx context.Context, id string) (*Trip, error)
+	List(ctx context.Context) ([]Trip, error)
+	Update(ctx context.Context, trip *Trip) error
+	Delete(ctx context.Context, id string) error
+	// Tripにアイテムを追加・削除・一括登録するためのメソッド
+	AddItems(ctx context.Context, tripID string, itemIDs []string) error
+	RemoveItems(ctx context.Context, tripID string, itemIDs []string) error
+}
+
+type TripService interface {
+	CreateTrip(ctx context.Context, name, description, location string, startDate, endDate time.Time) (*Trip, error)
+	GetTrip(ctx context.Context, id string) (*Trip, error)
+	ListTrips(ctx context.Context) ([]Trip, error)
+	UpdateTrip(ctx context.Context, id, name, description, location string, startDate, endDate time.Time) (*Trip, error)
+	DeleteTrip(ctx context.Context, id string) error
+	// Tripへのアイテム操作
+	AddItemsToTrip(ctx context.Context, tripID string, itemIDs []string) error
+	RemoveItemsFromTrip(ctx context.Context, tripID string, itemIDs []string) error
 }

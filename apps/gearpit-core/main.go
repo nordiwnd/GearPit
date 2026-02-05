@@ -5,7 +5,9 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 
+	"github.com/nordiwnd/gearpit/apps/gearpit-core/internal/domain"
 	"github.com/nordiwnd/gearpit/apps/gearpit-core/internal/handler"
 	"github.com/nordiwnd/gearpit/apps/gearpit-core/internal/infrastructure"
 	"github.com/nordiwnd/gearpit/apps/gearpit-core/internal/infrastructure/repository"
@@ -45,11 +47,15 @@ func main() {
 			host, user, password, dbname, port)
 	}
 
+	// 1. Connect to DB (Moved before AutoMigrate)
 	db, err := infrastructure.InitDB(dsn)
 	if err != nil {
 		slog.Error("Failed to connect to database", "error", err)
 		os.Exit(1)
 	}
+
+	// 2. Migration (Now db is defined)
+	db.AutoMigrate(&domain.Item{}, &domain.Kit{}, &domain.Loadout{}, &domain.MaintenanceLog{}, &domain.Trip{})
 
 	// Dependency Injection (DI) Setup
 	gearRepo := repository.NewGearRepository(db)
@@ -71,6 +77,10 @@ func main() {
 	dashboardService := service.NewDashboardService(dashboardRepo)
 	dashboardHandler := handler.NewDashboardHandler(dashboardService)
 
+	tripRepo := repository.NewTripRepository(db)
+	tripService := service.NewTripService(tripRepo)
+	tripHandler := handler.NewTripHandler(tripService)
+
 	// Router setup
 	mux := http.NewServeMux()
 
@@ -78,7 +88,7 @@ func main() {
 	mux.HandleFunc("/api/v1/gears", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
-			gearHandler.SearchItems(w, r) // 変更: ListItems から SearchItems へ
+			gearHandler.SearchItems(w, r)
 		case http.MethodPost:
 			gearHandler.CreateItem(w, r)
 		case http.MethodOptions:
@@ -89,7 +99,6 @@ func main() {
 	})
 
 	// 2. Item routes: /api/v1/gears/{id}
-	// Note: Standard net/http requires a trailing slash for subpath matching
 	mux.HandleFunc("/api/v1/gears/", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPut:
@@ -202,6 +211,40 @@ func main() {
 		}
 	})
 
+	// Trips
+	mux.HandleFunc("/api/v1/trips", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			tripHandler.ListTrips(w, r)
+		case http.MethodPost:
+			tripHandler.CreateTrip(w, r)
+		case http.MethodOptions:
+			w.WriteHeader(http.StatusOK)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	mux.HandleFunc("/api/v1/trips/", func(w http.ResponseWriter, r *http.Request) {
+		// /api/v1/trips/{id}/items の判定
+		if strings.Contains(r.URL.Path, "/items") {
+			tripHandler.HandleTripItems(w, r)
+			return
+		}
+
+		switch r.Method {
+		case http.MethodGet:
+			tripHandler.GetTrip(w, r)
+		case http.MethodDelete:
+			tripHandler.DeleteTrip(w, r)
+		// PUT (Update) は省略しましたが実装済みならここに追加
+		case http.MethodOptions:
+			w.WriteHeader(http.StatusOK)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
 	// Start server with CORS middleware
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -209,7 +252,6 @@ func main() {
 	}
 	slog.Info("Starting server", "port", port)
 
-	// 修正: muxをCORSミドルウェアでラップして起動
 	if err := http.ListenAndServe(":"+port, enableCORS(mux)); err != nil {
 		slog.Error("Server failed", "error", err)
 		os.Exit(1)
@@ -219,7 +261,7 @@ func main() {
 // enableCORS is a middleware to allow cross-origin requests from the frontend.
 func enableCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*") // 修正: Preview環境での通信を考慮し一旦全許可
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
