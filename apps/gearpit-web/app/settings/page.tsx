@@ -16,7 +16,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { profileApi, UserProfile } from "@/lib/api";
 
-// 修正: z.coerce.number() を使用し、default値を指定しないことで undefined 問題を回避
 const profileSchema = z.object({
   name: z.string().min(1, "Name is required"),
   heightCm: z.coerce.number().min(0),
@@ -25,7 +24,6 @@ const profileSchema = z.object({
   gender: z.string().min(1, "Select gender"),
 });
 
-// 型推論を使用
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
 export default function SettingsPage() {
@@ -33,9 +31,9 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // フォーム初期化
   const form = useForm<ProfileFormValues>({
-    resolver: zodResolver(profileSchema),
+    // 修正: as any を追加して型エラーを回避
+    resolver: zodResolver(profileSchema) as any,
     defaultValues: {
       name: "",
       heightCm: 170,

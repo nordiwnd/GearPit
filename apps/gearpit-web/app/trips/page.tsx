@@ -1,364 +1,149 @@
-// apps/gearpit-web/lib/api.ts
+"use client";
 
-const getBaseUrl = () => {
-  if (typeof window !== 'undefined') {
-    return '/api/v1'; // Next.js rewrites to backend
-  }
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
-};
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { format, parseISO } from "date-fns";
+import { MapPin, Calendar, Trash2, Pencil, Package } from "lucide-react";
+import { toast } from "sonner";
 
-// -----------------------------------------------------------------------------
-// Gear (Inventory) API
-// -----------------------------------------------------------------------------
-export interface GearItem {
-  id: string;
-  name: string;
-  description: string;
-  manufacturer: string;
-  weightGram: number;
-  unit: string;
-  // Backend changes: Tags removed, replaced by flexible properties
-  properties?: {
-    brand?: string;
-    category?: string;
-    color?: string;
-    [key: string]: any;
+import { tripApi, Trip } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { TripFormDialog } from "@/components/trip/trip-form-dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { 
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger 
+} from "@/components/ui/alert-dialog";
+
+export default function TripsPage() {
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  const fetchTrips = async () => {
+    try {
+      const data = await tripApi.list();
+      setTrips(data || []);
+    } catch (error) {
+      toast.error("Failed to load trips");
+    } finally {
+      setLoading(false);
+    }
   };
-  createdAt: string;
-  updatedAt: string;
+
+  useEffect(() => { fetchTrips(); }, []);
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      await tripApi.delete(id);
+      toast.success("Trip plan deleted");
+      fetchTrips();
+    } catch (error) {
+      toast.error("Failed to delete trip");
+    }
+  };
+
+  return (
+    <div className="min-h-screen p-8 bg-zinc-50 dark:bg-zinc-950 transition-colors">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-zinc-800 dark:text-zinc-50">Trip Plans</h1>
+            <p className="text-zinc-500 dark:text-zinc-400">Manage your expeditions and packing lists.</p>
+          </div>
+          <TripFormDialog onSuccess={fetchTrips} />
+        </div>
+
+        <div className="rounded-md border bg-white dark:bg-zinc-900 dark:border-zinc-800 overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="dark:border-zinc-800 hover:bg-transparent">
+                <TableHead className="w-[30%]">Trip Name</TableHead>
+                <TableHead>Location</TableHead>
+                <TableHead>Dates</TableHead>
+                <TableHead>Items</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">Loading...</TableCell>
+                </TableRow>
+              ) : trips.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                    No trips planned yet. Click "New Trip Plan" to start.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                trips.map((trip) => (
+                  <TableRow 
+                    key={trip.id} 
+                    className="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 dark:border-zinc-800 transition-colors"
+                    onClick={() => router.push(`/trips/${trip.id}`)}
+                  >
+                    <TableCell className="font-medium text-base dark:text-zinc-200">
+                      {trip.name}
+                      {trip.description && <div className="text-xs text-muted-foreground truncate max-w-[200px]">{trip.description}</div>}
+                    </TableCell>
+                    <TableCell className="dark:text-zinc-300">
+                      {trip.location && <div className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {trip.location}</div>}
+                    </TableCell>
+                    <TableCell className="dark:text-zinc-300">
+                      <div className="flex items-center gap-1 text-sm">
+                        <Calendar className="h-3 w-3 text-muted-foreground" />
+                        {format(parseISO(trip.startDate), "yyyy/MM/dd")}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                       <Badge variant="outline" className="dark:border-zinc-700 dark:text-zinc-400">
+                          {/* tripItems が存在しない場合にも対応 */}
+                          <Package className="h-3 w-3 mr-1" /> {trip.tripItems?.length || 0}
+                       </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                        <TripFormDialog 
+                          tripToEdit={trip}
+                          onSuccess={fetchTrips}
+                          trigger={
+                            <Button variant="ghost" size="icon" className="hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                              <Pencil className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                            </Button>
+                          } 
+                        />
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20">
+                              <Trash2 className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete "{trip.name}"?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure? This will delete the trip plan. Items in your inventory remain safe.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction className="bg-red-500 hover:bg-red-600" onClick={(e) => handleDelete(e, trip.id)}>Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+    </div>
+  );
 }
-
-export const gearApi = {
-  searchItems: async (query: string): Promise<GearItem[]> => {
-    const res = await fetch(`${getBaseUrl()}/gears?q=${encodeURIComponent(query)}`, { cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to search gears');
-    return res.json();
-  },
-
-  listItems: async (): Promise<GearItem[]> => {
-    // Reusing search for list all (empty query) if backend supports it, 
-    // or use a dedicated list endpoint if available. 
-    // Assuming /gears returns list by default.
-    const res = await fetch(`${getBaseUrl()}/gears`, { cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to list gears');
-    return res.json();
-  },
-
-  createItem: async (payload: any): Promise<GearItem> => {
-    const res = await fetch(`${getBaseUrl()}/gears`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error('Failed to create gear');
-    return res.json();
-  },
-
-  updateItem: async (id: string, payload: any): Promise<GearItem> => {
-    const res = await fetch(`${getBaseUrl()}/gears/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error('Failed to update gear');
-    return res.json();
-  },
-
-  deleteItem: async (id: string): Promise<void> => {
-    const res = await fetch(`${getBaseUrl()}/gears/${id}`, { method: 'DELETE' });
-    if (!res.ok) throw new Error('Failed to delete gear');
-  },
-};
-
-// -----------------------------------------------------------------------------
-// Kits API
-// -----------------------------------------------------------------------------
-export interface Kit {
-  id: string;
-  name: string;
-  description: string;
-  items?: GearItem[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export const kitApi = {
-  list: async (): Promise<Kit[]> => {
-    const res = await fetch(`${getBaseUrl()}/kits`, { cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to fetch kits');
-    return res.json();
-  },
-  get: async (id: string): Promise<Kit> => {
-    const res = await fetch(`${getBaseUrl()}/kits/${id}`, { cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to fetch kit');
-    return res.json();
-  },
-  create: async (payload: any): Promise<Kit> => {
-    const res = await fetch(`${getBaseUrl()}/kits`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error('Failed to create kit');
-    return res.json();
-  },
-};
-
-// -----------------------------------------------------------------------------
-// Loadouts API
-// -----------------------------------------------------------------------------
-export interface Loadout {
-  id: string;
-  name: string;
-  activityType: string;
-  items?: GearItem[];
-  kits?: Kit[];
-  totalWeightGram: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export const loadoutApi = {
-  list: async (): Promise<Loadout[]> => {
-    const res = await fetch(`${getBaseUrl()}/loadouts`, { cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to fetch loadouts');
-    return res.json();
-  },
-  get: async (id: string): Promise<Loadout> => {
-    const res = await fetch(`${getBaseUrl()}/loadouts/${id}`, { cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to fetch loadout');
-    return res.json();
-  },
-  create: async (payload: any): Promise<Loadout> => {
-    const res = await fetch(`${getBaseUrl()}/loadouts`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error('Failed to create loadout');
-    return res.json();
-  },
-  update: async (id: string, payload: any): Promise<Loadout> => {
-    const res = await fetch(`${getBaseUrl()}/loadouts/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error('Failed to update loadout');
-    return res.json();
-  },
-  delete: async (id: string): Promise<void> => {
-    const res = await fetch(`${getBaseUrl()}/loadouts/${id}`, { method: 'DELETE' });
-    if (!res.ok) throw new Error('Failed to delete loadout');
-  },
-};
-
-// -----------------------------------------------------------------------------
-// Maintenance API
-// -----------------------------------------------------------------------------
-export interface MaintenanceLog {
-  id: string;
-  itemId: string;
-  date: string;
-  type: string;
-  description: string;
-  cost: number;
-  createdAt: string;
-}
-
-export const maintenanceApi = {
-  addLog: async (payload: any): Promise<MaintenanceLog> => {
-    const res = await fetch(`${getBaseUrl()}/maintenance`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error('Failed to add maintenance log');
-    return res.json();
-  },
-  getItemLogs: async (itemId: string): Promise<MaintenanceLog[]> => {
-    const res = await fetch(`${getBaseUrl()}/maintenance/item/${itemId}`, { cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to fetch logs');
-    return res.json();
-  },
-  updateLog: async (id: string, payload: any): Promise<MaintenanceLog> => {
-    const res = await fetch(`${getBaseUrl()}/maintenance/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error('Failed to update log');
-    return res.json();
-  },
-  deleteLog: async (id: string): Promise<void> => {
-    const res = await fetch(`${getBaseUrl()}/maintenance/${id}`, { method: 'DELETE' });
-    if (!res.ok) throw new Error('Failed to delete log');
-  },
-};
-
-// -----------------------------------------------------------------------------
-// Dashboard API
-// -----------------------------------------------------------------------------
-export interface DashboardStats {
-  totalItems: number;
-  totalWeight: number;
-  totalLoadouts: number;
-  totalCost: number;
-  categoryStats: {
-    category: string;
-    count: number;
-    totalWeight: number;
-  }[];
-}
-
-export const dashboardApi = {
-  getStats: async (): Promise<DashboardStats> => {
-    const res = await fetch(`${getBaseUrl()}/dashboard/stats`, { cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to fetch stats');
-    return res.json();
-  },
-};
-
-// -----------------------------------------------------------------------------
-// User Profile API (New)
-// -----------------------------------------------------------------------------
-export interface UserProfile {
-  id: string;
-  name: string;
-  heightCm: number;
-  weightKg: number;
-  age: number;
-  gender: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export const profileApi = {
-  list: async (): Promise<UserProfile[]> => {
-    const res = await fetch(`${getBaseUrl()}/profiles`, { cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to fetch profiles');
-    return res.json();
-  },
-  create: async (payload: Partial<UserProfile>): Promise<UserProfile> => {
-    const res = await fetch(`${getBaseUrl()}/profiles`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error('Failed to create profile');
-    return res.json();
-  },
-  update: async (id: string, payload: Partial<UserProfile>): Promise<UserProfile> => {
-    const res = await fetch(`${getBaseUrl()}/profiles/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error('Failed to update profile');
-    return res.json();
-  },
-  delete: async (id: string): Promise<void> => {
-    const res = await fetch(`${getBaseUrl()}/profiles/${id}`, { method: 'DELETE' });
-    if (!res.ok) throw new Error('Failed to delete profile');
-  },
-};
-
-// -----------------------------------------------------------------------------
-// Trip (Packing List) API (Updated)
-// -----------------------------------------------------------------------------
-
-// 中間テーブル用の型
-export interface TripItem {
-  tripId: string;
-  itemId: string;
-  quantity: number;
-  item: GearItem; // ネストされたアイテム詳細
-}
-
-export interface Trip {
-  id: string;
-  name: string;
-  description: string;
-  location: string;
-  startDate: string;
-  endDate: string;
-  
-  // Changed: items -> tripItems (with quantity)
-  tripItems?: TripItem[];
-  // Legacy support field if needed, but prefer tripItems
-  items?: GearItem[]; 
-  
-  // User Profile
-  userProfileId?: string;
-  userProfile?: UserProfile;
-
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateTripPayload {
-  name: string;
-  description: string;
-  location: string;
-  startDate: string;
-  endDate: string;
-  userProfileId?: string;
-}
-
-export const tripApi = {
-  list: async (): Promise<Trip[]> => {
-    const res = await fetch(`${getBaseUrl()}/trips`, { cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to fetch trips');
-    return res.json();
-  },
-
-  get: async (id: string): Promise<Trip> => {
-    const res = await fetch(`${getBaseUrl()}/trips/${id}`, { cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to fetch trip');
-    return res.json();
-  },
-
-  create: async (payload: CreateTripPayload): Promise<Trip> => {
-    const res = await fetch(`${getBaseUrl()}/trips`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error('Failed to create trip');
-    return res.json();
-  },
-
-  delete: async (id: string): Promise<void> => {
-    const res = await fetch(`${getBaseUrl()}/trips/${id}`, { method: 'DELETE' });
-    if (!res.ok) throw new Error('Failed to delete trip');
-  },
-
-  // 一括追加 (既存互換)
-  addItems: async (tripId: string, itemIds: string[]): Promise<void> => {
-    const res = await fetch(`${getBaseUrl()}/trips/${tripId}/items`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ itemIds }),
-    });
-    if (!res.ok) throw new Error('Failed to add items to trip');
-  },
-
-  // 数量更新 (新規)
-  updateItemQuantity: async (tripId: string, itemId: string, quantity: number): Promise<void> => {
-    const res = await fetch(`${getBaseUrl()}/trips/${tripId}/items`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ itemId, quantity }),
-    });
-    if (!res.ok) throw new Error('Failed to update item quantity');
-  },
-
-  removeItems: async (tripId: string, itemIds: string[]): Promise<void> => {
-    const res = await fetch(`${getBaseUrl()}/trips/${tripId}/items`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ itemIds }),
-    });
-    if (!res.ok) throw new Error('Failed to remove items from trip');
-  }
-};

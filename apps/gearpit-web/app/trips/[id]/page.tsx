@@ -1,265 +1,148 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { format, parseISO } from "date-fns";
-import { 
-  PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend
-} from "recharts";
-import { MapPin, Calendar, ArrowLeft, Package, AlertTriangle, Trash2, Plus, Minus, User } from "lucide-react";
+import { MapPin, Calendar, Trash2, Pencil, Package } from "lucide-react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 import { tripApi, Trip } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { TripFormDialog } from "@/components/trip/trip-form-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AddGearToTripDialog } from "@/components/trip/add-gear-to-trip-dialog";
-import { AddLoadoutToTripDialog } from "@/components/trip/add-loadout-to-trip-dialog";
-import { EditGearDialog } from "@/components/inventory/edit-gear-dialog";
+import { 
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger 
+} from "@/components/ui/alert-dialog";
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ff8042', '#a4de6c'];
-
-export default function TripDetailPage() {
-  const { id } = useParams() as { id: string };
-  const router = useRouter();
-  const [trip, setTrip] = useState<Trip | null>(null);
+export default function TripsPage() {
+  const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
-  const fetchTrip = async () => {
+  const fetchTrips = async () => {
     try {
-      const data = await tripApi.get(id);
-      setTrip(data);
+      const data = await tripApi.list();
+      setTrips(data || []);
     } catch (error) {
-      toast.error("Failed to load trip details");
+      toast.error("Failed to load trips");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { fetchTrip(); }, [id]);
+  useEffect(() => { fetchTrips(); }, []);
 
-  const handleRemoveItem = async (itemId: string) => {
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    e.stopPropagation();
     try {
-      await tripApi.removeItems(id, [itemId]);
-      toast.success("Item removed");
-      fetchTrip();
+      await tripApi.delete(id);
+      toast.success("Trip plan deleted");
+      fetchTrips();
     } catch (error) {
-      toast.error("Failed to remove item");
+      toast.error("Failed to delete trip");
     }
   };
-
-  const handleQuantityChange = async (itemId: string, currentQty: number, change: number) => {
-    const newQty = currentQty + change;
-    if (newQty < 1) return;
-    try {
-      await tripApi.updateItemQuantity(id, itemId, newQty);
-      // ローカルstateのみ更新して高速化も可能だが、今回は再取得
-      fetchTrip();
-    } catch (error) {
-      toast.error("Failed to update quantity");
-    }
-  };
-
-  // --- 統計データの計算 (Quantity考慮) ---
-  const stats = useMemo(() => {
-    if (!trip || !trip.tripItems) return null;
-    
-    // 合計重量 = Σ (アイテム重量 * 個数)
-    const totalWeight = trip.tripItems.reduce((sum, ti) => sum + (ti.item.weightGram * ti.quantity), 0);
-    const totalItems = trip.tripItems.reduce((sum, ti) => sum + ti.quantity, 0); // 個数合計
-    
-    // カテゴリ別集計
-    const categoryMap = new Map<string, number>();
-    trip.tripItems.forEach(ti => {
-      const cat = ti.item.properties?.category || "Uncategorized";
-      const weight = ti.item.weightGram * ti.quantity;
-      categoryMap.set(cat, (categoryMap.get(cat) || 0) + weight);
-    });
-
-    const pieData = Array.from(categoryMap.entries())
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value);
-
-    return { totalWeight, totalItems, pieData };
-  }, [trip]);
-
-  if (loading) return <div className="flex justify-center py-20"><div className="animate-spin text-zinc-500">Loading...</div></div>;
-  if (!trip) return <div className="p-8 text-center text-zinc-500 dark:text-zinc-400">Trip not found</div>;
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 pb-20 transition-colors">
-      {/* Header Banner */}
-      <div className="bg-white dark:bg-zinc-900 border-b dark:border-zinc-800 px-8 py-6 mb-8 transition-colors">
-        <div className="max-w-7xl mx-auto">
-          <Button variant="ghost" className="mb-4 pl-0 hover:bg-transparent hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400" onClick={() => router.push('/trips')}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Plans
-          </Button>
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-            <div>
-              <h1 className="text-4xl font-bold text-zinc-900 dark:text-zinc-50 mb-2">{trip.name}</h1>
-              <div className="flex flex-wrap gap-4 text-zinc-500 dark:text-zinc-400 text-sm mb-2">
-                <div className="flex items-center"><Calendar className="mr-1 h-4 w-4" /> {format(parseISO(trip.startDate), "yyyy/MM/dd")} - {format(parseISO(trip.endDate), "yyyy/MM/dd")}</div>
-                {trip.location && <div className="flex items-center"><MapPin className="mr-1 h-4 w-4" /> {trip.location}</div>}
-              </div>
-              
-              {/* User Profile Info */}
-              {trip.userProfile && (
-                <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-full w-fit">
-                    <User className="h-4 w-4" />
-                    <span className="font-medium">{trip.userProfile.name}</span>
-                    <span className="text-zinc-400">|</span>
-                    <span>{trip.userProfile.heightCm}cm / {trip.userProfile.weightKg}kg</span>
-                </div>
-              )}
-
-              {trip.description && <p className="mt-4 text-zinc-600 dark:text-zinc-400 max-w-2xl">{trip.description}</p>}
-            </div>
-            
-            <div className="flex gap-2">
-              <AddLoadoutToTripDialog tripId={trip.id} onSuccess={fetchTrip} />
-              {/* AddGearToTripDialog needs to handle currentItems slightly differently now, 
-                  passing simple GearItem[] for compatibility logic inside dialog */}
-              <AddGearToTripDialog 
-                tripId={trip.id} 
-                currentItems={trip.tripItems?.map(ti => ti.item) || []} 
-                onSuccess={fetchTrip} 
-              />
-            </div>
+    <div className="min-h-screen p-8 bg-zinc-50 dark:bg-zinc-950 transition-colors">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-zinc-800 dark:text-zinc-50">Trip Plans</h1>
+            <p className="text-zinc-500 dark:text-zinc-400">Manage your expeditions and packing lists.</p>
           </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Left Column: Stats */}
-        <div className="space-y-6 lg:col-span-1">
-          <Card className="bg-zinc-900 dark:bg-black text-white border-zinc-800 dark:border-zinc-800">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-zinc-400 text-sm font-medium">Total Pack Weight</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold font-mono">
-                {stats ? (stats.totalWeight / 1000).toFixed(2) : "0.00"} <span className="text-lg text-zinc-500">kg</span>
-              </div>
-              <div className="mt-2 flex items-center gap-2 text-sm text-zinc-400">
-                <Package className="h-4 w-4" /> {stats?.totalItems} items packed
-              </div>
-            </CardContent>
-          </Card>
-
-          {stats && stats.totalWeight > 0 && (
-            <Card className="dark:bg-zinc-900 dark:border-zinc-800">
-              <CardHeader><CardTitle className="text-base dark:text-zinc-100">Weight Analysis</CardTitle></CardHeader>
-              <CardContent className="h-[250px] -ml-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={stats.pieData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={50}
-                      outerRadius={70}
-                      paddingAngle={4}
-                      dataKey="value"
-                      stroke="none" 
-                    >
-                      {stats.pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <RechartsTooltip 
-                        formatter={(value: any) => `${value}g`} 
-                        contentStyle={{ backgroundColor: 'var(--background)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
-                    />
-                    <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{fontSize: '12px'}} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          )}
+          <TripFormDialog onSuccess={fetchTrips} />
         </div>
 
-        {/* Right Column: Packing List (Table) */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold flex items-center gap-2 dark:text-zinc-50">
-              <Package className="h-5 w-5" /> Packing List
-            </h2>
-          </div>
-
-          <Card className="dark:bg-zinc-900 dark:border-zinc-800">
-            <Table>
-              <TableHeader>
-                <TableRow className="dark:border-zinc-800">
-                  <TableHead className="w-[40%]">Item Name</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead className="text-center">Qty</TableHead>
-                  <TableHead className="text-right">Weight (Total)</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
+        <div className="rounded-md border bg-white dark:bg-zinc-900 dark:border-zinc-800 overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="dark:border-zinc-800 hover:bg-transparent">
+                <TableHead className="w-[30%]">Trip Name</TableHead>
+                <TableHead>Location</TableHead>
+                <TableHead>Dates</TableHead>
+                <TableHead>Items</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">Loading...</TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {trip.tripItems && trip.tripItems.length > 0 ? (
-                  trip.tripItems.map((ti) => (
-                    <TableRow key={ti.itemId} className="group dark:border-zinc-800">
-                      <TableCell className="font-medium">
-                        <EditGearDialog 
-                          item={ti.item} 
+              ) : trips.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                    No trips planned yet. Click "New Trip Plan" to start.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                trips.map((trip) => (
+                  <TableRow 
+                    key={trip.id} 
+                    className="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 dark:border-zinc-800 transition-colors"
+                    onClick={() => router.push(`/trips/${trip.id}`)}
+                  >
+                    <TableCell className="font-medium text-base dark:text-zinc-200">
+                      {trip.name}
+                      {trip.description && <div className="text-xs text-muted-foreground truncate max-w-[200px]">{trip.description}</div>}
+                    </TableCell>
+                    <TableCell className="dark:text-zinc-300">
+                      {trip.location && <div className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {trip.location}</div>}
+                    </TableCell>
+                    <TableCell className="dark:text-zinc-300">
+                      <div className="flex items-center gap-1 text-sm">
+                        <Calendar className="h-3 w-3 text-muted-foreground" />
+                        {format(parseISO(trip.startDate), "yyyy/MM/dd")}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                       <Badge variant="outline" className="dark:border-zinc-700 dark:text-zinc-400">
+                          {/* tripItems を参照するように修正 */}
+                          <Package className="h-3 w-3 mr-1" /> {trip.tripItems?.length || 0}
+                       </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                        <TripFormDialog 
+                          tripToEdit={trip}
+                          onSuccess={fetchTrips}
                           trigger={
-                            <div className="cursor-pointer hover:underline decoration-dotted underline-offset-4 flex items-center gap-2 dark:text-zinc-200">
-                              {ti.item.name}
-                              <span className="text-xs text-muted-foreground font-normal">{ti.item.properties?.brand}</span>
-                            </div>
+                            <Button variant="ghost" size="icon" className="hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                              <Pencil className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                            </Button>
                           } 
                         />
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className="font-normal text-xs dark:bg-zinc-800 dark:text-zinc-300">{ti.item.properties?.category || "Other"}</Badge>
-                      </TableCell>
-                      
-                      {/* Quantity Controls */}
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleQuantityChange(ti.itemId, ti.quantity, -1)}>
-                            <Minus className="h-3 w-3" />
-                          </Button>
-                          <span className="w-6 text-center text-sm font-mono">{ti.quantity}</span>
-                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleQuantityChange(ti.itemId, ti.quantity, 1)}>
-                            <Plus className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </TableCell>
-
-                      {/* Weight Calculation (Item * Qty) */}
-                      <TableCell className="text-right font-mono dark:text-zinc-300">
-                        {ti.item.weightGram * ti.quantity}g
-                        {ti.quantity > 1 && <div className="text-[10px] text-muted-foreground">({ti.item.weightGram}g ea)</div>}
-                      </TableCell>
-                      
-                      <TableCell>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8 text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => handleRemoveItem(ti.itemId)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
-                      No items in this trip yet. <br/>
-                      Click "Add Gear" to build your packing list.
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20">
+                              <Trash2 className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete "{trip.name}"?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure? This will delete the trip plan. Items in your inventory remain safe.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction className="bg-red-500 hover:bg-red-600" onClick={(e) => handleDelete(e, trip.id)}>Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </TableCell>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </Card>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </div>
       </div>
     </div>
