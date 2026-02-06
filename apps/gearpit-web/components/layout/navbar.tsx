@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Package, Layers, Map, BarChart3, Mountain } from "lucide-react";
+import { Package, Layers, Map, Mountain, Settings } from "lucide-react"; // Settings追加
 import { ModeToggle } from "@/components/mode-toggle";
+import { Button } from "@/components/ui/button"; // Button追加
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
@@ -13,7 +14,7 @@ export function Navbar() {
     { name: "Inventory", href: "/", icon: Package },
     { name: "Loadouts", href: "/loadouts", icon: Layers },
     { name: "Trips", href: "/trips", icon: Map },
-    { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
+    // Dashboard削除済み
   ];
 
   return (
@@ -43,6 +44,12 @@ export function Navbar() {
           </nav>
         </div>
         <div className="flex items-center gap-2">
+          {/* Settings Link */}
+          <Link href="/settings">
+            <Button variant="ghost" size="icon" className="hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                <Settings className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+            </Button>
+          </Link>
           <ModeToggle />
         </div>
       </div>
