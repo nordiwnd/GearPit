@@ -12,10 +12,10 @@ export function Navbar() {
 
   const navItems = [
     // Dashboardを追加
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Inventory", href: "/", icon: Package },
     { name: "Loadouts", href: "/loadouts", icon: Layers },
     { name: "Trips", href: "/trips", icon: Map },
+    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   ];
 
   return (
