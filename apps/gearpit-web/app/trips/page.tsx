@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
 import { MapPin, Calendar, Trash2, Pencil, Package } from "lucide-react";
 import { toast } from "sonner";
+import Link from "next/link";
 
 import { tripApi, Trip } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -83,11 +84,13 @@ export default function TripsPage() {
                 trips.map((trip) => (
                   <TableRow 
                     key={trip.id} 
-                    className="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 dark:border-zinc-800 transition-colors"
-                    onClick={() => router.push(`/trips/${trip.id}`)}
+                    className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 dark:border-zinc-800 transition-colors"
                   >
+                    {/* 名前をクリック可能なリンクに変更 */}
                     <TableCell className="font-medium text-base dark:text-zinc-200">
-                      {trip.name}
+                      <Link href={`/trips/${trip.id}`} className="block w-full h-full hover:underline decoration-dotted underline-offset-4">
+                        {trip.name}
+                      </Link>
                       {trip.description && <div className="text-xs text-muted-foreground truncate max-w-[200px]">{trip.description}</div>}
                     </TableCell>
                     <TableCell className="dark:text-zinc-300">
