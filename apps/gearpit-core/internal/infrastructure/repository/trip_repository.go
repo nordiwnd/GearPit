@@ -6,6 +6,7 @@ import (
 
 	"github.com/nordiwnd/gearpit/apps/gearpit-core/internal/domain"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type tripRepository struct {
@@ -25,8 +26,11 @@ func (r *tripRepository) Create(ctx context.Context, trip *domain.Trip) error {
 
 func (r *tripRepository) GetByID(ctx context.Context, id string) (*domain.Trip, error) {
 	var trip domain.Trip
-	// Itemsも一緒に取得 (Preload)
-	if err := r.db.WithContext(ctx).Preload("Items").First(&trip, "id = ?", id).Error; err != nil {
+	if err := r.db.WithContext(ctx).
+		Preload("TripItems").
+		Preload("TripItems.Item"). // アイテム詳細
+		Preload("UserProfile").    // ユーザー情報
+		First(&trip, "id = ?", id).Error; err != nil {
 		return nil, fmt.Errorf("trip not found: %w", err)
 	}
 	return &trip, nil
@@ -34,7 +38,6 @@ func (r *tripRepository) GetByID(ctx context.Context, id string) (*domain.Trip, 
 
 func (r *tripRepository) List(ctx context.Context) ([]domain.Trip, error) {
 	var trips []domain.Trip
-	// 一覧ではアイテム詳細までは取らない（軽量化）
 	if err := r.db.WithContext(ctx).Order("start_date DESC").Find(&trips).Error; err != nil {
 		return nil, fmt.Errorf("failed to list trips: %w", err)
 	}
@@ -49,51 +52,44 @@ func (r *tripRepository) Update(ctx context.Context, trip *domain.Trip) error {
 }
 
 func (r *tripRepository) Delete(ctx context.Context, id string) error {
-	var trip domain.Trip
-	if err := r.db.WithContext(ctx).First(&trip, "id = ?", id).Error; err != nil {
-		return err
+	// 中間テーブル (trip_items) は GORM の外部キー制約 (OnDelete:CASCADE) で消えるのが理想だが、
+	// 安全のため明示的に消去、または Association モードでクリアする
+	// ここでは TripItem 自体を削除するクエリを発行
+	if err := r.db.WithContext(ctx).Where("trip_id = ?", id).Delete(&domain.TripItem{}).Error; err != nil {
+		return fmt.Errorf("failed to delete trip items: %w", err)
 	}
-	// 中間テーブルの関連を削除
-	r.db.WithContext(ctx).Model(&trip).Association("Items").Clear()
 
-	if err := r.db.WithContext(ctx).Delete(&trip).Error; err != nil {
+	if err := r.db.WithContext(ctx).Delete(&domain.Trip{ID: id}).Error; err != nil {
 		return fmt.Errorf("failed to delete trip: %w", err)
 	}
 	return nil
 }
 
-func (r *tripRepository) AddItems(ctx context.Context, tripID string, itemIDs []string) error {
-	var trip domain.Trip
-	trip.ID = tripID
-
-	var items []domain.Item
-	for _, id := range itemIDs {
-		// 修正: 埋め込みフィールドの可能性があるため、リテラルではなく代入を使用
-		var item domain.Item
-		item.ID = id
-		items = append(items, item)
+// ★ UpsertItem: 個数を指定してアイテムを追加・更新する
+func (r *tripRepository) UpsertItem(ctx context.Context, tripID string, itemID string, quantity int) error {
+	tripItem := domain.TripItem{
+		TripID:   tripID,
+		ItemID:   itemID,
+		Quantity: quantity,
 	}
 
-	if err := r.db.WithContext(ctx).Model(&trip).Association("Items").Append(items); err != nil {
-		return fmt.Errorf("failed to add items to trip: %w", err)
+	// PostgreSQL の ON CONFLICT (trip_id, item_id) DO UPDATE SET quantity = ... を実行
+	if err := r.db.WithContext(ctx).Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "trip_id"}, {Name: "item_id"}}, // 複合主キー
+		DoUpdates: clause.AssignmentColumns([]string{"quantity"}),        // 更新するカラム
+	}).Create(&tripItem).Error; err != nil {
+		return fmt.Errorf("failed to upsert trip item: %w", err)
 	}
+
 	return nil
 }
 
-func (r *tripRepository) RemoveItems(ctx context.Context, tripID string, itemIDs []string) error {
-	var trip domain.Trip
-	trip.ID = tripID
-
-	var items []domain.Item
-	for _, id := range itemIDs {
-		// 修正: 埋め込みフィールドの可能性があるため、リテラルではなく代入を使用
-		var item domain.Item
-		item.ID = id
-		items = append(items, item)
-	}
-
-	if err := r.db.WithContext(ctx).Model(&trip).Association("Items").Delete(items); err != nil {
-		return fmt.Errorf("failed to remove items from trip: %w", err)
+// ★ RemoveItem: 中間テーブルから削除
+func (r *tripRepository) RemoveItem(ctx context.Context, tripID string, itemID string) error {
+	if err := r.db.WithContext(ctx).
+		Where("trip_id = ? AND item_id = ?", tripID, itemID).
+		Delete(&domain.TripItem{}).Error; err != nil {
+		return fmt.Errorf("failed to remove item from trip: %w", err)
 	}
 	return nil
 }

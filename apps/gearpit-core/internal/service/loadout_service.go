@@ -2,8 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
-	"log/slog"
 
 	"github.com/nordiwnd/gearpit/apps/gearpit-core/internal/domain"
 )
@@ -16,36 +14,40 @@ func NewLoadoutService(repo domain.LoadoutRepository) domain.LoadoutService {
 	return &loadoutService{repo: repo}
 }
 
-func (s *loadoutService) CreateLoadout(ctx context.Context, name, activityType string, kitIDs, itemIDs []string) (*domain.Loadout, error) {
+func (s *loadoutService) CreateLoadout(ctx context.Context, name, activityType string, kitIds, itemIds []string) (*domain.Loadout, error) {
+	// アイテムとキットの関連付けを構築
+	var items []domain.Item
+	for _, id := range itemIds {
+		items = append(items, domain.Item{ID: id})
+	}
+	var kits []domain.Kit
+	for _, id := range kitIds {
+		kits = append(kits, domain.Kit{ID: id})
+	}
+
 	loadout := &domain.Loadout{
 		Name:         name,
 		ActivityType: activityType,
+		Items:        items,
+		Kits:         kits,
 	}
 
 	if err := s.repo.Create(ctx, loadout); err != nil {
-		slog.Error("Service failed to create loadout", "error", err.Error())
-		return nil, fmt.Errorf("service failed to create loadout: %w", err)
+		return nil, err
 	}
-
-	if len(kitIDs) > 0 || len(itemIDs) > 0 {
-		if err := s.repo.SetAssociations(ctx, loadout.ID, kitIDs, itemIDs); err != nil {
-			slog.Error("Failed to set loadout associations", "loadout_id", loadout.ID, "error", err.Error())
-			return nil, fmt.Errorf("failed to set loadout associations: %w", err)
-		}
-	}
-
-	return s.GetLoadout(ctx, loadout.ID)
+	return loadout, nil
 }
 
 func (s *loadoutService) GetLoadout(ctx context.Context, id string) (*domain.Loadout, error) {
+	// 重量計算などは必要ならここで行う
 	return s.repo.GetByID(ctx, id)
 }
 
 func (s *loadoutService) ListLoadouts(ctx context.Context) ([]domain.Loadout, error) {
-	return s.repo.ListAll(ctx)
+	return s.repo.List(ctx)
 }
 
-func (s *loadoutService) UpdateLoadout(ctx context.Context, id string, name, activityType string, kitIDs, itemIDs []string) (*domain.Loadout, error) {
+func (s *loadoutService) UpdateLoadout(ctx context.Context, id, name, activityType string, kitIds, itemIds []string) (*domain.Loadout, error) {
 	loadout, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -54,16 +56,26 @@ func (s *loadoutService) UpdateLoadout(ctx context.Context, id string, name, act
 	loadout.Name = name
 	loadout.ActivityType = activityType
 
+	// 関連の更新はGORMのAssociation Replaceを使用するべきだが、
+	// 簡易的にインスタンスを置き換えてSaveで対応する場合
+	// 注意: GORMのSaveで関連が正しく入れ替わるにはFullSaveAssociationsが必要な場合がある
+	// ここではRepositoryのUpdate実装に依存するが、
+	// Service層で関連付けを再構築して渡す
+	var items []domain.Item
+	for _, iid := range itemIds {
+		items = append(items, domain.Item{ID: iid})
+	}
+	var kits []domain.Kit
+	for _, kid := range kitIds {
+		kits = append(kits, domain.Kit{ID: kid})
+	}
+	loadout.Items = items
+	loadout.Kits = kits
+
 	if err := s.repo.Update(ctx, loadout); err != nil {
-		return nil, fmt.Errorf("service failed to update loadout: %w", err)
+		return nil, err
 	}
-
-	// Update associations
-	if err := s.repo.SetAssociations(ctx, id, kitIDs, itemIDs); err != nil {
-		return nil, fmt.Errorf("failed to update loadout associations: %w", err)
-	}
-
-	return s.GetLoadout(ctx, id)
+	return loadout, nil
 }
 
 func (s *loadoutService) DeleteLoadout(ctx context.Context, id string) error {

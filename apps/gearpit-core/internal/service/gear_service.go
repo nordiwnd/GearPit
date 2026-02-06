@@ -2,10 +2,10 @@ package service
 
 import (
 	"context"
-	"fmt"
-	"log/slog"
+	"encoding/json"
 
 	"github.com/nordiwnd/gearpit/apps/gearpit-core/internal/domain"
+	"gorm.io/datatypes"
 )
 
 type gearService struct {
@@ -16,18 +16,24 @@ func NewGearService(repo domain.GearRepository) domain.GearService {
 	return &gearService{repo: repo}
 }
 
-func (s *gearService) CreateItem(ctx context.Context, name, description string, weight int, tags []string, properties map[string]any) (*domain.Item, error) {
+func (s *gearService) CreateItem(ctx context.Context, name, description, manufacturer string, weight int, category, brand string) (*domain.Item, error) {
+	// プロパティをJSONとして構築
+	props := map[string]string{
+		"category": category,
+		"brand":    brand,
+	}
+	propsJSON, _ := json.Marshal(props)
+
 	item := &domain.Item{
-		Name:        name,
-		Description: description,
-		WeightGram:  weight,
-		Tags:        tags,
-		Properties:  properties,
+		Name:         name,
+		Description:  description,
+		Manufacturer: manufacturer,
+		WeightGram:   weight,
+		Properties:   datatypes.JSON(propsJSON),
 	}
 
 	if err := s.repo.Create(ctx, item); err != nil {
-		slog.Error("Service failed to create item", "error", err.Error())
-		return nil, fmt.Errorf("service failed to create item: %w", err)
+		return nil, err
 	}
 	return item, nil
 }
@@ -36,34 +42,39 @@ func (s *gearService) GetItem(ctx context.Context, id string) (*domain.Item, err
 	return s.repo.GetByID(ctx, id)
 }
 
-func (s *gearService) SearchItems(ctx context.Context, filter domain.GearFilter) ([]domain.Item, error) {
-	return s.repo.Search(ctx, filter)
+func (s *gearService) ListItems(ctx context.Context) ([]domain.Item, error) {
+	return s.repo.List(ctx)
 }
 
-func (s *gearService) UpdateItem(ctx context.Context, id string, name, description string, weight int, tags []string, properties map[string]any) (*domain.Item, error) {
-	// 1. Fetch existing item
+func (s *gearService) UpdateItem(ctx context.Context, id, name, description, manufacturer string, weight int, category, brand string) (*domain.Item, error) {
 	item, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	// 2. Update fields
+	// プロパティ更新
+	props := map[string]string{
+		"category": category,
+		"brand":    brand,
+	}
+	propsJSON, _ := json.Marshal(props)
+
 	item.Name = name
 	item.Description = description
+	item.Manufacturer = manufacturer
 	item.WeightGram = weight
-	item.Tags = tags
-	item.Properties = properties
+	item.Properties = datatypes.JSON(propsJSON)
 
-	// 3. Save
 	if err := s.repo.Update(ctx, item); err != nil {
-		slog.Error("Service failed to update item", "id", id, "error", err.Error())
-		return nil, fmt.Errorf("service failed to update item: %w", err)
+		return nil, err
 	}
-
 	return item, nil
 }
 
 func (s *gearService) DeleteItem(ctx context.Context, id string) error {
-	slog.Info("Soft deleting gear item", "id", id)
 	return s.repo.Delete(ctx, id)
+}
+
+func (s *gearService) SearchItems(ctx context.Context, query string) ([]domain.Item, error) {
+	return s.repo.Search(ctx, query)
 }

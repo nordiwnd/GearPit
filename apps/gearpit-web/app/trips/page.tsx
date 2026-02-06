@@ -5,7 +5,6 @@ import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { MapPin, Calendar, Trash2, Pencil, Package } from "lucide-react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 
 import { tripApi, Trip } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -20,7 +19,6 @@ import {
 export default function TripsPage() {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
 
   const fetchTrips = async () => {
     try {
@@ -84,11 +82,15 @@ export default function TripsPage() {
                 trips.map((trip) => (
                   <TableRow 
                     key={trip.id} 
-                    className="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 dark:border-zinc-800 transition-colors"
-                    onClick={() => router.push(`/trips/${trip.id}`)}
+                    className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 dark:border-zinc-800 transition-colors"
                   >
                     <TableCell className="font-medium text-base dark:text-zinc-200">
-                      {trip.name}
+                      <Link 
+                        href={`/trips/${trip.id}`} 
+                        className="block w-full hover:underline decoration-dotted underline-offset-4"
+                      >
+                        {trip.name}
+                      </Link>
                       {trip.description && <div className="text-xs text-muted-foreground truncate max-w-[200px]">{trip.description}</div>}
                     </TableCell>
                     <TableCell className="dark:text-zinc-300">
@@ -102,7 +104,7 @@ export default function TripsPage() {
                     </TableCell>
                     <TableCell>
                        <Badge variant="outline" className="dark:border-zinc-700 dark:text-zinc-400">
-                          <Package className="h-3 w-3 mr-1" /> {trip.items?.length || 0}
+                          <Package className="h-3 w-3 mr-1" /> {trip.tripItems?.length || 0}
                        </Badge>
                     </TableCell>
                     <TableCell className="text-right">

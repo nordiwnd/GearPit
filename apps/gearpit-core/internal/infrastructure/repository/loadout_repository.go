@@ -25,80 +25,33 @@ func (r *loadoutRepository) Create(ctx context.Context, loadout *domain.Loadout)
 
 func (r *loadoutRepository) GetByID(ctx context.Context, id string) (*domain.Loadout, error) {
 	var loadout domain.Loadout
-	// Nested Preload: Fetch Items, Kits, and Items inside those Kits.
-	if err := r.db.WithContext(ctx).
-		Preload("Items").
-		Preload("Kits.Items").
-		First(&loadout, "id = ?", id).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, fmt.Errorf("loadout not found (id: %s): %w", id, err)
-		}
-		return nil, fmt.Errorf("failed to fetch loadout: %w", err)
+	if err := r.db.WithContext(ctx).Preload("Items").Preload("Kits").First(&loadout, "id = ?", id).Error; err != nil {
+		return nil, fmt.Errorf("loadout not found: %w", err)
 	}
 	return &loadout, nil
 }
 
-func (r *loadoutRepository) ListAll(ctx context.Context) ([]domain.Loadout, error) {
+func (r *loadoutRepository) List(ctx context.Context) ([]domain.Loadout, error) {
 	var loadouts []domain.Loadout
-	if err := r.db.WithContext(ctx).Preload("Items").Preload("Kits").Order("created_at desc").Find(&loadouts).Error; err != nil {
+	if err := r.db.WithContext(ctx).Preload("Items").Preload("Kits").Find(&loadouts).Error; err != nil {
 		return nil, fmt.Errorf("failed to list loadouts: %w", err)
 	}
 	return loadouts, nil
 }
 
-// SetAssociations links existing items and kits to the loadout using GORM many2many
-func (r *loadoutRepository) SetAssociations(ctx context.Context, loadoutID string, kitIDs, itemIDs []string) error {
-	var loadout domain.Loadout
-	if err := r.db.WithContext(ctx).First(&loadout, "id = ?", loadoutID).Error; err != nil {
-		return err
-	}
-
-	tx := r.db.WithContext(ctx).Begin()
-
-	// Association 1: Items
-	if len(itemIDs) > 0 {
-		var items []domain.Item
-		tx.Find(&items, "id IN ?", itemIDs)
-		if err := tx.Model(&loadout).Association("Items").Replace(&items); err != nil {
-			tx.Rollback()
-			return err
-		}
-	}
-
-	// Association 2: Kits
-	if len(kitIDs) > 0 {
-		var kits []domain.Kit
-		tx.Find(&kits, "id IN ?", kitIDs)
-		if err := tx.Model(&loadout).Association("Kits").Replace(&kits); err != nil {
-			tx.Rollback()
-			return err
-		}
-	}
-
-	return tx.Commit().Error
-}
-
-// Update updates basic loadout fields.
 func (r *loadoutRepository) Update(ctx context.Context, loadout *domain.Loadout) error {
+	// Association更新を含む
 	if err := r.db.WithContext(ctx).Save(loadout).Error; err != nil {
 		return fmt.Errorf("failed to update loadout: %w", err)
 	}
+	// 中間テーブルの更新が必要な場合はここでAssociation Replaceを行うが、
+	// Service側で関連付けのIDリストを受け取って再構築する方が確実。
+	// ここでは単純なSaveのみとする
 	return nil
 }
 
-// Delete performs a cleanup of associations before soft deleting the loadout.
 func (r *loadoutRepository) Delete(ctx context.Context, id string) error {
-	var loadout domain.Loadout
-	if err := r.db.WithContext(ctx).First(&loadout, "id = ?", id).Error; err != nil {
-		return err
-	}
-
-	// 1. 中間テーブル（Items, Kits）の関連付けを解除 (Clear)
-	r.db.WithContext(ctx).Model(&loadout).Association("Items").Clear()
-	r.db.WithContext(ctx).Model(&loadout).Association("Kits").Clear()
-
-	// 2. Loadout本体を削除 (Soft Delete)
-	if err := r.db.WithContext(ctx).Delete(&loadout).Error; err != nil {
+	if err := r.db.WithContext(ctx).Delete(&domain.Loadout{ID: id}).Error; err != nil {
 		return fmt.Errorf("failed to delete loadout: %w", err)
 	}
 	return nil

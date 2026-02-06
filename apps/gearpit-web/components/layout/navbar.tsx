@@ -2,18 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Package, Layers, Map, BarChart3, Mountain } from "lucide-react";
+import { Package, Layers, Map, Mountain, Settings, LayoutDashboard } from "lucide-react"; // LayoutDashboardを追加
 import { ModeToggle } from "@/components/mode-toggle";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
   const pathname = usePathname();
 
   const navItems = [
+    // Dashboardを追加
     { name: "Inventory", href: "/", icon: Package },
     { name: "Loadouts", href: "/loadouts", icon: Layers },
     { name: "Trips", href: "/trips", icon: Map },
-    { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
+    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   ];
 
   return (
@@ -43,6 +45,11 @@ export function Navbar() {
           </nav>
         </div>
         <div className="flex items-center gap-2">
+          <Link href="/settings">
+            <Button variant="ghost" size="icon" className="hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                <Settings className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+            </Button>
+          </Link>
           <ModeToggle />
         </div>
       </div>

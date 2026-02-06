@@ -2,12 +2,10 @@ package handler
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 	"strings"
 
 	"github.com/nordiwnd/gearpit/apps/gearpit-core/internal/domain"
-	"gorm.io/gorm"
 )
 
 type GearHandler struct {
@@ -18,42 +16,40 @@ func NewGearHandler(s domain.GearService) *GearHandler {
 	return &GearHandler{service: s}
 }
 
-type GearRequest struct {
-	Name        string         `json:"name"`
-	Description string         `json:"description"`
-	WeightGram  int            `json:"weightGram"`
-	Tags        []string       `json:"tags"`
-	Properties  map[string]any `json:"properties"`
+// リクエスト用の構造体を定義
+type CreateItemRequest struct {
+	Name         string `json:"name"`
+	Description  string `json:"description"`
+	Manufacturer string `json:"manufacturer"`
+	WeightGram   int    `json:"weightGram"`
+	Category     string `json:"category"`
+	Brand        string `json:"brand"`
 }
 
 func (h *GearHandler) CreateItem(w http.ResponseWriter, r *http.Request) {
-	var req GearRequest
+	var req CreateItemRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		http.Error(w, "Invalid payload", http.StatusBadRequest)
 		return
 	}
 
-	item, err := h.service.CreateItem(r.Context(), req.Name, req.Description, req.WeightGram, req.Tags, req.Properties)
+	// Serviceの新しい引数に合わせて呼び出し
+	item, err := h.service.CreateItem(r.Context(), req.Name, req.Description, req.Manufacturer, req.WeightGram, req.Category, req.Brand)
 	if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		http.Error(w, "Failed to create item", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(item)
 }
 
 func (h *GearHandler) SearchItems(w http.ResponseWriter, r *http.Request) {
-	filter := domain.GearFilter{
-		Tag:      r.URL.Query().Get("tag"),
-		Category: r.URL.Query().Get("category"),
-		Brand:    r.URL.Query().Get("brand"),
-	}
-
-	items, err := h.service.SearchItems(r.Context(), filter)
+	query := r.URL.Query().Get("q")
+	// GearFilterを使わず、単純なクエリ文字列検索に変更
+	items, err := h.service.SearchItems(r.Context(), query)
 	if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		http.Error(w, "Failed to search items", http.StatusInternalServerError)
 		return
 	}
 
@@ -63,19 +59,16 @@ func (h *GearHandler) SearchItems(w http.ResponseWriter, r *http.Request) {
 
 func (h *GearHandler) UpdateItem(w http.ResponseWriter, r *http.Request) {
 	id := strings.TrimPrefix(r.URL.Path, "/api/v1/gears/")
-	var req GearRequest
+	var req CreateItemRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		http.Error(w, "Invalid payload", http.StatusBadRequest)
 		return
 	}
 
-	item, err := h.service.UpdateItem(r.Context(), id, req.Name, req.Description, req.WeightGram, req.Tags, req.Properties)
+	// Serviceの新しい引数に合わせて呼び出し
+	item, err := h.service.UpdateItem(r.Context(), id, req.Name, req.Description, req.Manufacturer, req.WeightGram, req.Category, req.Brand)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			http.Error(w, "Item not found", http.StatusNotFound)
-			return
-		}
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		http.Error(w, "Failed to update item", http.StatusInternalServerError)
 		return
 	}
 
@@ -85,11 +78,9 @@ func (h *GearHandler) UpdateItem(w http.ResponseWriter, r *http.Request) {
 
 func (h *GearHandler) DeleteItem(w http.ResponseWriter, r *http.Request) {
 	id := strings.TrimPrefix(r.URL.Path, "/api/v1/gears/")
-
 	if err := h.service.DeleteItem(r.Context(), id); err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		http.Error(w, "Failed to delete item", http.StatusInternalServerError)
 		return
 	}
-
 	w.WriteHeader(http.StatusNoContent)
 }

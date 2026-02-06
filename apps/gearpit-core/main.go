@@ -55,8 +55,15 @@ func main() {
 	}
 
 	// 2. Migration (Now db is defined)
-	db.AutoMigrate(&domain.Item{}, &domain.Kit{}, &domain.Loadout{}, &domain.MaintenanceLog{}, &domain.Trip{})
-
+	db.AutoMigrate(
+		&domain.Item{},
+		&domain.Kit{},
+		&domain.Loadout{},
+		&domain.MaintenanceLog{},
+		&domain.Trip{},
+		&domain.TripItem{},
+		&domain.UserProfile{},
+	)
 	// Dependency Injection (DI) Setup
 	gearRepo := repository.NewGearRepository(db)
 	gearService := service.NewGearService(gearRepo)
@@ -80,6 +87,10 @@ func main() {
 	tripRepo := repository.NewTripRepository(db)
 	tripService := service.NewTripService(tripRepo)
 	tripHandler := handler.NewTripHandler(tripService)
+
+	profileRepo := repository.NewProfileRepository(db)
+	profileService := service.NewProfileService(profileRepo)
+	profileHandler := handler.NewProfileHandler(profileService)
 
 	// Router setup
 	mux := http.NewServeMux()
@@ -211,7 +222,7 @@ func main() {
 		}
 	})
 
-	// Trips
+	// Trips Routes
 	mux.HandleFunc("/api/v1/trips", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
@@ -238,6 +249,31 @@ func main() {
 		case http.MethodDelete:
 			tripHandler.DeleteTrip(w, r)
 		// PUT (Update) は省略しましたが実装済みならここに追加
+		case http.MethodOptions:
+			w.WriteHeader(http.StatusOK)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	// Profile Routes
+	mux.HandleFunc("/api/v1/profiles", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			profileHandler.ListProfiles(w, r)
+		case http.MethodPost:
+			profileHandler.CreateProfile(w, r)
+		case http.MethodOptions:
+			w.WriteHeader(http.StatusOK)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	mux.HandleFunc("/api/v1/profiles/", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet, http.MethodPut, http.MethodDelete:
+			profileHandler.HandleProfile(w, r)
 		case http.MethodOptions:
 			w.WriteHeader(http.StatusOK)
 		default:
