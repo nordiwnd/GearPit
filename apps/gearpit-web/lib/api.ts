@@ -4,7 +4,9 @@ const getBaseUrl = () => {
   if (typeof window !== 'undefined') {
     return '/api/v1'; // Next.js rewrites to backend
   }
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
+  // Server-side: Try INTERNAL_API_URL (for K8s), then NEXT_PUBLIC_API_URL, then fallback
+  // 修正: INTERNAL_API_URL を優先して使用
+  return process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
 };
 
 // -----------------------------------------------------------------------------
@@ -23,7 +25,7 @@ export interface GearItem {
     color?: string;
     [key: string]: any;
   };
-  tags?: string[]; // page.tsxで使用されているため追加
+  tags?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -35,7 +37,6 @@ export const gearApi = {
     return res.json();
   },
 
-  // 修正: フィルタ引数を受け取れるように変更
   listItems: async (filters?: { tag?: string; category?: string; brand?: string }): Promise<GearItem[]> => {
     const params = new URLSearchParams();
     if (filters?.tag) params.append('tag', filters.tag);
