@@ -1,187 +1,245 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { format } from "date-fns";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Wrench, Plus, Loader2, Trash2, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
+import { Loader2, Wrench, Calendar, DollarSign, Trash2 } from "lucide-react";
+import { format, parseISO } from "date-fns";
 
-import { GearItem, MaintenanceLog, maintenanceApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { maintenanceApi, MaintenanceLog, GearItem } from "@/lib/api";
 
 const formSchema = z.object({
-  logDate: z.string().min(1, "Date is required"),
-  actionTaken: z.string().min(1, "Action taken is required"),
-  cost: z.string().regex(/^\d*$/, "Cost must be a positive number"),
+  date: z.string().min(1, "Date is required"),
+  type: z.string().min(1, "Type is required"),
+  description: z.string().optional(),
+  cost: z.coerce.number().min(0),
 });
 
-type FormValues = z.infer<typeof formSchema>;
+interface Props {
+  item: GearItem;
+}
 
-export function MaintenanceDialog({ item }: { item: GearItem }) {
+export function MaintenanceDialog({ item }: Props) {
   const [open, setOpen] = useState(false);
   const [logs, setLogs] = useState<MaintenanceLog[]>([]);
   const [loading, setLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [editingLogId, setEditingLogId] = useState<string | null>(null);
 
-  const fetchLogs = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await maintenanceApi.getLogsForItem(item.id);
-      setLogs(data || []);
-    } catch (error) { toast.error("Failed to load logs"); } 
-    finally { setLoading(false); }
-  }, [item.id]);
-
-  useEffect(() => { if (open) fetchLogs(); }, [open, fetchLogs]);
-
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: { logDate: format(new Date(), "yyyy-MM-dd"), actionTaken: "", cost: "" },
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema) as any,
+    defaultValues: {
+      date: format(new Date(), "yyyy-MM-dd"),
+      type: "cleaning",
+      description: "",
+      cost: 0,
+    },
   });
 
-  const startEdit = (log: MaintenanceLog) => {
-    setEditingLogId(log.id);
-    form.reset({
-      logDate: format(new Date(log.logDate), "yyyy-MM-dd"),
-      actionTaken: log.actionTaken,
-      cost: log.cost.toString(),
-    });
-  };
-
-  const cancelEdit = () => {
-    setEditingLogId(null);
-    form.reset({ logDate: format(new Date(), "yyyy-MM-dd"), actionTaken: "", cost: "" });
-  };
-
-  async function onSubmit(data: FormValues) {
-    setIsSubmitting(true);
+  const fetchLogs = async () => {
     try {
-      const costNumber = data.cost ? Number(data.cost) : 0;
-      const payload = { itemId: item.id, logDate: data.logDate, actionTaken: data.actionTaken, cost: costNumber };
+      const data = await maintenanceApi.getItemLogs(item.id);
+      setLogs(data || []);
+    } catch (error) {
+      toast.error("Failed to load maintenance logs");
+    }
+  };
 
-      if (editingLogId) {
-        await maintenanceApi.updateLog(editingLogId, payload);
-        toast.success("Log updated successfully");
-      } else {
-        await maintenanceApi.addLog(payload);
-        toast.success("New log added");
-      }
-      
-      cancelEdit();
+  useEffect(() => {
+    if (open) {
       fetchLogs();
-    } catch (error) { toast.error("Failed to save log"); } 
-    finally { setIsSubmitting(false); }
-  }
+    }
+  }, [open, item.id]);
 
-  async function handleDelete(logId: string) {
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setLoading(true);
     try {
-      await maintenanceApi.deleteLog(logId);
+      await maintenanceApi.addLog({
+        itemId: item.id,
+        ...values,
+      });
+      toast.success("Log added");
+      form.reset({
+        date: format(new Date(), "yyyy-MM-dd"),
+        type: "cleaning",
+        description: "",
+        cost: 0,
+      });
+      fetchLogs();
+    } catch (error) {
+      toast.error("Failed to add log");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await maintenanceApi.deleteLog(id);
       toast.success("Log deleted");
-      if (editingLogId === logId) cancelEdit();
       fetchLogs();
-    } catch (error) { toast.error("Failed to delete log"); }
-  }
-
-  const totalCost = logs.reduce((sum, log) => sum + log.cost, 0);
+    } catch (error) {
+      toast.error("Failed to delete log");
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" title="Maintenance"><Wrench className="h-4 w-4" /></Button>
+        <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-blue-500">
+          <Wrench className="h-4 w-4" />
+        </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl h-[80vh] flex flex-col">
-        <DialogHeader className="pb-2">
-          <div className="flex justify-between items-start">
-            <div>
-              <DialogTitle className="text-xl">{item.name}</DialogTitle>
-              <p className="text-sm text-muted-foreground mt-1">Maintenance History</p>
-            </div>
-            <Badge variant="secondary" className="text-sm px-3 py-1">Total Cost: ¥{totalCost.toLocaleString()}</Badge>
-          </div>
+      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle>Maintenance Log: {item.name}</DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 grid md:grid-cols-2 gap-6 overflow-hidden">
-          {/* Form */}
-          <div className="flex flex-col h-full bg-zinc-50 p-4 rounded-md border">
-            <h3 className="font-semibold mb-4 flex items-center justify-between">
-              <span className="flex items-center">
-                {editingLogId ? <Pencil className="w-4 h-4 mr-1 text-blue-500" /> : <Plus className="w-4 h-4 mr-1" />} 
-                {editingLogId ? "Edit Log" : "Add New Log"}
-              </span>
-              {editingLogId && <Button variant="ghost" size="sm" onClick={cancelEdit}><X className="h-4 w-4" /></Button>}
-            </h3>
+        <div className="flex gap-6 h-full overflow-hidden">
+          {/* Left: Form */}
+          <div className="w-1/3 border-r pr-6">
+            <h3 className="font-semibold mb-4 text-sm">Add New Log</h3>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField control={form.control} name="logDate" render={({ field }) => (
-                  <FormItem><FormLabel>Date</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="actionTaken" render={({ field }) => (
-                  <FormItem><FormLabel>Action / Description</FormLabel><FormControl><Input placeholder="e.g. Waxed base" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="cost" render={({ field }) => (
-                  <FormItem><FormLabel>Cost (JPY)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <Button type="submit" disabled={isSubmitting} className="w-full">
-                  {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : editingLogId ? "Update Log" : "Save Log"}
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+                <FormField
+                  control={form.control}
+                  name="date"
+                  // 修正: 型を明示的に指定
+                  render={({ field }: { field: any }) => (
+                    <FormItem>
+                      <FormLabel>Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="type"
+                  // 修正: 型を明示的に指定
+                  render={({ field }: { field: any }) => (
+                    <FormItem>
+                      <FormLabel>Type</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="cleaning">Cleaning</SelectItem>
+                          <SelectItem value="repair">Repair</SelectItem>
+                          <SelectItem value="inspection">Inspection</SelectItem>
+                          <SelectItem value="modification">Modification</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="cost"
+                  // 修正: 型を明示的に指定
+                  render={({ field }: { field: any }) => (
+                    <FormItem>
+                      <FormLabel>Cost</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="description"
+                  // 修正: 型を明示的に指定
+                  render={({ field }: { field: any }) => (
+                    <FormItem>
+                      <FormLabel>Notes</FormLabel>
+                      <FormControl>
+                        <Textarea className="resize-none h-20" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Add Log
                 </Button>
               </form>
             </Form>
           </div>
 
-          <Separator className="md:hidden" />
-
-          {/* History List */}
-          <div className="flex flex-col h-full min-h-0">
-            <h3 className="font-semibold mb-4">History ({logs.length})</h3>
+          {/* Right: List */}
+          <div className="w-2/3 pl-2 flex flex-col">
+            <h3 className="font-semibold mb-4 text-sm">History</h3>
             <ScrollArea className="flex-1 pr-4">
-              {loading ? <div className="flex justify-center"><Loader2 className="animate-spin" /></div> : logs.length === 0 ? <p className="text-sm text-muted-foreground">No records.</p> : (
-                <div className="space-y-3 pb-4">
-                  {logs.map(log => (
-                    <div key={log.id} className={`bg-white border rounded-md p-3 transition-colors flex flex-col gap-2 ${editingLogId === log.id ? 'border-blue-500 bg-blue-50' : ''}`}>
-                      <div className="flex justify-between items-start">
-                        <div>
-                           <div className="flex items-center gap-2 mb-1">
-                             <span className="text-xs font-mono font-medium text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded">{format(new Date(log.logDate), "yyyy-MM-dd")}</span>
-                             {log.cost > 0 && <span className="text-xs font-semibold text-zinc-700">¥{log.cost.toLocaleString()}</span>}
-                           </div>
-                           <p className="text-sm text-zinc-800 break-words">{log.actionTaken}</p>
+              {logs.length === 0 ? (
+                <div className="text-center text-muted-foreground py-10 text-sm">
+                  No maintenance records found.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {logs.map((log) => (
+                    <div key={log.id} className="bg-muted/50 p-3 rounded-md text-sm border relative group">
+                      <div className="flex justify-between items-start mb-1">
+                        <div className="flex items-center gap-2 font-medium">
+                          <span className="capitalize px-2 py-0.5 bg-white dark:bg-zinc-800 rounded border text-xs">
+                            {log.type}
+                          </span>
+                          <span className="text-muted-foreground text-xs flex items-center">
+                            <Calendar className="h-3 w-3 mr-1" />
+                            {format(parseISO(log.date), "MMM d, yyyy")}
+                          </span>
                         </div>
+                        {log.cost > 0 && (
+                          <span className="font-mono text-xs flex items-center text-zinc-600 dark:text-zinc-400">
+                            <DollarSign className="h-3 w-3" />
+                            {log.cost}
+                          </span>
+                        )}
                       </div>
+                      <p className="text-zinc-700 dark:text-zinc-300 pl-1">{log.description}</p>
                       
-                      {/* Actions: Always Visible */}
-                      <div className="flex justify-end gap-2 mt-1 pt-2 border-t border-zinc-100">
-                        <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => startEdit(log)}>
-                          <Pencil className="h-3 w-3 mr-1" /> Edit
-                        </Button>
-                        
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="outline" size="sm" className="h-7 text-xs hover:text-red-600 hover:bg-red-50 hover:border-red-200">
-                              <Trash2 className="h-3 w-3 mr-1" /> Delete
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Log?</AlertDialogTitle>
-                              <AlertDialogDescription>Are you sure you want to delete this maintenance record?</AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction className="bg-red-500 hover:bg-red-600" onClick={() => handleDelete(log.id)}>Delete</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-red-500"
+                        onClick={() => handleDelete(log.id)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
                     </div>
                   ))}
                 </div>

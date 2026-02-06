@@ -23,6 +23,7 @@ export interface GearItem {
     color?: string;
     [key: string]: any;
   };
+  tags?: string[]; // page.tsxで使用されているため追加
   createdAt: string;
   updatedAt: string;
 }
@@ -34,8 +35,17 @@ export const gearApi = {
     return res.json();
   },
 
-  listItems: async (): Promise<GearItem[]> => {
-    const res = await fetch(`${getBaseUrl()}/gears`, { cache: 'no-store' });
+  // 修正: フィルタ引数を受け取れるように変更
+  listItems: async (filters?: { tag?: string; category?: string; brand?: string }): Promise<GearItem[]> => {
+    const params = new URLSearchParams();
+    if (filters?.tag) params.append('tag', filters.tag);
+    if (filters?.category) params.append('category', filters.category);
+    if (filters?.brand) params.append('brand', filters.brand);
+
+    const queryString = params.toString();
+    const url = `${getBaseUrl()}/gears${queryString ? `?${queryString}` : ''}`;
+
+    const res = await fetch(url, { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to list gears');
     return res.json();
   },
@@ -216,7 +226,7 @@ export const dashboardApi = {
 };
 
 // -----------------------------------------------------------------------------
-// User Profile API (New)
+// User Profile API
 // -----------------------------------------------------------------------------
 export interface UserProfile {
   id: string;
@@ -260,15 +270,14 @@ export const profileApi = {
 };
 
 // -----------------------------------------------------------------------------
-// Trip (Packing List) API (Updated)
+// Trip (Packing List) API
 // -----------------------------------------------------------------------------
 
-// 中間テーブル用の型
 export interface TripItem {
   tripId: string;
   itemId: string;
   quantity: number;
-  item: GearItem; // ネストされたアイテム詳細
+  item: GearItem;
 }
 
 export interface Trip {
@@ -278,14 +287,10 @@ export interface Trip {
   location: string;
   startDate: string;
   endDate: string;
-  
-  // ★ 重要: ここが更新されていないとコンパイルエラーになります
   tripItems?: TripItem[];
   items?: GearItem[]; 
-  
   userProfileId?: string;
   userProfile?: UserProfile;
-
   createdAt: string;
   updatedAt: string;
 }
