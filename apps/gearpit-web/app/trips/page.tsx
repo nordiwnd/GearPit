@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { MapPin, Calendar, Trash2, Pencil, Package } from "lucide-react";
 import { toast } from "sonner";
-import Link from "next/link";
 
 import { tripApi, Trip } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -20,7 +19,6 @@ import {
 export default function TripsPage() {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
 
   const fetchTrips = async () => {
     try {
@@ -86,9 +84,11 @@ export default function TripsPage() {
                     key={trip.id} 
                     className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 dark:border-zinc-800 transition-colors"
                   >
-                    {/* 名前をクリック可能なリンクに変更 */}
                     <TableCell className="font-medium text-base dark:text-zinc-200">
-                      <Link href={`/trips/${trip.id}`} className="block w-full h-full hover:underline decoration-dotted underline-offset-4">
+                      <Link 
+                        href={`/trips/${trip.id}`} 
+                        className="block w-full hover:underline decoration-dotted underline-offset-4"
+                      >
                         {trip.name}
                       </Link>
                       {trip.description && <div className="text-xs text-muted-foreground truncate max-w-[200px]">{trip.description}</div>}
@@ -104,7 +104,6 @@ export default function TripsPage() {
                     </TableCell>
                     <TableCell>
                        <Badge variant="outline" className="dark:border-zinc-700 dark:text-zinc-400">
-                          {/* tripItems が存在しない場合にも対応 */}
                           <Package className="h-3 w-3 mr-1" /> {trip.tripItems?.length || 0}
                        </Badge>
                     </TableCell>
