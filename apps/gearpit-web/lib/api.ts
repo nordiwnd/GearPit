@@ -2,11 +2,19 @@
 
 const getBaseUrl = () => {
   if (typeof window !== 'undefined') {
-    return '/api/v1'; // Next.js rewrites to backend
+    return '/api/v1'; // Client-side: Next.js rewrites to backend
   }
-  // Server-side: Try INTERNAL_API_URL (for K8s), then NEXT_PUBLIC_API_URL, then fallback
-  // 修正: INTERNAL_API_URL を優先して使用
-  return process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
+
+  // Server-side: Try INTERNAL_API_URL (for K8s), then NEXT_PUBLIC_API_URL
+  if (process.env.INTERNAL_API_URL) return process.env.INTERNAL_API_URL;
+  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+
+  // Fallback: Use Service name in Production (K8s), Localhost in Development
+  if (process.env.NODE_ENV === 'production') {
+    return 'http://gearpit-app-svc/api/v1';
+  }
+  
+  return 'http://localhost:8080/api/v1';
 };
 
 // -----------------------------------------------------------------------------
@@ -32,8 +40,13 @@ export interface GearItem {
 
 export const gearApi = {
   searchItems: async (query: string): Promise<GearItem[]> => {
-    const res = await fetch(`${getBaseUrl()}/gears?q=${encodeURIComponent(query)}`, { cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to search gears');
+    const url = `${getBaseUrl()}/gears?q=${encodeURIComponent(query)}`;
+    console.log(`[SSR] Fetching: ${url}`); // Debug Log
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) {
+      console.error(`[SSR] Failed to search items: ${res.status} ${res.statusText}`);
+      throw new Error('Failed to search gears');
+    }
     return res.json();
   },
 
@@ -45,9 +58,14 @@ export const gearApi = {
 
     const queryString = params.toString();
     const url = `${getBaseUrl()}/gears${queryString ? `?${queryString}` : ''}`;
+    
+    console.log(`[SSR] Fetching list: ${url}`); // Debug Log
 
     const res = await fetch(url, { cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to list gears');
+    if (!res.ok) {
+        console.error(`[SSR] Failed to list items: ${res.status} ${res.statusText}`);
+        throw new Error('Failed to list gears');
+    }
     return res.json();
   },
 
