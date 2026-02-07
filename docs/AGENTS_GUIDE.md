@@ -6,7 +6,7 @@ You are working on the "GearPit" project.
 ## ⚠️ CRITICAL CONSTRAINTS (MUST FOLLOW)
 
 1. **Target Architecture**: 
-   - STRICTLY **ARM64** (Raspberry Pi 4/5). 
+   - STRICTLY **ARM64** (Raspberry Pi 5). 
    - ALL Docker images MUST be ARM64 compatible (e.g., `postgres:16-alpine`, `node:20-alpine`).
    - NEVER use `amd64` specific binaries or images.
 

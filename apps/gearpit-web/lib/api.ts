@@ -5,16 +5,29 @@ const getBaseUrl = () => {
     return '/api/v1'; // Client-side: Next.js rewrites to backend
   }
 
-  // Server-side: Try INTERNAL_API_URL (for K8s), then NEXT_PUBLIC_API_URL
-  if (process.env.INTERNAL_API_URL) return process.env.INTERNAL_API_URL;
-  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
-
-  // Fallback: Use Service name in Production (K8s), Localhost in Development
-  if (process.env.NODE_ENV === 'production') {
-    return 'http://gearpit-app-svc/api/v1';
+  // Server-side Resolution Strategy:
+  // 1. Explicit Override: INTERNAL_API_URL (Set in K8s Deployment)
+  if (process.env.INTERNAL_API_URL) {
+    // console.log(`[API] Using INTERNAL_API_URL: ${process.env.INTERNAL_API_URL}`);
+    return process.env.INTERNAL_API_URL;
   }
-  
-  return 'http://localhost:8080/api/v1';
+
+  // 2. Public URL Fallback (if applicable for some setups)
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    // console.log(`[API] Using NEXT_PUBLIC_API_URL: ${process.env.NEXT_PUBLIC_API_URL}`);
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+
+  // 3. Local Development Fallback
+  // Only use localhost if explicitly in development mode
+  if (process.env.NODE_ENV === 'development') {
+    return 'http://localhost:8080/api/v1';
+  }
+
+  // 4. Default K8s Service (Production / Staging / PR envs)
+  // If we are in a container but INTERNAL_API_URL wasn't set for some reason,
+  // we default to the service name which is standard across our K8s envs.
+  return 'http://gearpit-app-svc/api/v1';
 };
 
 // -----------------------------------------------------------------------------
@@ -58,13 +71,13 @@ export const gearApi = {
 
     const queryString = params.toString();
     const url = `${getBaseUrl()}/gears${queryString ? `?${queryString}` : ''}`;
-    
+
     console.log(`[SSR] Fetching list: ${url}`); // Debug Log
 
     const res = await fetch(url, { cache: 'no-store' });
     if (!res.ok) {
-        console.error(`[SSR] Failed to list items: ${res.status} ${res.statusText}`);
-        throw new Error('Failed to list gears');
+      console.error(`[SSR] Failed to list items: ${res.status} ${res.statusText}`);
+      throw new Error('Failed to list gears');
     }
     return res.json();
   },
@@ -307,7 +320,7 @@ export interface Trip {
   startDate: string;
   endDate: string;
   tripItems?: TripItem[];
-  items?: GearItem[]; 
+  items?: GearItem[];
   userProfileId?: string;
   userProfile?: UserProfile;
   createdAt: string;

@@ -9,9 +9,9 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/v1/:path*",
-        destination: process.env.INTERNAL_API_URL 
+        destination: process.env.INTERNAL_API_URL
           ? `${process.env.INTERNAL_API_URL}/:path*`
-          : "http://gearpit-app-svc/api/v1/:path*", // K8s Serviceへの内部ルーティング
+          : "http://gearpit-app-svc/api/v1/:path*", // Default to K8s Service
       },
     ];
   },

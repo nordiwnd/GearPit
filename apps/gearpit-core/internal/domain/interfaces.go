@@ -97,7 +97,7 @@ type LoadoutService interface {
 // --- Maintenance ---
 type MaintenanceLog struct {
 	ID          string    `gorm:"type:uuid;default:gen_random_uuid();primaryKey" json:"id"`
-	ItemID      string    `gorm:"not null" json:"itemId"`
+	ItemID      string    `gorm:"type:uuid;not null" json:"itemId"`
 	Date        time.Time `json:"date"`
 	Type        string    `json:"type"` // "cleaning", "repair", "inspection"
 	Description string    `json:"description"`
@@ -157,8 +157,8 @@ type UserProfile struct {
 // --- Trip Item (Join Table with Quantity) ---
 // GORMの中間テーブルモデル
 type TripItem struct {
-	TripID   string `gorm:"primaryKey" json:"tripId"`
-	ItemID   string `gorm:"primaryKey" json:"itemId"`
+	TripID   string `gorm:"type:uuid;primaryKey" json:"tripId"`
+	ItemID   string `gorm:"type:uuid;primaryKey" json:"itemId"`
 	Quantity int    `gorm:"default:1" json:"quantity"`
 
 	// Relationships
@@ -180,7 +180,7 @@ type Trip struct {
 	Location    string    `json:"location"`
 
 	// User Profile Link
-	UserProfileID *string      `json:"userProfileId,omitempty"` // Nullable
+	UserProfileID *string      `gorm:"type:uuid" json:"userProfileId,omitempty"` // Nullable
 	UserProfile   *UserProfile `gorm:"foreignKey:UserProfileID" json:"userProfile,omitempty"`
 
 	// Many-to-Many via Join Table
