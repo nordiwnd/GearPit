@@ -19,7 +19,7 @@ jobs:
       # Verification Script (Cold Start Handling)
       - name: Verify Deployment
         id: verify
-        run: ./ops/scripts/verify-deployment.sh ${{ github.event.number }} pr-${{ github.event.number }}
+        run: ./ops/scripts/verify-deployment.sh ${{ github.event.number }} pr${{ github.event.number }}
 
       # Construct Target URL
       - name: Set Target URL
