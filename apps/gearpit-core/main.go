@@ -68,6 +68,11 @@ func main() {
 		slog.Error("Failed to migrate database", "error", err)
 		os.Exit(1)
 	}
+
+	// 3. Seeding (Optional)
+	if os.Getenv("SEED_ON_STARTUP") == "true" {
+		infrastructure.SeedDB(db)
+	}
 	// Dependency Injection (DI) Setup
 	gearRepo := repository.NewGearRepository(db)
 	gearService := service.NewGearService(gearRepo)

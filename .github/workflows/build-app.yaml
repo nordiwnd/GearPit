@@ -8,10 +8,15 @@ on:
       - ".github/workflows/build-app.yaml"
   pull_request:
     branches: [ "main" ]
-    paths:
-      - "apps/**"
-      - ".github/workflows/build-app.yaml"
+    # paths:
+    #   - "apps/**"
+    #   - ".github/workflows/build-app.yaml"
   workflow_dispatch:
+
+# 1. Concurrency: PRに対する連続プッシュ時に古いビルドをキャンセル
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   REGISTRY: ghcr.io
@@ -22,8 +27,9 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      packages: write
+      contents: write # Manifest更新に必要
+      packages: write # GHCRへのPushに必要
+      # id-token: write # 将来的にOIDCを使うなら必要
     strategy:
       max-parallel: 1
       fail-fast: false
@@ -53,7 +59,8 @@ jobs:
               - '${{ matrix.context }}/**'
 
       - name: Set Full SHA
-        if: steps.changes.outputs.src == 'true'
+        # PRのときは必ず実行、または変更があったら実行
+        if: steps.changes.outputs.src == 'true' || github.event_name == 'pull_request'
         id: vars
         run: echo "sha_full=${{ github.sha }}" >> $GITHUB_OUTPUT
 
@@ -62,27 +69,28 @@ jobs:
         id: pr
         run: echo "num=${{ github.event.number }}" >> $GITHUB_OUTPUT
 
-      # QEMUのセットアップ（ARM64ビルドに必須）
+      # --- Docker Build Setup ---
       - name: Set up QEMU
-        if: steps.changes.outputs.src == 'true'
+        # 2. PRのときは変更検知を無視して必ずセットアップ（キャッシュが効くので時間はかからない）
+        if: steps.changes.outputs.src == 'true' || github.event_name == 'pull_request'
         uses: docker/setup-qemu-action@v3
       
-      # Buildxのセットアップ
       - name: Set up Docker Buildx
-        if: steps.changes.outputs.src == 'true'
+        if: steps.changes.outputs.src == 'true' || github.event_name == 'pull_request'
         uses: docker/setup-buildx-action@v3
       
       - name: Log in to the Container registry
-        if: steps.changes.outputs.src == 'true'
+        if: steps.changes.outputs.src == 'true' || github.event_name == 'pull_request'
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # マルチアーキテクチャビルドを実行
+      # --- Build & Push ---
       - name: Build and push Docker image
-        if: steps.changes.outputs.src == 'true'
+        # PR時は必ず実行して tag:pr-xx を生成する
+        if: steps.changes.outputs.src == 'true' || github.event_name == 'pull_request'
         uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.context }}
@@ -92,10 +100,13 @@ jobs:
             ${{ env.REGISTRY }}/${{ matrix.image }}:latest
             ${{ env.REGISTRY }}/${{ matrix.image }}:${{ steps.vars.outputs.sha_full }}
             ${{ github.event_name == 'pull_request' && format('{0}/{1}:pr-{2}', env.REGISTRY, matrix.image, steps.pr.outputs.num) || '' }}
+          # キャッシュの設定は維持
           cache-from: type=gha,scope=${{ matrix.app }}
           cache-to: type=gha,mode=max,scope=${{ matrix.app }}
 
+      # --- GitOps Update (PRの時は実行しない) ---
       - name: Setup Kustomize
+        # ここは変更があった時のみ、かつPRではない時のみ（mainマージ時）
         if: steps.changes.outputs.src == 'true' && github.event_name != 'pull_request'
         uses: imranismail/setup-kustomize@v2
 
@@ -131,3 +142,40 @@ jobs:
               break
             fi
           done
+
+  e2e-preview:
+    needs: build-and-push
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: [self-hosted, linux, arm64]
+    timeout-minutes: 15
+    steps:
+      - name: Clean Workspace
+        run: |
+          docker run --rm -v $(pwd):/work -w /work alpine sh -c "rm -rf apps/e2e/node_modules apps/e2e/playwright-report apps/e2e/test-results" || true
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Verification Script (Cold Start Handling)
+      - name: Verify Deployment
+        id: verify
+        run: |
+          export KUBECONFIG=/home/$(whoami)/.kube/config
+          ./ops/scripts/verify-deployment.sh ${{ github.event.number }} pr${{ github.event.number }} ${{ github.sha }}
+
+      # Construct Target URL
+      - name: Set Target URL
+        run: echo "TARGET_URL=http://web-pr${{ github.event.number }}.192.168.40.100.nip.io" >> $GITHUB_ENV
+
+      # Run Playwright in Docker
+      - name: Run Playwright Tests
+        run: |
+          docker run --rm --ipc=host --network host \
+            -u $(id -u):$(id -g) \
+            -v $(pwd):/work -w /work/apps/e2e \
+            -v /tmp:/home/pwuser \
+            -e HOME=/home/pwuser \
+            -e BASE_URL=${{ env.TARGET_URL }} \
+            -e CI=true \
+            mcr.microsoft.com/playwright:v1.40.0-jammy \
+            /bin/bash -c "rm -rf node_modules && npm ci && npx playwright test"
