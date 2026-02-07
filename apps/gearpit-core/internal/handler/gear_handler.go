@@ -36,7 +36,7 @@ func (h *GearHandler) CreateItem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Serviceの新しい引数に合わせて呼び出し
-	item, err := h.service.CreateItem(r.Context(), req.Name, req.Description, req.Manufacturer, req.WeightGram, req.WeightType, req.Category, req.Brand)
+	item, err := h.service.CreateItem(r.Context(), req.Name, req.Description, req.Manufacturer, req.WeightGram, domain.WeightType(req.WeightType), req.Category, req.Brand)
 	if err != nil {
 		slog.Error("Failed to create item", "error", err)
 		http.Error(w, "Failed to create item", http.StatusInternalServerError)
@@ -70,7 +70,8 @@ func (h *GearHandler) UpdateItem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Serviceの新しい引数に合わせて呼び出し
-	item, err := h.service.UpdateItem(r.Context(), id, req.Name, req.Description, req.Manufacturer, req.WeightGram, req.WeightType, req.Category, req.Brand)
+	item, err := h.service.UpdateItem(r.Context(), id, req.Name, req.Description, req.Manufacturer, req.WeightGram, domain.WeightType(req.WeightType), req.Category, req.Brand)
+
 	if err != nil {
 		slog.Error("Failed to update item", "error", err)
 		http.Error(w, "Failed to update item", http.StatusInternalServerError)

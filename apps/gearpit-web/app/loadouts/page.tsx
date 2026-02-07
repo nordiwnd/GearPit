@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { toast } from "sonner";
 import { Scale, Package, Trash2, Pencil } from "lucide-react";
 
@@ -19,6 +21,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function LoadoutPage() {
+  const router = useRouter();
   const [loadouts, setLoadouts] = useState<Loadout[]>([]);
   const [selectedLoadout, setSelectedLoadout] = useState<Loadout | null>(null);
 
@@ -79,10 +82,13 @@ export default function LoadoutPage() {
                 loadouts.map((loadout) => (
                   <TableRow
                     key={loadout.id}
-                    className="cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50 dark:border-zinc-800 transition-colors"
-                    onClick={() => setSelectedLoadout(loadout)}
+                    className="group hover:bg-zinc-50 dark:hover:bg-zinc-800/50 dark:border-zinc-800 transition-colors"
                   >
-                    <TableCell className="font-medium text-base dark:text-zinc-200">{loadout.name}</TableCell>
+                    <TableCell className="font-medium text-base dark:text-zinc-200">
+                      <Link href={`/loadouts/${loadout.id}`} className="block w-full h-full hover:underline decoration-zinc-400 underline-offset-4">
+                        {loadout.name}
+                      </Link>
+                    </TableCell>
                     <TableCell><Badge variant="secondary" className="dark:bg-zinc-800 dark:text-zinc-300">{loadout.activityType}</Badge></TableCell>
                     <TableCell>
                       <span className="flex items-center gap-1 text-muted-foreground">
