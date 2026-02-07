@@ -8,4 +8,4 @@ resources:
 images:
 - name: ghcr.io/nordiwnd/gearpit-app
   newName: ghcr.io/nordiwnd/gearpit-app
-  newTag: b5616debc809ec7f1ada7f9421e8fb23825ba124
+  newTag: 989356bc985c8828dc7297f6cadb605de53a1753
