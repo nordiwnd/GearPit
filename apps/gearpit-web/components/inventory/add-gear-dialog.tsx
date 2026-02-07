@@ -26,12 +26,20 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // 修正: weightGram を文字列として定義し、数字のみ許可するバリデーションに変更
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   description: z.string().optional(),
   weightGram: z.string().regex(/^\d*$/, "Weight must be a positive number."),
+  weightType: z.enum(["base", "consumable", "worn"]),
   brand: z.string().optional(),
   category: z.string().optional(),
   tags: z.string().optional(),
@@ -50,6 +58,7 @@ export function AddGearDialog() {
       name: "",
       description: "",
       weightGram: "", // 修正: 初期値を空文字に変更
+      weightType: "base",
       brand: "",
       category: "",
       tags: "",
@@ -62,11 +71,12 @@ export function AddGearDialog() {
       const tagsArray = data.tags ? data.tags.split(",").map((t) => t.trim()) : [];
       // 修正: 送信時に Number() でキャスト
       const weight = data.weightGram ? Number(data.weightGram) : 0;
-      
+
       await gearApi.createItem({
         name: data.name,
         description: data.description || "",
-        weightGram: weight, 
+        weightGram: weight,
+        weightType: data.weightType,
         tags: tagsArray,
         properties: {
           brand: data.brand || "",
@@ -104,7 +114,7 @@ export function AddGearDialog() {
             <FormField
               control={form.control}
               name="name"
-              render={({ field }) => (
+              render={({ field }: { field: any }) => (
                 <FormItem>
                   <FormLabel>Item Name</FormLabel>
                   <FormControl>
@@ -118,7 +128,7 @@ export function AddGearDialog() {
               <FormField
                 control={form.control}
                 name="brand"
-                render={({ field }) => (
+                render={({ field }: { field: any }) => (
                   <FormItem>
                     <FormLabel>Brand</FormLabel>
                     <FormControl>
@@ -131,7 +141,7 @@ export function AddGearDialog() {
               <FormField
                 control={form.control}
                 name="weightGram"
-                render={({ field }) => (
+                render={({ field }: { field: any }) => (
                   <FormItem>
                     <FormLabel>Weight (g)</FormLabel>
                     <FormControl>
@@ -144,8 +154,30 @@ export function AddGearDialog() {
             </div>
             <FormField
               control={form.control}
+              name="weightType"
+              render={({ field }: { field: any }) => (
+                <FormItem>
+                  <FormLabel>Weight Type</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select weight type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="base">Base Weight (Carried)</SelectItem>
+                      <SelectItem value="consumable">Consumable (Food/Water)</SelectItem>
+                      <SelectItem value="worn">Worn (Clothing)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="category"
-              render={({ field }) => (
+              render={({ field }: { field: any }) => (
                 <FormItem>
                   <FormLabel>Category</FormLabel>
                   <FormControl>
@@ -158,7 +190,7 @@ export function AddGearDialog() {
             <FormField
               control={form.control}
               name="tags"
-              render={({ field }) => (
+              render={({ field }: { field: any }) => (
                 <FormItem>
                   <FormLabel>Tags (comma-separated)</FormLabel>
                   <FormControl>

@@ -8,6 +8,11 @@ import (
 )
 
 // --- Existing Gear & Inventory ---
+const (
+	WeightTypeBase       = "base"
+	WeightTypeConsumable = "consumable"
+	WeightTypeWorn       = "worn"
+)
 
 type Item struct {
 	ID           string         `gorm:"type:uuid;default:gen_random_uuid();primaryKey" json:"id"`
@@ -15,6 +20,7 @@ type Item struct {
 	Description  string         `json:"description"`
 	Manufacturer string         `json:"manufacturer"`
 	WeightGram   int            `json:"weightGram"`
+	WeightType   string         `json:"weightType"` // "base", "consumable", "worn"
 	Unit         string         `json:"unit"`       // "g", "kg", "oz"
 	Properties   datatypes.JSON `json:"properties"` // Flexible fields (color, size, category, brand, etc.)
 	CreatedAt    time.Time      `json:"createdAt"`
@@ -31,10 +37,10 @@ type GearRepository interface {
 }
 
 type GearService interface {
-	CreateItem(ctx context.Context, name, description, manufacturer string, weight int, category, brand string) (*Item, error)
+	CreateItem(ctx context.Context, name, description, manufacturer string, weight int, weightType, category, brand string) (*Item, error)
 	GetItem(ctx context.Context, id string) (*Item, error)
 	ListItems(ctx context.Context) ([]Item, error)
-	UpdateItem(ctx context.Context, id, name, description, manufacturer string, weight int, category, brand string) (*Item, error)
+	UpdateItem(ctx context.Context, id, name, description, manufacturer string, weight int, weightType, category, brand string) (*Item, error)
 	DeleteItem(ctx context.Context, id string) error
 	SearchItems(ctx context.Context, query string) ([]Item, error)
 }
@@ -68,14 +74,17 @@ type KitService interface {
 
 // --- Loadout (Template) ---
 type Loadout struct {
-	ID              string    `gorm:"type:uuid;default:gen_random_uuid();primaryKey" json:"id"`
-	Name            string    `gorm:"not null" json:"name"`
-	ActivityType    string    `json:"activityType"` // hiking, camping, climbing
-	Kits            []Kit     `gorm:"many2many:loadout_kits;" json:"kits"`
-	Items           []Item    `gorm:"many2many:loadout_items;" json:"items"`
-	TotalWeightGram int       `json:"totalWeightGram"` // Computed
-	CreatedAt       time.Time `json:"createdAt"`
-	UpdatedAt       time.Time `json:"updatedAt"`
+	ID                   string    `gorm:"type:uuid;default:gen_random_uuid();primaryKey" json:"id"`
+	Name                 string    `gorm:"not null" json:"name"`
+	ActivityType         string    `json:"activityType"` // hiking, camping, climbing
+	Kits                 []Kit     `gorm:"many2many:loadout_kits;" json:"kits"`
+	Items                []Item    `gorm:"many2many:loadout_items;" json:"items"`
+	TotalWeightGram      int       `json:"totalWeightGram"`               // Computed
+	BaseWeightGram       int       `json:"baseWeightGram" gorm:"-"`       // Computed
+	ConsumableWeightGram int       `json:"consumableWeightGram" gorm:"-"` // Computed
+	WornWeightGram       int       `json:"wornWeightGram" gorm:"-"`       // Computed
+	CreatedAt            time.Time `json:"createdAt"`
+	UpdatedAt            time.Time `json:"updatedAt"`
 }
 
 type LoadoutRepository interface {

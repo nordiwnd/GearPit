@@ -65,11 +65,11 @@ export function EditGearDialog({ item, trigger }: EditGearDialogProps) {
     try {
       const tagsArray = data.tags ? data.tags.split(",").map((t) => t.trim()).filter(Boolean) : [];
       const weight = data.weightGram ? Number(data.weightGram) : 0;
-      
+
       await gearApi.updateItem(item.id, {
         name: data.name,
         description: data.description || "",
-        weightGram: weight, 
+        weightGram: weight,
         tags: tagsArray,
         properties: {
           brand: data.brand || "",
@@ -102,24 +102,24 @@ export function EditGearDialog({ item, trigger }: EditGearDialogProps) {
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField control={form.control} name="name" render={({ field }) => (
+            <FormField control={form.control} name="name" render={({ field }: { field: any }) => (
               <FormItem><FormLabel>Item Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
             )} />
             <div className="grid grid-cols-2 gap-4">
-              <FormField control={form.control} name="brand" render={({ field }) => (
+              <FormField control={form.control} name="brand" render={({ field }: { field: any }) => (
                 <FormItem><FormLabel>Brand</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
               )} />
-              <FormField control={form.control} name="weightGram" render={({ field }) => (
+              <FormField control={form.control} name="weightGram" render={({ field }: { field: any }) => (
                 <FormItem><FormLabel>Weight (g)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
             </div>
-            <FormField control={form.control} name="category" render={({ field }) => (
+            <FormField control={form.control} name="category" render={({ field }: { field: any }) => (
               <FormItem><FormLabel>Category</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
             )} />
-            <FormField control={form.control} name="tags" render={({ field }) => (
+            <FormField control={form.control} name="tags" render={({ field }: { field: any }) => (
               <FormItem><FormLabel>Tags (comma-separated)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
             )} />
-            
+
             <div className="flex justify-end pt-4">
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Changes"}

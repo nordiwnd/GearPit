@@ -76,23 +76,11 @@ func (h *LoadoutHandler) GetLoadout(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(toLoadoutResponse(loadout))
 }
 
-// toLoadoutResponse calculates the total weight dynamically.
+// toLoadoutResponse uses domain model which now includes calculated weights.
 func toLoadoutResponse(l *domain.Loadout) LoadoutResponse {
-	totalWeight := 0
-	// 1. Add weights of direct items
-	for _, item := range l.Items {
-		totalWeight += item.WeightGram
-	}
-	// 2. Add weights of items inside kits
-	for _, kit := range l.Kits {
-		for _, item := range kit.Items {
-			totalWeight += item.WeightGram
-		}
-	}
-
 	return LoadoutResponse{
 		Loadout:         l,
-		TotalWeightGram: totalWeight,
+		TotalWeightGram: l.TotalWeightGram,
 	}
 }
 

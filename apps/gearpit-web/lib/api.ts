@@ -39,6 +39,7 @@ export interface GearItem {
   description: string;
   manufacturer: string;
   weightGram: number;
+  weightType?: 'base' | 'consumable' | 'worn';
   unit: string;
   properties?: {
     brand?: string;
@@ -152,6 +153,9 @@ export interface Loadout {
   items?: GearItem[];
   kits?: Kit[];
   totalWeightGram: number;
+  baseWeightGram: number;
+  consumableWeightGram: number;
+  wornWeightGram: number;
   createdAt: string;
   updatedAt: string;
 }

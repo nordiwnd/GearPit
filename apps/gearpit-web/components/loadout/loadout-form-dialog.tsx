@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
-import { gearApi, GearItem, loadoutApi, Loadout } from "@/lib/api"; 
+import { gearApi, GearItem, loadoutApi, Loadout } from "@/lib/api";
 
 const formSchema = z.object({
   name: z.string().min(1, "Loadout name is required"),
@@ -25,7 +25,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface Props {
-  loadoutToEdit?: Loadout; 
+  loadoutToEdit?: Loadout;
   trigger?: React.ReactNode;
   onSuccess?: () => void; // ★追加
 }
@@ -84,7 +84,7 @@ export function LoadoutFormDialog({ loadoutToEdit, trigger, onSuccess }: Props) 
 
       setOpen(false);
       router.refresh();
-      
+
       // ★ここで実行
       if (onSuccess) {
         onSuccess();
@@ -114,10 +114,10 @@ export function LoadoutFormDialog({ loadoutToEdit, trigger, onSuccess }: Props) 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 flex-1 flex flex-col min-h-0">
             <div className="grid grid-cols-2 gap-4">
-              <FormField control={form.control} name="name" render={({ field }) => (
+              <FormField control={form.control} name="name" render={({ field }: { field: any }) => (
                 <FormItem><FormLabel>Name</FormLabel><FormControl><Input placeholder="Ex: Summer Hike 2026" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
-              <FormField control={form.control} name="activityType" render={({ field }) => (
+              <FormField control={form.control} name="activityType" render={({ field }: { field: any }) => (
                 <FormItem><FormLabel>Activity</FormLabel><FormControl><Input placeholder="Ex: Hiking" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
             </div>
@@ -128,10 +128,10 @@ export function LoadoutFormDialog({ loadoutToEdit, trigger, onSuccess }: Props) 
                 <FormField control={form.control} name="selectedItemIds" render={() => (
                   <div className="space-y-2">
                     {gears.map((gear) => (
-                      <FormField key={gear.id} control={form.control} name="selectedItemIds" render={({ field }) => (
+                      <FormField key={gear.id} control={form.control} name="selectedItemIds" render={({ field }: { field: any }) => (
                         <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border bg-white p-3 shadow-sm dark:bg-zinc-950">
                           <FormControl>
-                            <Checkbox checked={field.value?.includes(gear.id)} onCheckedChange={(checked) => checked ? field.onChange([...field.value, gear.id]) : field.onChange(field.value?.filter((v) => v !== gear.id))} />
+                            <Checkbox checked={field.value?.includes(gear.id)} onCheckedChange={(checked) => checked ? field.onChange([...field.value, gear.id]) : field.onChange(field.value?.filter((v: any) => v !== gear.id))} />
                           </FormControl>
                           <div className="space-y-1 leading-none flex-1 flex justify-between">
                             <div>

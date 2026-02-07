@@ -39,12 +39,55 @@ func (s *loadoutService) CreateLoadout(ctx context.Context, name, activityType s
 }
 
 func (s *loadoutService) GetLoadout(ctx context.Context, id string) (*domain.Loadout, error) {
-	// 重量計算などは必要ならここで行う
-	return s.repo.GetByID(ctx, id)
+	loadout, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	s.calculateWeights(loadout)
+	return loadout, nil
+}
+
+func (s *loadoutService) calculateWeights(l *domain.Loadout) {
+	var total, base, consumable, worn int
+
+	countItem := func(item domain.Item) {
+		w := item.WeightGram
+		total += w
+		switch item.WeightType {
+		case domain.WeightTypeConsumable:
+			consumable += w
+		case domain.WeightTypeWorn:
+			worn += w
+		default: // "base" or empty defaults to base
+			base += w
+		}
+	}
+
+	for _, item := range l.Items {
+		countItem(item)
+	}
+
+	for _, kit := range l.Kits {
+		for _, item := range kit.Items {
+			countItem(item)
+		}
+	}
+
+	l.TotalWeightGram = total
+	l.BaseWeightGram = base
+	l.ConsumableWeightGram = consumable
+	l.WornWeightGram = worn
 }
 
 func (s *loadoutService) ListLoadouts(ctx context.Context) ([]domain.Loadout, error) {
-	return s.repo.List(ctx)
+	loadouts, err := s.repo.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for i := range loadouts {
+		s.calculateWeights(&loadouts[i])
+	}
+	return loadouts, nil
 }
 
 func (s *loadoutService) UpdateLoadout(ctx context.Context, id, name, activityType string, kitIds, itemIds []string) (*domain.Loadout, error) {

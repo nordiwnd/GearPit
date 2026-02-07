@@ -16,7 +16,7 @@ func NewGearService(repo domain.GearRepository) domain.GearService {
 	return &gearService{repo: repo}
 }
 
-func (s *gearService) CreateItem(ctx context.Context, name, description, manufacturer string, weight int, category, brand string) (*domain.Item, error) {
+func (s *gearService) CreateItem(ctx context.Context, name, description, manufacturer string, weight int, weightType, category, brand string) (*domain.Item, error) {
 	// プロパティをJSONとして構築
 	props := map[string]string{
 		"category": category,
@@ -29,6 +29,7 @@ func (s *gearService) CreateItem(ctx context.Context, name, description, manufac
 		Description:  description,
 		Manufacturer: manufacturer,
 		WeightGram:   weight,
+		WeightType:   weightType,
 		Properties:   datatypes.JSON(propsJSON),
 	}
 
@@ -46,7 +47,7 @@ func (s *gearService) ListItems(ctx context.Context) ([]domain.Item, error) {
 	return s.repo.List(ctx)
 }
 
-func (s *gearService) UpdateItem(ctx context.Context, id, name, description, manufacturer string, weight int, category, brand string) (*domain.Item, error) {
+func (s *gearService) UpdateItem(ctx context.Context, id, name, description, manufacturer string, weight int, weightType, category, brand string) (*domain.Item, error) {
 	item, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -63,6 +64,7 @@ func (s *gearService) UpdateItem(ctx context.Context, id, name, description, man
 	item.Description = description
 	item.Manufacturer = manufacturer
 	item.WeightGram = weight
+	item.WeightType = weightType
 	item.Properties = datatypes.JSON(propsJSON)
 
 	if err := s.repo.Update(ctx, item); err != nil {
