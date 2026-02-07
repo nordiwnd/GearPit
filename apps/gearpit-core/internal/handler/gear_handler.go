@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -36,6 +37,7 @@ func (h *GearHandler) CreateItem(w http.ResponseWriter, r *http.Request) {
 	// Serviceの新しい引数に合わせて呼び出し
 	item, err := h.service.CreateItem(r.Context(), req.Name, req.Description, req.Manufacturer, req.WeightGram, req.Category, req.Brand)
 	if err != nil {
+		slog.Error("Failed to create item", "error", err)
 		http.Error(w, "Failed to create item", http.StatusInternalServerError)
 		return
 	}
@@ -49,6 +51,7 @@ func (h *GearHandler) SearchItems(w http.ResponseWriter, r *http.Request) {
 	// GearFilterを使わず、単純なクエリ文字列検索に変更
 	items, err := h.service.SearchItems(r.Context(), query)
 	if err != nil {
+		slog.Error("Failed to search items", "error", err)
 		http.Error(w, "Failed to search items", http.StatusInternalServerError)
 		return
 	}
@@ -68,6 +71,7 @@ func (h *GearHandler) UpdateItem(w http.ResponseWriter, r *http.Request) {
 	// Serviceの新しい引数に合わせて呼び出し
 	item, err := h.service.UpdateItem(r.Context(), id, req.Name, req.Description, req.Manufacturer, req.WeightGram, req.Category, req.Brand)
 	if err != nil {
+		slog.Error("Failed to update item", "error", err)
 		http.Error(w, "Failed to update item", http.StatusInternalServerError)
 		return
 	}
@@ -79,6 +83,7 @@ func (h *GearHandler) UpdateItem(w http.ResponseWriter, r *http.Request) {
 func (h *GearHandler) DeleteItem(w http.ResponseWriter, r *http.Request) {
 	id := strings.TrimPrefix(r.URL.Path, "/api/v1/gears/")
 	if err := h.service.DeleteItem(r.Context(), id); err != nil {
+		slog.Error("Failed to delete item", "error", err)
 		http.Error(w, "Failed to delete item", http.StatusInternalServerError)
 		return
 	}

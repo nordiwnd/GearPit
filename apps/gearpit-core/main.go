@@ -55,7 +55,8 @@ func main() {
 	}
 
 	// 2. Migration (Now db is defined)
-	db.AutoMigrate(
+	// 2. Migration (Now db is defined)
+	if err := db.AutoMigrate(
 		&domain.Item{},
 		&domain.Kit{},
 		&domain.Loadout{},
@@ -63,7 +64,10 @@ func main() {
 		&domain.Trip{},
 		&domain.TripItem{},
 		&domain.UserProfile{},
-	)
+	); err != nil {
+		slog.Error("Failed to migrate database", "error", err)
+		os.Exit(1)
+	}
 	// Dependency Injection (DI) Setup
 	gearRepo := repository.NewGearRepository(db)
 	gearService := service.NewGearService(gearRepo)
