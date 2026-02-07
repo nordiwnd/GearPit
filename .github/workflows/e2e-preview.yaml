@@ -21,7 +21,7 @@ jobs:
         id: verify
         run: |
           export KUBECONFIG=/home/$(whoami)/.kube/config
-          ./ops/scripts/verify-deployment.sh ${{ github.event.number }} pr${{ github.event.number }}
+          ./ops/scripts/verify-deployment.sh ${{ github.event.number }} pr${{ github.event.number }} ${{ github.sha }}
 
       # Construct Target URL
       - name: Set Target URL
@@ -35,4 +35,4 @@ jobs:
             -e BASE_URL=${{ env.TARGET_URL }} \
             -e CI=true \
             mcr.microsoft.com/playwright:v1.40.0-jammy \
-            /bin/bash -c "npm install && npx playwright test"
+            /bin/bash -c "rm -rf node_modules && npm ci && npx playwright test"

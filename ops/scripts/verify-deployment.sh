@@ -3,17 +3,17 @@ set -e
 
 PR_NUMBER=$1
 NAMESPACE=$2
+EXPECTED_SHA=$3
 TARGET_URL="http://web-pr${PR_NUMBER}.192.168.40.100.nip.io"
-EXPECTED_TAG="pr-${PR_NUMBER}"
 
-if [ -z "$PR_NUMBER" ] || [ -z "$NAMESPACE" ]; then
-  echo "Usage: $0 <PR_NUMBER> <NAMESPACE>"
+if [ -z "$PR_NUMBER" ] || [ -z "$NAMESPACE" ] || [ -z "$EXPECTED_SHA" ]; then
+  echo "Usage: $0 <PR_NUMBER> <NAMESPACE> <EXPECTED_SHA>"
   exit 1
 fi
 
 echo "Starting deployment verification for PR #$PR_NUMBER in namespace $NAMESPACE..."
 echo "Target URL: $TARGET_URL"
-echo "Expected Tag: $EXPECTED_TAG"
+echo "Expected SHA Match: $EXPECTED_SHA"
 
 # 1. Wait for Deployment Existence (Cold Start handling)
 echo "Waiting for deployment 'gearpit-web' to exist..."
@@ -37,16 +37,17 @@ while true; do
   sleep 5
 done
 
-# 2. Image Tag Verification
-echo "Verifying image tag..."
+# 2. Image Tag Verification (SHA Check)
+echo "Verifying image tag contains SHA: $EXPECTED_SHA ..."
 START_TIME=$(date +%s)
 TIMEOUT=300
 
 while true; do
   CURRENT_IMAGE=$(kubectl get deployment gearpit-web -n "$NAMESPACE" -o jsonpath='{.spec.template.spec.containers[0].image}')
   
-  if [[ "$CURRENT_IMAGE" == *"$EXPECTED_TAG"* ]]; then
-    echo "Image tag matched: $CURRENT_IMAGE"
+  # Check if image contains the SHA (handles both 'sha-<SHA>' and just '<SHA>' formats if present)
+  if [[ "$CURRENT_IMAGE" == *"$EXPECTED_SHA"* ]]; then
+    echo "Image tag matched SHA: $CURRENT_IMAGE"
     break
   fi
   
@@ -54,12 +55,14 @@ while true; do
   ELAPSED=$((CURRENT_TIME - START_TIME))
   
   if [ "$ELAPSED" -gt "$TIMEOUT" ]; then
-    echo "Timeout waiting for image update. Current: $CURRENT_IMAGE, Expected: *$EXPECTED_TAG*"
+    echo "Timeout waiting for image update."
+    echo "Current Image: $CURRENT_IMAGE"
+    echo "Expected SHA in Tag: $EXPECTED_SHA"
     exit 1
   fi
   
   echo "Waiting for image update... (Current: $CURRENT_IMAGE)"
-  sleep 10
+  sleep 5
 done
 
 # 3. Rollout Status
@@ -72,8 +75,10 @@ START_TIME=$(date +%s)
 TIMEOUT=300
 
 while true; do
-  if curl -s -o /dev/null -w "%{http_code}" "$TARGET_URL" | grep -q "200"; then
-    echo "Health check passed!"
+  HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$TARGET_URL")
+  
+  if [ "$HTTP_STATUS" -eq 200 ]; then
+    echo "Health check passed: HTTP 200"
     break
   fi
   
@@ -81,12 +86,13 @@ while true; do
   ELAPSED=$((CURRENT_TIME - START_TIME))
   
   if [ "$ELAPSED" -gt "$TIMEOUT" ]; then
-    echo "Timeout waiting for health check."
+    echo "Timeout waiting for health check (HTTP 200)."
+    echo "Last Status: $HTTP_STATUS"
     exit 1
   fi
   
-  echo "Waiting for HTTP 200..."
+  echo "Waiting for HTTP 200... (Current: $HTTP_STATUS)"
   sleep 5
 done
 
-echo "Verification successful!"
+echo "Deployment verification successful!"
