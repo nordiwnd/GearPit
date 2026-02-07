@@ -5,7 +5,7 @@ PR_NUMBER=$1
 NAMESPACE=$2
 # $3 (SHA) is accepted but ignored in this logic as we force restart to pull latest image
 TARGET_URL="http://web-pr${PR_NUMBER}.192.168.40.100.nip.io"
-APPS=("gearpit-core" "gearpit-web")
+APPS=("gearpit-app" "gearpit-web")
 
 if [ -z "$PR_NUMBER" ] || [ -z "$NAMESPACE" ]; then
   echo "Usage: $0 <PR_NUMBER> <NAMESPACE> [EXPECTED_SHA]"
