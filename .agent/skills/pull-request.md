@@ -11,7 +11,7 @@ Focus: Monitoring GitHub Actions and fixing regressions.
 
 ## 3. Triage (If CI Fails)
 - **Do NOT** run local tests blindly.
-- Reference Skill: `ci-triage` (Analyze logs for ARM64 specific issues or Race Conditions).
+- Analyze logs for ARM64 specific issues or Race Conditions.
 - Propose fixes to be applied in `feature-dev` workflow.
 
 ## 4. Merge Ready

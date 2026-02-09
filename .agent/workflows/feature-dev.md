@@ -22,7 +22,9 @@ This workflow guides the development of a new feature from local coding to CI/CD
     - Ensure ARM64 compatibility for any new dependencies.
 
 3.  **Local Verification:**
-    - **Unit Tests:** Run `go test ./...` (Backend) or `npm run test` (Frontend).
+    - **Backend:** See `.agent/skills/test-backend.md`.
+    - **Frontend:** See `.agent/skills/test-frontend.md`.
+    - **E2E:** See `.agent/skills/test-e2e.md`.
     - **Docker Build:** Verify `docker build --platform linux/arm64 .` succeeds.
     - **Local Run:** Ensure `docker-compose up` works strictly.
 

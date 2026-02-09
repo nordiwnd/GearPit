@@ -7,11 +7,14 @@ Description: Executes Go backend tests ensuring Clean Architecture compliance.
 
 ## Commands (Local)
 ```bash
+# Navigate to core
+cd apps/gearpit-core
+
 # Run all unit tests with race detection (Crucial for Go)
-go test -race ./apps/gearpit-core/...
+go test -race ./...
 
 # Run specific package test
-go test -v ./apps/gearpit-core/internal/service/...
+go test -v ./internal/service/...
 ```
 
 ## Verification Criteria
