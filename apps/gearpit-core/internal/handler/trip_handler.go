@@ -47,7 +47,13 @@ func (h *TripHandler) CreateTrip(w http.ResponseWriter, r *http.Request) {
 	start, _ := time.Parse("2006-01-02", req.StartDate)
 	end, _ := time.Parse("2006-01-02", req.EndDate)
 
-	trip, err := h.service.CreateTrip(r.Context(), req.Name, req.Description, req.Location, start, end, req.UserProfileID)
+	durationDays := int(end.Sub(start).Hours() / 24)
+	if durationDays < 1 {
+		durationDays = 1
+	}
+
+	trip, err := h.service.CreateTrip(r.Context(), req.Name, req.Description, req.Location, start, end, req.UserProfileID, durationDays)
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -76,6 +82,31 @@ func (h *TripHandler) GetTrip(w http.ResponseWriter, r *http.Request) {
 	trip, err := h.service.GetTrip(r.Context(), id)
 	if err != nil {
 		http.Error(w, "Trip not found", http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(trip)
+}
+
+func (h *TripHandler) UpdateTrip(w http.ResponseWriter, r *http.Request) {
+	id := strings.TrimPrefix(r.URL.Path, "/api/v1/trips/")
+	var req TripRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid payload", http.StatusBadRequest)
+		return
+	}
+
+	start, _ := time.Parse("2006-01-02", req.StartDate)
+	end, _ := time.Parse("2006-01-02", req.EndDate)
+
+	durationDays := int(end.Sub(start).Hours() / 24)
+	if durationDays < 1 {
+		durationDays = 1
+	}
+
+	trip, err := h.service.UpdateTrip(r.Context(), id, req.Name, req.Description, req.Location, start, end, req.UserProfileID, durationDays)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -145,4 +176,15 @@ func (h *TripHandler) HandleTripItems(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
+}
+
+func (h *TripHandler) CompleteTrip(w http.ResponseWriter, r *http.Request) {
+	id := strings.TrimPrefix(r.URL.Path, "/api/v1/trips/")
+	id = strings.TrimSuffix(id, "/complete")
+
+	if err := h.service.CompleteTrip(r.Context(), id); err != nil {
+		http.Error(w, "Failed to complete trip: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }

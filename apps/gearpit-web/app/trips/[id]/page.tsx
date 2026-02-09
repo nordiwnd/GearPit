@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
-import { 
+import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend
 } from "recharts";
 import { MapPin, Calendar, ArrowLeft, Package, Trash2, Plus, Minus, User } from "lucide-react";
@@ -60,12 +60,24 @@ export default function TripDetailPage() {
     }
   };
 
+  const handleCompleteTrip = async () => {
+    if (!confirm("Are you sure you want to complete this trip? This will increase the usage count for all packed items.")) return;
+    try {
+      const res = await fetch(`/api/v1/trips/${id}/complete`, { method: 'POST' });
+      if (!res.ok) throw new Error("Failed to complete trip");
+      toast.success("Trip completed! Gear usage updated.");
+      fetchTrip();
+    } catch (error) {
+      toast.error("Failed to complete trip");
+    }
+  };
+
   const stats = useMemo(() => {
     if (!trip || !trip.tripItems) return null;
-    
+
     const totalWeight = trip.tripItems.reduce((sum, ti) => sum + (ti.item.weightGram * ti.quantity), 0);
     const totalItems = trip.tripItems.reduce((sum, ti) => sum + ti.quantity, 0);
-    
+
     const categoryMap = new Map<string, number>();
     trip.tripItems.forEach(ti => {
       const cat = ti.item.properties?.category || "Uncategorized";
@@ -97,25 +109,32 @@ export default function TripDetailPage() {
                 <div className="flex items-center"><Calendar className="mr-1 h-4 w-4" /> {format(parseISO(trip.startDate), "yyyy/MM/dd")} - {format(parseISO(trip.endDate), "yyyy/MM/dd")}</div>
                 {trip.location && <div className="flex items-center"><MapPin className="mr-1 h-4 w-4" /> {trip.location}</div>}
               </div>
-              
+
               {trip.userProfile && (
                 <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-full w-fit">
-                    <User className="h-4 w-4" />
-                    <span className="font-medium">{trip.userProfile.name}</span>
-                    <span className="text-zinc-400">|</span>
-                    <span>{trip.userProfile.heightCm}cm / {trip.userProfile.weightKg}kg</span>
+                  <User className="h-4 w-4" />
+                  <span className="font-medium">{trip.userProfile.name}</span>
+                  <span className="text-zinc-400">|</span>
+                  <span>{trip.userProfile.heightCm}cm / {trip.userProfile.weightKg}kg</span>
                 </div>
               )}
 
               {trip.description && <p className="mt-4 text-zinc-600 dark:text-zinc-400 max-w-2xl">{trip.description}</p>}
             </div>
-            
+
             <div className="flex gap-2">
+              <Button
+                onClick={handleCompleteTrip}
+                className="dark:bg-green-600 dark:hover:bg-green-700 bg-green-600 hover:bg-green-700 text-white"
+                disabled={trip.status === 'completed'}
+              >
+                {trip.status === 'completed' ? "Completed" : "Complete Trip"}
+              </Button>
               <AddLoadoutToTripDialog tripId={trip.id} onSuccess={fetchTrip} />
-              <AddGearToTripDialog 
-                tripId={trip.id} 
-                currentItems={trip.tripItems?.map(ti => ti.item) || []} 
-                onSuccess={fetchTrip} 
+              <AddGearToTripDialog
+                tripId={trip.id}
+                currentItems={trip.tripItems?.map(ti => ti.item) || []}
+                onSuccess={fetchTrip}
               />
             </div>
           </div>
@@ -152,17 +171,17 @@ export default function TripDetailPage() {
                       outerRadius={70}
                       paddingAngle={4}
                       dataKey="value"
-                      stroke="none" 
+                      stroke="none"
                     >
                       {stats.pieData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <RechartsTooltip 
-                        formatter={(value: any) => `${value}g`} 
-                        contentStyle={{ backgroundColor: 'var(--background)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
+                    <RechartsTooltip
+                      formatter={(value: any) => `${value}g`}
+                      contentStyle={{ backgroundColor: 'var(--background)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
                     />
-                    <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{fontSize: '12px'}} />
+                    <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
                   </PieChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -193,20 +212,20 @@ export default function TripDetailPage() {
                   trip.tripItems.map((ti) => (
                     <TableRow key={ti.itemId} className="group dark:border-zinc-800">
                       <TableCell className="font-medium">
-                        <EditGearDialog 
-                          item={ti.item} 
+                        <EditGearDialog
+                          item={ti.item}
                           trigger={
                             <div className="cursor-pointer hover:underline decoration-dotted underline-offset-4 flex items-center gap-2 dark:text-zinc-200">
                               {ti.item.name}
                               <span className="text-xs text-muted-foreground font-normal">{ti.item.properties?.brand}</span>
                             </div>
-                          } 
+                          }
                         />
                       </TableCell>
                       <TableCell>
                         <Badge variant="secondary" className="font-normal text-xs dark:bg-zinc-800 dark:text-zinc-300">{ti.item.properties?.category || "Other"}</Badge>
                       </TableCell>
-                      
+
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-1">
                           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleQuantityChange(ti.itemId, ti.quantity, -1)}>
@@ -223,11 +242,11 @@ export default function TripDetailPage() {
                         {ti.item.weightGram * ti.quantity}g
                         {ti.quantity > 1 && <div className="text-[10px] text-muted-foreground">({ti.item.weightGram}g ea)</div>}
                       </TableCell>
-                      
+
                       <TableCell>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           className="h-8 w-8 text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                           onClick={() => handleRemoveItem(ti.itemId)}
                         >
@@ -239,7 +258,7 @@ export default function TripDetailPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
-                      No items in this trip yet. <br/>
+                      No items in this trip yet. <br />
                       Click "Add Gear" to build your packing list.
                     </TableCell>
                   </TableRow>

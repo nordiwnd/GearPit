@@ -19,13 +19,15 @@ func NewGearHandler(s domain.GearService) *GearHandler {
 
 // リクエスト用の構造体を定義
 type CreateItemRequest struct {
-	Name         string `json:"name"`
-	Description  string `json:"description"`
-	Manufacturer string `json:"manufacturer"`
-	WeightGram   int    `json:"weightGram"`
-	WeightType   string `json:"weightType"`
-	Category     string `json:"category"`
-	Brand        string `json:"brand"`
+	Name                string `json:"name"`
+	Description         string `json:"description"`
+	Manufacturer        string `json:"manufacturer"`
+	WeightGram          int    `json:"weightGram"`
+	WeightType          string `json:"weightType"`
+	Category            string `json:"category"`
+	Brand               string `json:"brand"`
+	UsageCount          int    `json:"usageCount"`
+	MaintenanceInterval int    `json:"maintenanceInterval"`
 }
 
 func (h *GearHandler) CreateItem(w http.ResponseWriter, r *http.Request) {
@@ -36,7 +38,7 @@ func (h *GearHandler) CreateItem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Serviceの新しい引数に合わせて呼び出し
-	item, err := h.service.CreateItem(r.Context(), req.Name, req.Description, req.Manufacturer, req.WeightGram, domain.WeightType(req.WeightType), req.Category, req.Brand)
+	item, err := h.service.CreateItem(r.Context(), req.Name, req.Description, req.Manufacturer, req.WeightGram, domain.WeightType(req.WeightType), req.Category, req.Brand, req.UsageCount, req.MaintenanceInterval)
 	if err != nil {
 		slog.Error("Failed to create item", "error", err)
 		http.Error(w, "Failed to create item", http.StatusInternalServerError)
@@ -70,7 +72,7 @@ func (h *GearHandler) UpdateItem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Serviceの新しい引数に合わせて呼び出し
-	item, err := h.service.UpdateItem(r.Context(), id, req.Name, req.Description, req.Manufacturer, req.WeightGram, domain.WeightType(req.WeightType), req.Category, req.Brand)
+	item, err := h.service.UpdateItem(r.Context(), id, req.Name, req.Description, req.Manufacturer, req.WeightGram, domain.WeightType(req.WeightType), req.Category, req.Brand, req.UsageCount, req.MaintenanceInterval)
 
 	if err != nil {
 		slog.Error("Failed to update item", "error", err)

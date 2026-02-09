@@ -48,6 +48,8 @@ export interface GearItem {
     [key: string]: any;
   };
   tags?: string[];
+  usageCount: number;
+  maintenanceInterval: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -323,6 +325,8 @@ export interface Trip {
   location: string;
   startDate: string;
   endDate: string;
+  status: string;
+  durationDays: number;
   tripItems?: TripItem[];
   items?: GearItem[];
   userProfileId?: string;

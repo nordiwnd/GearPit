@@ -34,13 +34,15 @@ const formSchema = z.object({
   brand: z.string().optional(),
   category: z.string().optional(),
   tags: z.string().optional(),
+  usageCount: z.string().regex(/^\d*$/, "Usage count must be a number.").optional(),
+  maintenanceInterval: z.string().regex(/^\d*$/, "Interval must be a number.").optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 interface EditGearDialogProps {
   item: GearItem;
-  trigger?: React.ReactNode; // 追加: トリガーを外部から渡せるようにする
+  trigger?: React.ReactNode;
 }
 
 export function EditGearDialog({ item, trigger }: EditGearDialogProps) {
@@ -57,6 +59,8 @@ export function EditGearDialog({ item, trigger }: EditGearDialogProps) {
       brand: item.properties?.brand || "",
       category: item.properties?.category || "",
       tags: item.tags?.join(", ") || "",
+      usageCount: item.usageCount?.toString() || "0",
+      maintenanceInterval: item.maintenanceInterval?.toString() || "0",
     },
   });
 
@@ -65,12 +69,16 @@ export function EditGearDialog({ item, trigger }: EditGearDialogProps) {
     try {
       const tagsArray = data.tags ? data.tags.split(",").map((t) => t.trim()).filter(Boolean) : [];
       const weight = data.weightGram ? Number(data.weightGram) : 0;
+      const usage = data.usageCount ? Number(data.usageCount) : 0;
+      const interval = data.maintenanceInterval ? Number(data.maintenanceInterval) : 0;
 
       await gearApi.updateItem(item.id, {
         name: data.name,
         description: data.description || "",
         weightGram: weight,
         tags: tagsArray,
+        usageCount: usage,
+        maintenanceInterval: interval,
         properties: {
           brand: data.brand || "",
           category: data.category || "",
@@ -113,6 +121,16 @@ export function EditGearDialog({ item, trigger }: EditGearDialogProps) {
                 <FormItem><FormLabel>Weight (g)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField control={form.control} name="maintenanceInterval" render={({ field }: { field: any }) => (
+                <FormItem><FormLabel>Maint. Interval</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name="usageCount" render={({ field }: { field: any }) => (
+                <FormItem><FormLabel>Usage</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+            </div>
+
             <FormField control={form.control} name="category" render={({ field }: { field: any }) => (
               <FormItem><FormLabel>Category</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
             )} />

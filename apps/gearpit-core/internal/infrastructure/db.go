@@ -27,6 +27,9 @@ func InitDB(dsn string) (*gorm.DB, error) {
 		&domain.Kit{},
 		&domain.Loadout{},
 		&domain.MaintenanceLog{},
+		&domain.UserProfile{},
+		&domain.Trip{},
+		&domain.TripItem{},
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to run auto migrate: %w", err)

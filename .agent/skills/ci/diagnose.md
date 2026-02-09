@@ -1,46 +1,50 @@
 ---
 name: diagnose_ci_failure
-description: Monitors GitHub Actions, identifies specific failure jobs (like e2e-preview), and extracts relevant logs.
-tags: [ci, github-actions, debugging]
+description: Deeply investigates CI failures by correlating GitHub Action logs with K8s Cluster state and Remote Connectivity.
+tags: [ci, k8s, debugging, playwright, github-actions, debugging]
 usage_patterns:
-  - "Check why the build failed"
-  - "Get logs for e2e-preview"
-  - "Monitor CI status"
+  - "Why did the preview build fail?"
+  - "Diagnose e2e-preview failure"
 ---
 
-# Skill: Diagnose CI Failure
+# Skill: Diagnose CI Failure (Deep Dive)
 
 ## Context
-Use this skill to autonomously monitor the `build-app.yaml` pipeline and extract logs if it fails.
-This is critical for debugging the Self-Hosted ARM64 runner issues.
+When the `build-app.yaml` pipeline fails, standard logs are often insufficient.
+Use this skill to determine if the failure is **Code-related** (Logic) or **Infrastructure-related** (Timeouts, OOM, Network).
 
-## 1. Monitor Pipeline
+## 1. Identify Failed Step
 ```bash
-# Watch the latest run for the current branch
-gh run watch
-```
-
-## 2. Identify & Fetch Failure Logs (If Failed)
-If the pipeline fails, execute this sequence to pinpoint the error without drowning in logs.
-
-```bash
-# A. Get the Run ID of the latest run
+# Get the Run ID and find the failed job
 RUN_ID=$(gh run list --limit 1 --json databaseId --jq '.[0].databaseId')
-
-# B. Find the specific failed job (specifically looking for 'e2e-preview' or 'build-and-push')
-# This extracts the Job ID of the failed step
 JOB_ID=$(gh run view $RUN_ID --json jobs --jq '.jobs[] | select(.conclusion=="failure") | .databaseId')
-
-# C. Fetch logs ONLY for that specific job
-if [ -n "$JOB_ID" ]; then
-  echo "Fetching logs for Job ID: $JOB_ID"
-  gh run view --job $JOB_ID --log
-else
-  echo "Pipeline failed but could not identify specific job ID. Fetching run summary."
-  gh run view $RUN_ID
-fi
+gh run view --job $JOB_ID --log
 ```
 
-## 3. Analysis Strategy
-- Infrastructure: Look for "Pod Pending", "Context Deadline Exceeded" (K3s/ARM64 issues).
-- Application: Look for Playwright timeouts or assertion errors.
+## 2. Infrastructure Health Check (CRITICAL)
+If the failure happened in e2e-preview, DO NOT assume the code is broken. The Preview environment might be unstable. Execute these commands immediately to verify the cluster state:
+```bash
+# 0. Check existing preview namespaces
+# The largest number is the most recent pr[number]
+kubectl get ns | grep "pr"
+
+# 1. Check if Pods are actually running (Look for CrashLoopBackOff or Pending)
+# Replace [number] with the actual PR number if known, or check all namespaces
+kubectl get pods -A | grep "pr[number]"
+
+# 2. Check Backend Logs for 500 Errors or Panics
+# (Assuming namespace is pr[number])
+kubectl logs -l app=gearpit-app -n pr[number] --tail=50
+
+# 3. Check Frontend Logs for Errors
+# (Assuming namespace is pr[number])
+kubectl logs -l app=gearpit-web -n pr[number] --tail=50
+```
+## 3. Remote Reproduction (The "Truth" Test)
+Before fixing any code, try to reproduce the error from your local environment against the remote preview. This isolates whether the issue is the test code or the CI runner.
+
+```bash
+# 1. Construct Preview URL (e.g., https://web-pr[number].192.168.40.100.nip.io)
+# 2. Run Playwright against the Remote URL
+BASE_URL="https://web-pr[number].192.168.40.100.nip.io" npx playwright test
+```

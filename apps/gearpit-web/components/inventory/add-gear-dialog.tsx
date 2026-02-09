@@ -43,6 +43,8 @@ const formSchema = z.object({
   brand: z.string().optional(),
   category: z.string().optional(),
   tags: z.string().optional(),
+  usageCount: z.string().regex(/^\d*$/, "Usage count must be a number.").optional(),
+  maintenanceInterval: z.string().regex(/^\d*$/, "Interval must be a number.").optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -57,11 +59,13 @@ export function AddGearDialog() {
     defaultValues: {
       name: "",
       description: "",
-      weightGram: "", // 修正: 初期値を空文字に変更
+      weightGram: "",
       weightType: "base",
       brand: "",
       category: "",
       tags: "",
+      usageCount: "0",
+      maintenanceInterval: "0",
     },
   });
 
@@ -69,8 +73,9 @@ export function AddGearDialog() {
     setIsSubmitting(true);
     try {
       const tagsArray = data.tags ? data.tags.split(",").map((t) => t.trim()) : [];
-      // 修正: 送信時に Number() でキャスト
       const weight = data.weightGram ? Number(data.weightGram) : 0;
+      const usage = data.usageCount ? Number(data.usageCount) : 0;
+      const interval = data.maintenanceInterval ? Number(data.maintenanceInterval) : 0;
 
       await gearApi.createItem({
         name: data.name,
@@ -78,6 +83,8 @@ export function AddGearDialog() {
         weightGram: weight,
         weightType: data.weightType,
         tags: tagsArray,
+        usageCount: usage,
+        maintenanceInterval: interval,
         properties: {
           brand: data.brand || "",
           category: data.category || "",
@@ -152,6 +159,36 @@ export function AddGearDialog() {
                 )}
               />
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="maintenanceInterval"
+                render={({ field }: { field: any }) => (
+                  <FormItem>
+                    <FormLabel>Maint. Interval (Trips)</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="0 = infinite" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="usageCount"
+                render={({ field }: { field: any }) => (
+                  <FormItem>
+                    <FormLabel>Current Usage</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="0" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <FormField
               control={form.control}
               name="weightType"

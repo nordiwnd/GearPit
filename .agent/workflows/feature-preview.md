@@ -4,40 +4,47 @@ description: Manages the lifecycle of a Pull Request, from creation to CI checks
 
 ---
 name: feature_preview_flow
-description: Autonomously manages Pull Requests, monitors CI pipelines (including Self-Hosted E2E), and verifies deployments.
-trigger: "After pushing code in feature-dev workflow, or user requests deployment status."
+description: Manages the feedback loop between Local Code and Remote Preview. Prioritizes infrastructure verification over blind code fixes.
+trigger: "After pushing code in feature-dev workflow, or when CI reports failure."
 ---
 
-# Workflow: Feature Preview & CI Loop
+# Workflow: Feature Preview & Remote Debugging
 
-This workflow manages the "Loop 2" (Remote Validation), bridging the gap between GitHub Actions cloud runners and the on-premise Raspberry Pi cluster.
+This workflow governs the "Loop 2" (Remote Validation).
+**Prime Directive:** Never commit a "fix" for a Preview failure without first verifying the failure locally against the remote URL.
 
-## 1. Pull Request Management
-- [ ] **Check Existing:** Check if a PR exists for the current branch.
-  - `gh pr list --head [branch-name]`
-- [ ] **Create PR:** If no PR exists, create one autonomously.
-  - `gh pr create --title "feat: [description]" --body "Automated PR for feature verification."`
+## 1. Pull Request & CI Monitoring
+- [ ] **Ensure PR:** `gh pr list --head [branch]` -> `gh pr create` if missing.
+- [ ] **Watch Pipeline:** Run `gh run watch`.
 
-## 2. CI Pipeline Monitoring
-The pipeline `build-app.yaml` consists of two phases:
-1. **Cloud Phase:** Build & Push (Ubuntu).
-2. **On-Prem Phase:** E2E Preview (Raspberry Pi/Self-Hosted).
+## 2. Analyze Outcome (The Fork in the Road)
 
-- [ ] **Exec:** Run Skill `diagnose_ci_failure` (YAML: `skills/ci/diagnose.md`) to watch the build.
-- [ ] **Analyze Outcome:**
-  - **🟢 PASS:** Proceed to Step 3.
-  - **🔴 FAIL (Cloud/Build):** Fix code syntax or Dockerfile in `feature-dev` workflow.
-  - **🔴 FAIL (E2E/On-Prem):** The failure occurred on the physical cluster.
-    - **Action:** IMMEDIATELY run Skill `debug_k8s_cluster` to check for Pod/Node issues (Pending, CrashLoop, OOM).
+### 🟢 CASE A: Pipeline PASS
+- [ ] **Manual Check:** `curl -I [PREVIEW_URL]` to confirm availability.
+- [ ] **Report:** "Preview is live and verified."
 
-## 3. Post-Deployment Verification
-*Trigger: Pipeline is GREEN.*
+### 🔴 CASE B: Cloud Phase FAIL (Build/Push)
+- **Scope:** Syntax errors, Dockerfile issues, Unit Tests.
+- **Action:** Fix code immediately in `feature-dev`. This is a pure code issue.
 
-- [ ] **Locate URL:** Extract URL (Format: `http://web-pr[NUM].192.168.40.100.nip.io`).
-- [ ] **Health Check:**
-  - `curl -I [PREVIEW_URL]`
-- [ ] **Manual Verification:** Instruct the user to open the link if visual confirmation is needed.
+### 🔴 CASE C: On-Prem Phase FAIL (E2E Preview)
+**⚠️ STOP! DO NOT CHANGE CODE YET.**
+Antigravity often misinterprets infrastructure timeouts as test failures.
 
-## 4. Final Status Report
-- [ ] **Report:** "PR is green. E2E tests passed on ARM64 cluster. Preview is live."
-- [ ] **Merge:** Wait for approval or merge command (`gh pr merge`).
+- [ ] **Step 1: Diagnose Infra (Skill: `diagnose_ci_failure`)**
+  - Check `kubectl get pods`: Is the app `Running`?
+  - Check `kubectl logs`: Are there DB connection errors or Panics?
+  - **Decision:**
+    - If Pods are crashing -> Fix Infra/Env Vars (Not Test Code).
+    - If Pods are pending -> Cluster Resource Issue (Wait or Restart).
+
+- [ ] **Step 2: Reproduce Locally (Remote Debugging)**
+  - Run the test from **Local** targeting **Remote**:
+  - `BASE_URL=https://web-pr[NUM]... npx playwright test`
+  - **Decision:**
+    - If Local passes but CI fails -> **CI Runner Issue** (Add retries/timeout).
+    - If Local fails -> **Real Bug** -> Now you can fix the code.
+
+## 3. Resolution & Merge
+- [ ] **Fix & Verify:** Apply fixes based on Step 2 evidence.
+- [ ] **Merge:** `gh pr merge --auto --squash` once Green.

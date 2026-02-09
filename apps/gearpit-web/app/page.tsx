@@ -55,6 +55,7 @@ export default async function InventoryPage({ searchParams }: Props) {
               <TableHead>Category / Brand</TableHead>
               <TableHead className="text-right">Weight (g)</TableHead>
               <TableHead className="hidden md:table-cell">Tags</TableHead>
+              <TableHead className="w-[120px] text-right">Usage</TableHead>
               {/* アクション列を追加 */}
               <TableHead className="w-[80px]"></TableHead>
             </TableRow>
@@ -80,13 +81,23 @@ export default async function InventoryPage({ searchParams }: Props) {
                     ))}
                   </TableCell>
                   <TableCell className="text-right">
+                    <span className={
+                      item.maintenanceInterval > 0 && item.usageCount >= item.maintenanceInterval
+                        ? "text-red-500 font-bold"
+                        : "text-muted-foreground"
+                    }>
+                      {item.usageCount}
+                      {item.maintenanceInterval > 0 && ` / ${item.maintenanceInterval}`}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
                     <div className="flex justify-end items-center gap-1">
-                    {/* メンテナンスボタン */}
-                    <MaintenanceDialog item={item} />
-                    {/* 編集・削除ボタン */}
-                    <EditGearDialog item={item} />
-                    {/* ★追加: 直接削除ボタン */}
-                    <DeleteGearButton itemId={item.id} itemName={item.name} />
+                      {/* メンテナンスボタン */}
+                      <MaintenanceDialog item={item} />
+                      {/* 編集・削除ボタン */}
+                      <EditGearDialog item={item} />
+                      {/* ★追加: 直接削除ボタン */}
+                      <DeleteGearButton itemId={item.id} itemName={item.name} />
                     </div>
                   </TableCell>
                 </TableRow>

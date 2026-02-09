@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { 
-  PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid 
+import {
+  PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from "recharts";
 import { Package, Scale, Layers, IndianRupee, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
@@ -33,12 +33,30 @@ export default function DashboardPage() {
     return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading analytics...</div>;
   }
 
+  // Zero State Handling
+  if (stats.totalItems === 0) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center space-y-4 p-8 bg-zinc-50 dark:bg-zinc-950">
+        <div className="p-4 bg-zinc-100 dark:bg-zinc-900 rounded-full">
+          <Package className="h-12 w-12 text-zinc-400" />
+        </div>
+        <h1 className="text-2xl font-bold text-zinc-800 dark:text-zinc-50">Welcome to GearPit!</h1>
+        <p className="text-zinc-500 dark:text-zinc-400 text-center max-w-md">
+          It looks like you haven't added any gear yet. Start by adding items to your inventory to see analytics here.
+        </p>
+        <Link href="/">
+          <Button>Go to Inventory</Button>
+        </Link>
+      </div>
+    );
+  }
+
   // グラフ用にデータを整形 (重量が0のカテゴリは除外など)
   const pieData = stats.categoryStats
     .filter(c => c.totalWeight > 0)
     .map(c => ({ name: c.category || "Uncategorized", value: c.totalWeight }));
 
-return (
+  return (
     // bg-zinc-50 dark:bg-zinc-950 に変更
     <div className="min-h-screen p-8 bg-zinc-50 dark:bg-zinc-950 transition-colors space-y-8">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -104,12 +122,12 @@ return (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip 
+                  <Tooltip
                     formatter={(value: any) => `${value}g`}
                     contentStyle={{ backgroundColor: 'var(--background)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
                     itemStyle={{ color: 'var(--foreground)' }}
                   />
-                  <Legend verticalAlign="bottom" height={36}/>
+                  <Legend verticalAlign="bottom" height={36} />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>
@@ -123,16 +141,16 @@ return (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={stats.categoryStats}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.2} />
-                  <XAxis 
-                    dataKey="category" 
-                    tick={{fontSize: 12, fill: '#888'}} 
+                  <XAxis
+                    dataKey="category"
+                    tick={{ fontSize: 12, fill: '#888' }}
                     tickFormatter={(val) => val || "Other"}
                     axisLine={false}
                     tickLine={false}
                   />
-                  <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{fill: '#888'}} />
-                  <Tooltip 
-                    cursor={{fill: 'rgba(255,255,255,0.05)'}}
+                  <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: '#888' }} />
+                  <Tooltip
+                    cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                     contentStyle={{ backgroundColor: 'var(--background)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
                   />
                   <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Items" />

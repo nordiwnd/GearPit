@@ -86,7 +86,7 @@ func main() {
 	loadoutHandler := handler.NewLoadoutHandler(loadoutService)
 
 	maintenanceRepo := repository.NewMaintenanceRepository(db)
-	maintenanceService := service.NewMaintenanceService(maintenanceRepo)
+	maintenanceService := service.NewMaintenanceService(maintenanceRepo, gearRepo)
 	maintenanceHandler := handler.NewMaintenanceHandler(maintenanceService)
 
 	dashboardRepo := repository.NewDashboardRepository(db)
@@ -251,13 +251,20 @@ func main() {
 			tripHandler.HandleTripItems(w, r)
 			return
 		}
+		// /api/v1/trips/{id}/complete の判定
+		if strings.HasSuffix(r.URL.Path, "/complete") && r.Method == http.MethodPost {
+			tripHandler.CompleteTrip(w, r)
+			return
+		}
 
 		switch r.Method {
+
 		case http.MethodGet:
 			tripHandler.GetTrip(w, r)
 		case http.MethodDelete:
 			tripHandler.DeleteTrip(w, r)
-		// PUT (Update) は省略しましたが実装済みならここに追加
+		case http.MethodPut:
+			tripHandler.UpdateTrip(w, r)
 		case http.MethodOptions:
 			w.WriteHeader(http.StatusOK)
 		default:
