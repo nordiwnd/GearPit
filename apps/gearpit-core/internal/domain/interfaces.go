@@ -59,10 +59,10 @@ type LoadoutRepository interface {
 }
 
 type LoadoutService interface {
-	CreateLoadout(ctx context.Context, name, activityType string, kitIds, itemIds []string) (*Loadout, error)
+	CreateLoadout(ctx context.Context, name, activityType string, kitIds, itemIds []string, targetWeightGram *int) (*Loadout, error)
 	GetLoadout(ctx context.Context, id string) (*Loadout, error)
 	ListLoadouts(ctx context.Context) ([]Loadout, error)
-	UpdateLoadout(ctx context.Context, id, name, activityType string, kitIds, itemIds []string) (*Loadout, error)
+	UpdateLoadout(ctx context.Context, id, name, activityType string, kitIds, itemIds []string, targetWeightGram *int) (*Loadout, error)
 	DeleteLoadout(ctx context.Context, id string) error
 }
 

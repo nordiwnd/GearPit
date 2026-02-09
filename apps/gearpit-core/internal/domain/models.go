@@ -51,6 +51,7 @@ type Loadout struct {
 	ActivityType         string    `json:"activityType"` // hiking, camping, climbing
 	Kits                 []Kit     `gorm:"many2many:loadout_kits;" json:"kits"`
 	Items                []Item    `gorm:"many2many:loadout_items;" json:"items"`
+	TargetWeightGram     *int      `json:"targetWeightGram"`              // User defined budget (nullable)
 	TotalWeightGram      int       `json:"totalWeightGram"`               // Computed
 	BaseWeightGram       int       `json:"baseWeightGram" gorm:"-"`       // Computed
 	ConsumableWeightGram int       `json:"consumableWeightGram" gorm:"-"` // Computed
