@@ -1,7 +1,13 @@
-# Skill: Run E2E Tests
+---
+name: run_e2e_scenarios
+description: Executes End-to-End tests using Playwright to verify critical user flows.
+tags: [e2e, playwright, testing]
+---
+
+# Skill: Run E2E Scenarios
 Description: Executes End-to-End tests using Playwright against the local environment.
 
-## Usage context
+## Context
 - Use after backend and frontend are running (`docker-compose up` or local dev servers).
 - Use to verify critical user flows before PR.
 
@@ -22,8 +28,3 @@ npx playwright test
 # Run E2E Tests (UI Mode - for debugging)
 npx playwright test --ui
 ```
-
-## Verification Criteria
-- **All specs must pass.**
-- **Screenshots/Videos:** Check `apps/e2e/playwright-report/` if failures occur.
-- **Clean Run:** No flaky tests allowed in final verification.

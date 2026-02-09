@@ -1,43 +1,47 @@
 ---
-description: 
+description: Autonomously implements and verifies features locally, ending with a git push.
 ---
 
-# Feature Development Workflow ("The Loop")
+---
+name: feature_development_loop
+description: Autonomously implements and verifies features locally, ending with a git push.
+trigger: "User starts a new feature, requests code changes, or fixes."
+---
 
-This workflow guides the development of a new feature from local coding to CI/CD verification.
+# Workflow: Feature Development (Local Loop)
 
-## Trigger
-- User request: "Start feature [FEATURE_NAME]" or "Implement [TASK]"
+## 1. Branch Management
+- [ ] **Check Branch:** Ensure strictly on a `feature/*` or `fix/*` branch.
+- [ ] **Create Branch:** If on `main`, create and switch to a new branch derived from the task name.
+  - `git checkout -b feature/[task-name]`
 
-## Process
+## 2. Implementation Loop
+- [ ] **Analyze & Plan:** Read `.agent/rules/*.md` and codebase to determine necessary changes.
+- [ ] **Code:** Apply changes to files.
 
-### Phase 1: Local Development (Loop 1)
-1.  **Branching:**
-    - Create/Switch to branch `feature/[FEATURE_NAME]` or `fix/[ISSUE]`.
-    - *Constraint:* Never commit to `main`.
+## 3. Autonomous Verification
+Run the appropriate skills to verify changes. **Fix any failures immediately.**
 
-2.  **Implementation:**
-    - Analyze `docs/` and relevant code.
-    - Implement the feature following `.agent/rules/*.md`.
-    - Ensure ARM64 compatibility for any new dependencies.
+### Backend Modified (`apps/gearpit-core`)
+- [ ] **Exec:** `test_backend_logic`
+- [ ] **Action:** If fails, analyze error -> Fix code -> Re-run.
 
-3.  **Local Verification:**
-    - **Backend:** See `.agent/skills/test-backend.md`.
-    - **Frontend:** See `.agent/skills/test-frontend.md`.
-    - **E2E:** See `.agent/skills/test-e2e.md`.
-    - **Docker Build:** Verify `docker build --platform linux/arm64 .` succeeds.
-    - **Local Run:** Ensure `docker-compose up` works strictly.
+### Frontend Modified (`apps/gearpit-web`)
+- [ ] **Exec:** `verify_frontend_quality`
+- [ ] **Action:** If fails, fix lint/type errors -> Re-run.
 
-4.  **Commit:**
-    - If Verification passes, generate a Commit Message (English).
-    - If fails, fix and repeat Phase 1.
+### Critical Flows
+- [ ] **Exec:** `run_e2e_scenarios` (Smoke test)
 
-### Phase 2: CI/CD Validation (Loop 2)
-1.  **Push & PR:**
-    - Push branch to origin.
-    - Instruct user to create a Pull Request.
+### Architecture Check
+- [ ] **Exec:** `check_arm64_compat` (Must pass before commit)
 
-2.  **Pipeline Watch:**
-    - Monitor GitHub Actions (`Build` -> `ArgoCD Deploy` -> `E2E Preview`).
-    - **IF FAILURE:** Analyze logs (race conditions, ARM specifics). Return to Phase 1.
-    - **IF SUCCESS:** Task is Done. Ready for Merge.
+## 4. Commit & Push
+- [ ] **Stage:** `git add .`
+- [ ] **Commit:** Generate a Conventional Commit message (English) and execute commit.
+  - `git commit -m "feat: ..."`
+- [ ] **Push:** Push the branch to origin.
+  - `git push origin [branch-name]`
+
+## 5. Transition
+- [ ] **Next Step:** Immediately trigger the **`feature_preview_flow`** (feature-preview.md) to handle the PR and Deployment.

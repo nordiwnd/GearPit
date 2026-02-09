@@ -2,39 +2,28 @@
 description: Unified testing workflow for local development
 ---
 
-# Unified Test Workflow
+---
+name: run_tests
+description: Unified entry point to run tests for any part of the repository.
+trigger: "User asks to run tests or verify code."
+---
 
-Run this workflow to verify your changes before committing.
+# Workflow: Unified Test Runner
 
-## // turbo-all
-The following steps can be auto-executed.
+Determine the scope of changes and run the appropriate verification skills.
 
-1. **Determine Scope & Test**
-   - Check which directories have changes.
-   - Run appropriate tests based on the scope.
+## 1. Scope Analysis
+Check which directories have been modified.
 
-### Backend Changes (`apps/gearpit-core`)
-```bash
-echo "Testing Backend..."
-cd apps/gearpit-core
-go test -race ./...
-```
+## 2. Execution
 
-### Frontend Changes (`apps/gearpit-web`)
-```bash
-echo "Testing Frontend..."
-cd apps/gearpit-web
-# Type Check
-npx tsc --noEmit
-# Lint
-npm run lint
-# Build Verification
-npm run build
-```
+| Scope | Skill to Run |
+| :--- | :--- |
+| **Backend** | `test_backend_logic` |
+| **Frontend** | `verify_frontend_quality` |
+| **E2E / Critical** | `run_e2e_scenarios` |
+| **Infra / Docker** | `check_arm64_compat` |
 
-### E2E Changes (`apps/e2e`)
-```bash
-echo "Running E2E..."
-cd apps/e2e
-npx playwright test
-```
+## 3. Report
+- Summarize pass/fail status for each executed skill.
+- If failures occur, analyze logs and suggest fixes.
