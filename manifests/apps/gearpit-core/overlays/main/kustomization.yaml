@@ -8,4 +8,8 @@ resources:
 images:
 - name: ghcr.io/nordiwnd/gearpit-app
   newName: ghcr.io/nordiwnd/gearpit-app
+<<<<<<< HEAD
   newTag: 4bf0c8daf41c1cbf856c45b70941db41cbce1f03
+=======
+  newTag: 850e024cdd7aa63a3c86e3125bff2e09e9f67ee0
+>>>>>>> feat/weight-analytics
