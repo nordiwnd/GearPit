@@ -8,10 +8,12 @@ import (
 )
 
 // --- Existing Gear & Inventory ---
+type WeightType string
+
 const (
-	WeightTypeBase       = "base"
-	WeightTypeConsumable = "consumable"
-	WeightTypeWorn       = "worn"
+	WeightTypeBase       WeightType = "base"
+	WeightTypeConsumable WeightType = "consumable"
+	WeightTypeWorn       WeightType = "worn"
 )
 
 type Item struct {
@@ -20,9 +22,9 @@ type Item struct {
 	Description  string         `json:"description"`
 	Manufacturer string         `json:"manufacturer"`
 	WeightGram   int            `json:"weightGram"`
-	WeightType   string         `json:"weightType"` // "base", "consumable", "worn"
-	Unit         string         `json:"unit"`       // "g", "kg", "oz"
-	Properties   datatypes.JSON `json:"properties"` // Flexible fields (color, size, category, brand, etc.)
+	WeightType   WeightType     `gorm:"default:'base';not null" json:"weightType"` // "base", "consumable", "worn"
+	Unit         string         `json:"unit"`                                      // "g", "kg", "oz"
+	Properties   datatypes.JSON `json:"properties"`                                // Flexible fields (color, size, category, brand, etc.)
 	CreatedAt    time.Time      `json:"createdAt"`
 	UpdatedAt    time.Time      `json:"updatedAt"`
 }
@@ -37,10 +39,10 @@ type GearRepository interface {
 }
 
 type GearService interface {
-	CreateItem(ctx context.Context, name, description, manufacturer string, weight int, weightType, category, brand string) (*Item, error)
+	CreateItem(ctx context.Context, name, description, manufacturer string, weight int, weightType WeightType, category, brand string) (*Item, error)
 	GetItem(ctx context.Context, id string) (*Item, error)
 	ListItems(ctx context.Context) ([]Item, error)
-	UpdateItem(ctx context.Context, id, name, description, manufacturer string, weight int, weightType, category, brand string) (*Item, error)
+	UpdateItem(ctx context.Context, id, name, description, manufacturer string, weight int, weightType WeightType, category, brand string) (*Item, error)
 	DeleteItem(ctx context.Context, id string) error
 	SearchItems(ctx context.Context, query string) ([]Item, error)
 }
