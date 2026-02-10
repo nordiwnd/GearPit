@@ -154,6 +154,7 @@ export interface Loadout {
   activityType: string;
   items?: GearItem[];
   kits?: Kit[];
+  targetWeightGram?: number;
   totalWeightGram: number;
   baseWeightGram: number;
   consumableWeightGram: number;

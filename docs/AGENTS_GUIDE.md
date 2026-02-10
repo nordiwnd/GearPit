@@ -33,7 +33,7 @@ You are working on the "GearPit" project.
    - Always define `resources.limits` for Pods (Critical for Raspberry Pi stability).
 
 6. **Development Verification (NEW)**:
-   - **Local Dev**: Agents MUST use `tilt up` locally for any full-stack verification.
+   - **Local Dev**: Agents MUST use `tilt ci` locally for any full-stack verification.
    - **Do NOT** suggest `docker run`, `docker-compose`, or `go run` for testing features that involve DB/API interaction.
    - Always assume the environment is `k3d`.
 

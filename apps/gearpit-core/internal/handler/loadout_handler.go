@@ -17,10 +17,11 @@ func NewLoadoutHandler(s domain.LoadoutService) *LoadoutHandler {
 }
 
 type LoadoutRequest struct {
-	Name         string   `json:"name"`
-	ActivityType string   `json:"activityType"`
-	KitIDs       []string `json:"kitIds"`
-	ItemIDs      []string `json:"itemIds"`
+	Name             string   `json:"name"`
+	ActivityType     string   `json:"activityType"`
+	KitIDs           []string `json:"kitIds"`
+	ItemIDs          []string `json:"itemIds"`
+	TargetWeightGram *int     `json:"targetWeightGram"`
 }
 
 // LoadoutResponse extends the domain model to include calculated data like total weight
@@ -36,7 +37,7 @@ func (h *LoadoutHandler) CreateLoadout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	loadout, err := h.service.CreateLoadout(r.Context(), req.Name, req.ActivityType, req.KitIDs, req.ItemIDs)
+	loadout, err := h.service.CreateLoadout(r.Context(), req.Name, req.ActivityType, req.KitIDs, req.ItemIDs, req.TargetWeightGram)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
@@ -92,7 +93,7 @@ func (h *LoadoutHandler) UpdateLoadout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	loadout, err := h.service.UpdateLoadout(r.Context(), id, req.Name, req.ActivityType, req.KitIDs, req.ItemIDs)
+	loadout, err := h.service.UpdateLoadout(r.Context(), id, req.Name, req.ActivityType, req.KitIDs, req.ItemIDs, req.TargetWeightGram)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return

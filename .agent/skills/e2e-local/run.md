@@ -11,7 +11,7 @@ In the new GearPit workflow, **Local E2E = Tilt Environment**.
 We do not spin up a separate "test stack". We verify against the running development cluster (k3d).
 
 ## 2. Preparation
-- **Command:** `tilt up` (Must be running in background)
+- **Command:** `tilt ci` (Must be running in background)
 - **Status Check:**
   - Open Tilt UI (default: `http://localhost:10350`).
   - Verify `gearpit-core`, `gearpit-web`, and `gearpit-db` are **Green (Active)**.

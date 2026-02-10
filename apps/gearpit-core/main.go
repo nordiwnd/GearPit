@@ -104,6 +104,12 @@ func main() {
 	// Router setup
 	mux := http.NewServeMux()
 
+	// Health Check
+	mux.HandleFunc("/api/v1/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("OK"))
+	})
+
 	// 1. Collection routes: /api/v1/gears
 	mux.HandleFunc("/api/v1/gears", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {

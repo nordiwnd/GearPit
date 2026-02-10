@@ -42,7 +42,7 @@ We use **Tilt** + **k3d** for a rapid "Inner Loop" development experience that m
 
 ### How to Start
 1. Run `scripts/setup-dev.sh` (One-time setup).
-2. Run `tilt up`.
+2. Run `tilt ci`.
 
 ## 4. Deployment Workflow (The GitOps Loop)
 

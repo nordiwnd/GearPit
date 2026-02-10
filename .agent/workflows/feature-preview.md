@@ -19,7 +19,7 @@ Monitor the GitHub Actions pipeline.
 
 # 3. Preview Environment Verification
 Once CI passes, ArgoCD will provision a preview environment.
-1. **Wait for Deployment**: The PR comment will eventually contain the dynamic URL (e.g., `https://gearpit-pr-123.nip.io`).
+1. **Wait for Deployment**: The PR comment will eventually contain the dynamic URL (e.g., `https://gearpit-pr123.nip.io`).
 2. **Health Check**:
    - Check if the preview pods are healthy (if you have access to the cluster, otherwise rely on ArgoCD status).
    - **Log Check**: Check logs for startup errors, specifically looking for `exec format error` which indicates an Architecture Mismatch (running amd64 binary on arm64).

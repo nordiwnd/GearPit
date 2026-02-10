@@ -14,7 +14,7 @@ func NewLoadoutService(repo domain.LoadoutRepository) domain.LoadoutService {
 	return &loadoutService{repo: repo}
 }
 
-func (s *loadoutService) CreateLoadout(ctx context.Context, name, activityType string, kitIds, itemIds []string) (*domain.Loadout, error) {
+func (s *loadoutService) CreateLoadout(ctx context.Context, name, activityType string, kitIds, itemIds []string, targetWeightGram *int) (*domain.Loadout, error) {
 	// アイテムとキットの関連付けを構築
 	var items []domain.Item
 	for _, id := range itemIds {
@@ -26,10 +26,11 @@ func (s *loadoutService) CreateLoadout(ctx context.Context, name, activityType s
 	}
 
 	loadout := &domain.Loadout{
-		Name:         name,
-		ActivityType: activityType,
-		Items:        items,
-		Kits:         kits,
+		Name:             name,
+		ActivityType:     activityType,
+		Items:            items,
+		Kits:             kits,
+		TargetWeightGram: targetWeightGram,
 	}
 
 	if err := s.repo.Create(ctx, loadout); err != nil {
@@ -90,7 +91,7 @@ func (s *loadoutService) ListLoadouts(ctx context.Context) ([]domain.Loadout, er
 	return loadouts, nil
 }
 
-func (s *loadoutService) UpdateLoadout(ctx context.Context, id, name, activityType string, kitIds, itemIds []string) (*domain.Loadout, error) {
+func (s *loadoutService) UpdateLoadout(ctx context.Context, id, name, activityType string, kitIds, itemIds []string, targetWeightGram *int) (*domain.Loadout, error) {
 	loadout, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -98,6 +99,7 @@ func (s *loadoutService) UpdateLoadout(ctx context.Context, id, name, activityTy
 
 	loadout.Name = name
 	loadout.ActivityType = activityType
+	loadout.TargetWeightGram = targetWeightGram
 
 	// 関連の更新はGORMのAssociation Replaceを使用するべきだが、
 	// 簡易的にインスタンスを置き換えてSaveで対応する場合

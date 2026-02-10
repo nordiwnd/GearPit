@@ -46,7 +46,10 @@ func (h *GearHandler) CreateItem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(item)
+	if err := json.NewEncoder(w).Encode(item); err != nil {
+		slog.Error("Failed to encode item", "error", err)
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+	}
 }
 
 func (h *GearHandler) SearchItems(w http.ResponseWriter, r *http.Request) {
@@ -60,7 +63,10 @@ func (h *GearHandler) SearchItems(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(items)
+	if err := json.NewEncoder(w).Encode(items); err != nil {
+		slog.Error("Failed to encode items", "error", err)
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+	}
 }
 
 func (h *GearHandler) UpdateItem(w http.ResponseWriter, r *http.Request) {
@@ -81,7 +87,11 @@ func (h *GearHandler) UpdateItem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(item)
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(item); err != nil {
+		slog.Error("Failed to encode item", "error", err)
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+	}
 }
 
 func (h *GearHandler) DeleteItem(w http.ResponseWriter, r *http.Request) {
