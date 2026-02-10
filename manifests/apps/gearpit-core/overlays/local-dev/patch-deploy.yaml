@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gearpit-app
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: app
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: DB_HOST
+              value: "gearpit-db"
+            - name: DB_PORT
+              value: "5432"

@@ -32,6 +32,11 @@ You are working on the "GearPit" project.
    - NEVER hardcode secrets in manifests. Assume `SealedSecrets` usage.
    - Always define `resources.limits` for Pods (Critical for Raspberry Pi stability).
 
+6. **Development Verification (NEW)**:
+   - **Local Dev**: Agents MUST use `tilt up` locally for any full-stack verification.
+   - **Do NOT** suggest `docker run`, `docker-compose`, or `go run` for testing features that involve DB/API interaction.
+   - Always assume the environment is `k3d`.
+
 ## Current Task Context
 Read the files in `docs/` carefully before generating any code.
 If you are unsure about the directory structure, ask before creating files.

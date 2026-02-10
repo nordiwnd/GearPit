@@ -4,25 +4,18 @@ description: Runs static analysis (lint), type checking, and build verification 
 tags: [frontend, nextjs, quality]
 ---
 
-# Skill: Verify Frontend Quality
+# Skill: Frontend Verification (Next.js)
 
-## Context
-Mandatory check before committing changes to `apps/gearpit-web`.
+## 1. Dev Server (Tilt)
+- **Primary Method:** Always use **Tilt**.
+- **Command:** `tilt up` (Root directory)
+- **Access:**
+  - Web UI: `http://localhost:3000` (via k3d Ingress or Port Forward)
+  - Tilt UI: `http://localhost:10350`
+- **Note:** Do not run `npm run dev` manually unless you are debugging a specific UI component in isolation without backend dependency.
 
-## Commands
-Run from the repository root:
-
-```bash
-cd apps/gearpit-web
-
-# 1. Linting (Static Analysis)
-npm run lint
-
-# 2. Type Checking (TypeScript)
-# Using tsc directly is faster than building for type checks
-npx tsc --noEmit
-
-# 3. Build Verification (Production Build)
-# Ensures code can actually compile for production
-npm run build
-```
+## 2. Lint & Type Check
+- **Command:**
+  - `npm run lint`
+  - `tsc --noEmit`
+- **Timing:** Must pass before every commit.

@@ -4,18 +4,23 @@ description: Executes Go unit tests with race detection for the backend service.
 tags: [backend, go, testing]
 ---
 
-# Skill: Run Backend Tests
+# Skill: Backend Testing Strategy (Go)
 
-## Context
-Use this skill when verifying logic changes in `apps/gearpit-core`.
+## 1. Unit Tests (Pure Logic)
+- **Scope:** Domain logic, utility functions, and handlers with mocked interfaces.
+- **Command:** `go test ./internal/... -v`
+- **Dependency:** None. Can be run instantly.
 
-## Commands
-Run from the repository root:
+## 2. Integration Tests (DB Required)
+- **Scope:** Repository layer, Database interactions.
+- **Environment:**
+  - **DO NOT** spin up a manual Postgres container.
+  - **USE** the `k3d` environment managed by Tilt.
+- **Action:**
+  1. Ensure `tilt up` is running.
+  2. Connect to the forwarded DB port (default: `5432` on localhost).
+  3. Run tests with `DB_HOST=localhost` `DB_PORT=5432`.
 
-```bash
-# Ensure dependencies are tidy
-cd apps/gearpit-core && go mod tidy
-
-# Run tests with Race Detector (Critical for concurrent Go code)
-go test -race ./...
-```
+## 3. Linting
+- **Command:** `golangci-lint run ./...`
+- **Rule:** Zero tolerance for lint errors before commit.

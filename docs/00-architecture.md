@@ -11,6 +11,8 @@ The core philosophy is **"Local First & Cloud Native"**—achieving a complete G
 <infrastructure>
 <hardware>Raspberry Pi 4/5 (ARM64 architecture strictly enforced)</hardware>
 <orchestration>k3s (Lightweight Kubernetes)</orchestration>
+<orchestration>k3s (Lightweight Kubernetes)</orchestration>
+<local_dev>k3d (Local K3s) + Tilt (Live Update)</local_dev>
 <gitops>ArgoCD (Push to GitHub -> Auto-sync by ArgoCD)</gitops>
 </infrastructure>
 
@@ -44,15 +46,19 @@ When generating code or manifests for GearPit, you **MUST** adhere to the follow
    - All Dockerfiles MUST use ARM64-compatible base images (e.g., `golang:1.25.6-alpine`, `node:20-alpine`, `postgres:16-alpine`).
    - GitHub Actions workflows MUST utilize `docker/build-push-action` with `platforms: linux/amd64,linux/arm64`.
 
-2. **Stateless App / Stateful DB**
+2. **Development Verification**
+   - Agents MUST use `tilt up` to verify changes locally.
+   - Do NOT suggest `docker run` or `go run` for full-stack testing. Using `k3d` ensures environment parity.
+
+3. **Stateless App / Stateful DB**
    - Application pods (`gearpit-core`, `gearpit-web`) MUST be completely stateless (`Deployment`).
    - PostgreSQL MUST be deployed as a `StatefulSet` with properly configured PersistentVolumeClaims (PVC).
 
-3. **Strict Monorepo Separation (App vs Infra)**
+4. **Strict Monorepo Separation (App vs Infra)**
    - Application code (`apps/`) MUST NOT contain any Kubernetes definitions.
    - All infrastructure definitions MUST reside in `manifests/` (for app deployment) or `ops/` (for ArgoCD config).
 
-4. **Component Reusability**
+5. **Component Reusability**
    - Frontend: Strictly use existing `shadcn/ui` components (`apps/gearpit-web/components/ui`). Do not install new UI libraries unless strictly necessary.
    - Backend: Domain logic MUST NOT depend on Infrastructure or Handler layer packages.
 
