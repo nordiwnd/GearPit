@@ -4,27 +4,34 @@ description: Executes End-to-End tests using Playwright to verify critical user 
 tags: [e2e, playwright, testing]
 ---
 
-# Skill: Run E2E Scenarios
-Description: Executes End-to-End tests using Playwright against the local environment.
+# Skill: Run Local E2E / Integration Verification
 
-## Context
-- Use after backend and frontend are running (`docker-compose up` or local dev servers).
-- Use to verify critical user flows before PR.
+## 1. Concept
+In the new GearPit workflow, **Local E2E = Tilt Environment**.
+We do not spin up a separate "test stack". We verify against the running development cluster (k3d).
 
-## Prerequisites
-- **Environment:** Applications must be running and accessible at `http://localhost:3000` (Web) and `http://localhost:8080` (API).
-- **Dependencies:** `npm install` inside `apps/e2e`.
+## 2. Preparation
+- **Command:** `tilt up` (Must be running in background)
+- **Status Check:**
+  - Open Tilt UI (default: `http://localhost:10350`).
+  - Verify `gearpit-core`, `gearpit-web`, and `gearpit-db` are **Green (Active)**.
 
-## Commands (Local)
-```bash
-cd apps/e2e
+## 3. Execution Steps
 
-# Install dependencies (if needed)
-npm ci
+### A. Manual Smoke Test (Browser)
+1. Open **`http://localhost:3000`** (Next.js via Ingress/PortForward).
+2. **Critical Path:**
+   - Create a new Gear Item.
+   - Verify it appears in the list.
+   - (This confirms Frontend -> Backend -> DB write/read flow).
 
-# Run E2E Tests (Headless)
-npx playwright test
+### B. API Verification (Curl)
+1. Check Backend Health:
+   - `curl http://localhost:8080/healthz` (or equivalent endpoint).
+2. Check specific API (optional):
+   - `curl http://localhost:8080/api/v1/gears`
 
-# Run E2E Tests (UI Mode - for debugging)
-npx playwright test --ui
-```
+## 4. Troubleshooting
+- **If Frontend cannot connect to Backend:**
+  - Check `gearpit-web` logs in Tilt.
+  - Verify `NEXT_PUBLIC_API_URL` is correctly configured in the k8s manifest (likely pointing to `/api/v1` or full URL).
