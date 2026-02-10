@@ -47,7 +47,7 @@ When generating code or manifests for GearPit, you **MUST** adhere to the follow
    - GitHub Actions workflows MUST utilize `docker/build-push-action` with `platforms: linux/amd64,linux/arm64`.
 
 2. **Development Verification**
-   - Agents MUST use `tilt up` to verify changes locally.
+   - Agents MUST use `tilt ci` to verify changes locally.
    - Do NOT suggest `docker run` or `go run` for full-stack testing. Using `k3d` ensures environment parity.
 
 3. **Stateless App / Stateful DB**

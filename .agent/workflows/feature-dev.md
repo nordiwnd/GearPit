@@ -9,7 +9,7 @@ Check if the local development environment is ready.
 // turbo
 1. Check if `k3d` cluster is running: `k3d cluster list`
 2. If not, run setup script: `./scripts/setup-dev.sh`
-3. Start Tilt in the background (or ensure it's running): `tilt up --stream` (Use a separate terminal or background process if possible, otherwise rely on `kubectl` for status checks).
+3. Start Tilt in the background (or ensure it's running): `tilt ci --stream` (Use a separate terminal or background process if possible, otherwise rely on `kubectl` for status checks).
 
 # 2. Implementation Loop (TDD/Inner Loop)
 Iterate on code changes.

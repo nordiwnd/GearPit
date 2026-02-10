@@ -54,7 +54,10 @@ func (r *dashboardRepository) GetStats(ctx context.Context) (*domain.DashboardSt
 	if err != nil {
 		return nil, fmt.Errorf("failed to aggregate categories: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		// Explicitly ignore close error
+		_ = rows.Close()
+	}()
 
 	for rows.Next() {
 		var catStat domain.CategoryStat

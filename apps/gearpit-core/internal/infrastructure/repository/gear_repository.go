@@ -64,3 +64,14 @@ func (r *gearRepository) Search(ctx context.Context, query string) ([]domain.Ite
 	}
 	return items, nil
 }
+
+func (r *gearRepository) AddMaintenanceLog(ctx context.Context, log *domain.MaintenanceLog) error {
+	return r.db.WithContext(ctx).Create(log).Error
+}
+
+func (r *gearRepository) DoInTransaction(ctx context.Context, fn func(txRepo domain.GearRepository) error) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		txRepo := &gearRepository{db: tx}
+		return fn(txRepo)
+	})
+}

@@ -93,3 +93,33 @@ func (r *tripRepository) RemoveItem(ctx context.Context, tripID string, itemID s
 	}
 	return nil
 }
+
+func (r *tripRepository) DoInTransaction(ctx context.Context, fn func(txRepo domain.TripRepository) error) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		txRepo := &tripRepository{db: tx}
+		return fn(txRepo)
+	})
+}
+
+func (r *tripRepository) IncrementItemUsages(ctx context.Context, tripID string, increment int) error {
+	// 1. Get List of ItemIDs associated with this trip
+	var tripItems []domain.TripItem
+	if err := r.db.WithContext(ctx).Where("trip_id = ?", tripID).Find(&tripItems).Error; err != nil {
+		return err
+	}
+
+	if len(tripItems) == 0 {
+		return nil
+	}
+
+	itemIDs := make([]string, 0, len(tripItems))
+	for _, ti := range tripItems {
+		itemIDs = append(itemIDs, ti.ItemID)
+	}
+
+	// 2. Increment usage_count for these Items
+	// usage_count = usage_count + increment
+	return r.db.WithContext(ctx).Model(&domain.Item{}).
+		Where("id IN ?", itemIDs).
+		UpdateColumn("usage_count", gorm.Expr("usage_count + ?", increment)).Error
+}

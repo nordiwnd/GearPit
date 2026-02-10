@@ -46,7 +46,10 @@ func (h *KitHandler) CreateKit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(kit)
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(kit); err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+	}
 }
 
 func (h *KitHandler) ListKits(w http.ResponseWriter, r *http.Request) {

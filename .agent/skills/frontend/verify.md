@@ -8,7 +8,7 @@ tags: [frontend, nextjs, quality]
 
 ## 1. Dev Server (Tilt)
 - **Primary Method:** Always use **Tilt**.
-- **Command:** `tilt up` (Root directory)
+- **Command:** `tilt ci` (Root directory)
 - **Access:**
   - Web UI: `http://localhost:3000` (via k3d Ingress or Port Forward)
   - Tilt UI: `http://localhost:10350`

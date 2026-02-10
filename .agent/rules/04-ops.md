@@ -1,5 +1,6 @@
 ---
-trigger: always_on
+trigger: model_decision
+description: Implementation and testing using CICD pipeline
 ---
 
 # Operations & GitOps Guidelines
