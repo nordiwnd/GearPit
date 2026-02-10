@@ -29,7 +29,22 @@ Strictly maintain the separation between Application manifests and GitOps config
 - **NEVER** write raw `Secret` manifests containing plaintext base64 credentials. Always assume the use of `SealedSecrets` (via `kubeseal`).
 - **NEVER** hardcode environment-specific URLs or secrets in `manifests/apps/.../base/`. Use Kustomize `patches` in overlays.
 
-## 3. Deployment Workflow (The GitOps Loop)
+## 3. Local Development (Inner Loop)
+
+We use **Tilt** + **k3d** for a rapid "Inner Loop" development experience that mirrors Production.
+
+- **Cluster**: local k3d cluster (`gearpit-dev`)
+- **Orchestration**: Tilt (manages builds, live updates, and logs)
+- **Difference from Prod**: 
+  - Runs on developer's machine (WSL/Linux).
+  - Uses `overlays/local-dev` (hot reloading, debugger ports).
+  - "k3d for Dev" vs "k3s (RPi) for Ops".
+
+### How to Start
+1. Run `scripts/setup-dev.sh` (One-time setup).
+2. Run `tilt up`.
+
+## 4. Deployment Workflow (The GitOps Loop)
 
 ### Production (`main` branch)
 1. **Build**: GitHub Actions builds multi-arch (`linux/amd64`, `linux/arm64`) images using QEMU and pushes to GHCR with the Git commit SHA as the tag.
@@ -43,7 +58,7 @@ Strictly maintain the separation between Application manifests and GitOps config
    - Ingress hosts are patched dynamically via Nip.io (e.g., `api-pr123.192.168.40.100.nip.io`).
 4. **Teardown**: Automated upon PR closure.
 
-## 4. Coding Standard for Manifests
+## 5. Coding Standard for Manifests
 - **Resource Limits**: ALWAYS define `resources.limits` (CPU/Memory) for ARM64 stability.
 - **Health Checks**: ALWAYS define `livenessProbe` and `readinessProbe` for Deployments.
 
@@ -59,7 +74,7 @@ livenessProbe:
     port: 8080
 ```
 
-## 5. Constraint & Networking Rules
+## 6. Constraint & Networking Rules
 - **Secret Management**: Do not write plain text secrets in manifests. (Currently managed in `ops/`).
 - **Internal DNS (Service-to-Service)**: 
   - Web to App communication MUST use `gearpit-app-svc`.

@@ -1,47 +1,44 @@
 ---
-description: Autonomously implements and verifies features locally, ending with a git push.
+description: Autonomously implements and verifies features locally using Tilt & k3d
 ---
 
----
-name: feature_development_loop
-description: Autonomously implements and verifies features locally, ending with a git push.
-trigger: "User starts a new feature, requests code changes, or fixes."
----
+This workflow guides the agent through the full feature development lifecycle using the local Kubernetes environment.
 
-# Workflow: Feature Development (Local Loop)
+# 1. Environment Check
+Check if the local development environment is ready.
+// turbo
+1. Check if `k3d` cluster is running: `k3d cluster list`
+2. If not, run setup script: `./scripts/setup-dev.sh`
+3. Start Tilt in the background (or ensure it's running): `tilt up --stream` (Use a separate terminal or background process if possible, otherwise rely on `kubectl` for status checks).
 
-## 1. Branch Management
-- [ ] **Check Branch:** Ensure strictly on a `feature/*` or `fix/*` branch.
-- [ ] **Create Branch:** If on `main`, create and switch to a new branch derived from the task name.
-  - `git checkout -b feature/[task-name]`
+# 2. Implementation Loop (TDD/Inner Loop)
+Iterate on code changes.
+1. **Plan**: Analyze requirements and create an implementation plan.
+2. **Code**: Implement changes in `apps/gearpit-core` (Go) or `apps/gearpit-web` (Next.js).
+3. **Verify (Fast)**:
+   - Go: `go test ./internal/...`
+   - Next.js: `npm run lint`
+4. **Verify (Integration)**:
+   - Check Tilt status (via `kubectl get pods` or Tilt UI if accessible).
+   - Ensure Pods restart and become `Running`.
+   - Check logs for errors: `kubectl logs -l app=gearpit-app` or `kubectl logs -l app=gearpit-web`.
 
-## 2. Implementation Loop
-- [ ] **Analyze & Plan:** Read `.agent/rules/*.md` and codebase to determine necessary changes.
-- [ ] **Code:** Apply changes to files.
+# 3. Security & Quality Check
+Run static analysis before committing.
+// turbo
+1. **Security Scan**: Run Trivy on the filesystem.
+   - `trivy fs --scanners vuln,secret,config .`
+   - **CRITICAL**: Fix any `HIGH` or `CRITICAL` vulnerabilities immediately.
+2. **Linting**:
+   - Backend: `golangci-lint run ./...` (if available) or `go vet ./...`
+   - Frontend: `npm run lint` (in `apps/gearpit-web`)
 
-## 3. Autonomous Verification
-Run the appropriate skills to verify changes. **Fix any failures immediately.**
+# 4. Final verification
+Ensure the feature works end-to-end in the local k3d cluster.
+1. Perform manual testing or run integration tests against the local ingress.
+   - Core: `curl http://localhost:8080/api/v1/...`
+   - Web: Open browser (if applicable) or `curl http://localhost:3000`.
 
-### Backend Modified (`apps/gearpit-core`)
-- [ ] **Exec:** `test_backend_logic`
-- [ ] **Action:** If fails, analyze error -> Fix code -> Re-run.
-
-### Frontend Modified (`apps/gearpit-web`)
-- [ ] **Exec:** `verify_frontend_quality`
-- [ ] **Action:** If fails, fix lint/type errors -> Re-run.
-
-### Critical Flows
-- [ ] **Exec:** `run_e2e_scenarios` (Smoke test)
-
-### Architecture Check
-- [ ] **Exec:** `check_arm64_compat` (Must pass before commit)
-
-## 4. Commit & Push
-- [ ] **Stage:** `git add .`
-- [ ] **Commit:** Generate a Conventional Commit message (English) and execute commit.
-  - `git commit -m "feat: ..."`
-- [ ] **Push:** Push the branch to origin.
-  - `git push origin [branch-name]`
-
-## 5. Transition
-- [ ] **Next Step:** Immediately trigger the **`feature_preview_flow`** (feature-preview.md) to handle the PR and Deployment.
+# 5. Commit & Push
+1. Create a conventional commit message (e.g., `feat: add new gear type`).
+2. Push to the feature branch.

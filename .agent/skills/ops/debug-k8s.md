@@ -8,39 +8,26 @@ usage_patterns:
   - "Fetch logs for preview environment"
 ---
 
-# Skill: Debug Kubernetes Workload
+# Skill: Kubernetes Debugging (Local vs Remote)
 
-## Context
-Use this when a deployment exists but is not running correctly (CrashLoopBackOff, Error, or 500 responses).
+## 1. Identify Context
+Always check which cluster you are targeting before running commands.
+- **Local (Dev):** `k3d-gearpit-dev` (Managed by Tilt)
+- **Remote (Prod):** `default` (Raspberry Pi / k3s)
 
-## Prerequisites
-- Identify the target namespace (usually `gearpit` or derived from PR number).
+## 2. Pod Status
+- **Command:** `kubectl get pods -A`
+- **Common Issues:**
+  - `ImagePullBackOff`: Check if the image exists in the local registry (k3d) or GHCR (Remote).
+  - `CrashLoopBackOff`: Check logs (`kubectl logs [pod]`).
+  - `Pending`:
+    - **Local:** Docker Desktop resource limits (CPU/Memory).
+    - **Remote:** Node capacity or Taints.
 
-## Commands
+## 3. Logs
+- **Tilt (Local):** Use the Tilt Web UI for aggregated, color-coded logs.
+- **Kubectl (Raw):** `kubectl logs -f -l app=[app-name]`
 
-### 1. Identify the Failing Pod
-Find the pod specifically related to the app in question.
-
-```bash
-# List pods with labels to find the right one
-kubectl get pods -n gearpit --show-labels
-```
-
-### 2. Inspect Configuration & Events
-Check why Kubernetes thinks the pod is failing (Liveness probe failed? OOMKilled?).
-
-```Bash
-# Replace [POD_NAME] with actual name
-kubectl describe pod [POD_NAME] -n gearpit
-```
-
-### 3. Fetch Application Logs
-Get logs from the container. If the pod restarted, use `--previous`.
-
-```Bash
-# Current logs
-kubectl logs [POD_NAME] -n gearpit --all-containers=true --tail=100
-
-# Previous logs (if crashed)
-kubectl logs [POD_NAME] -n gearpit --previous --tail=100 || echo "No previous logs found"
-```
+## 4. Networking (Ingress)
+- **Local:** `http://localhost:8080` (Backend), `http://localhost:3000` (Frontend).
+- **Remote:** `https://api.gearpit.local`, `https://gearpit.local`.
