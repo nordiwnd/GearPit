@@ -1,5 +1,5 @@
 load('ext://restart_process', 'docker_build_with_restart')
-
+allow_k8s_contexts('default')
 # 1. Database
 # The user asked to apply the base postgres yaml.
 # However, the local-dev overlay of gearpit-core includes base.

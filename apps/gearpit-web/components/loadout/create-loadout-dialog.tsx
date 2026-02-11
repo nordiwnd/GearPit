@@ -59,7 +59,7 @@ export function CreateLoadoutDialog() {
       await loadoutApi.create({
         name: values.name,
         activityType: values.activityType,
-        kitIds: [], // 今回はシンプルにアイテム直指定のみとする
+        kitIds: [],
         itemIds: values.selectedItemIds,
         targetWeightGram: values.targetWeightGram,
       });

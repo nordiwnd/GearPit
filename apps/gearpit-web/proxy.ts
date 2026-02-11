@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   // /api/ から始まるリクエストを検知
   if (request.nextUrl.pathname.startsWith('/api/')) {
     // 実行時に環境変数を読み込む (なければ K8s Service)
