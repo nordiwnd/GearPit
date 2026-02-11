@@ -15,8 +15,9 @@ Strictly maintain the separation between Application manifests and GitOps config
     <description>Kustomize definitions for the applications.</description>
     <structure>
       - `base/`: Common resources (Deployment, Service, Ingress).
-      - `overlays/main/`: Production settings (replicas, domain names, resource limits).
+      - `overlays/dev/`: Local development settings (Target: AMD64, localhost, debug ports).  <-- ADDED
       - `overlays/preview/`: Ephemeral settings for PR previews (e.g., ephemeral DB patches).
+      - `overlays/main/`: Production settings (replicas, domain names, resource limits).
     </structure>
   </directory>
   <directory path="ops/">
@@ -36,9 +37,8 @@ We use **Tilt** + **k3d** for a rapid "Inner Loop" development experience that m
 - **Cluster**: local k3d cluster (`gearpit-dev`)
 - **Orchestration**: Tilt (manages builds, live updates, and logs)
 - **Difference from Prod**: 
-  - Runs on developer's machine (WSL/Linux).
-  - Uses `overlays/local-dev` (hot reloading, debugger ports).
-  - "k3d for Dev" vs "k3s (RPi) for Ops".
+  - **Architecture**: Builds native `linux/amd64` images (No QEMU/Cross-compilation) for maximum speed.   - **Manifests**: Uses `manifests/apps/.../overlays/dev` (hot reloading, debugger ports).
+  - **Context**: "k3d for Dev" vs "k3s (RPi) for Ops".
 
 ### How to Start
 1. Run `scripts/setup-dev.sh` (One-time setup).

@@ -33,10 +33,3 @@ go.work.sum
 
 # mycert
 mycert.pem
-
-# skills
-.agent/skills/*
-!.agent/skills/backend/
-!.agent/skills/frontend/
-!.agent/skills/ops/
-!.agent/skills/e2e-local/

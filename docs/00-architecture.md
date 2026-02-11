@@ -42,13 +42,17 @@ To facilitate seamless development and review, the system automatically provisio
 
 When generating code or manifests for GearPit, you **MUST** adhere to the following constraints:
 
-1. **ARM64 Compatibility First**
-   - All Dockerfiles MUST use ARM64-compatible base images (e.g., `golang:1.25.6-alpine`, `node:20-alpine`, `postgres:16-alpine`).
-   - GitHub Actions workflows MUST utilize `docker/build-push-action` with `platforms: linux/amd64,linux/arm64`.
+1. **Architecture-Agnostic Docker Builds**
+   - **Constraint**: Dockerfiles MUST support both AMD64 and ARM64 without code changes.
+   - **Implementation**:
+     - Go: Use `FROM --platform=$BUILDPLATFORM` and `GOARCH=$TARGETARCH` for cross-compilation.
+     - Node.js: Use multi-arch base images (e.g., `node:20-alpine`).
+   - **Policy**:
+     - **Local Dev**: Build native `amd64` for speed.
+     - **CI/Prod**: Build `arm64` via Docker Buildx for Raspberry Pi compatibility.
 
-2. **Development Verification**
-   - Agents MUST use `tilt ci` to verify changes locally.
-   - Do NOT suggest `docker run` or `go run` for full-stack testing. Using `k3d` ensures environment parity.
+2. **Stateless App / Stateful DB**
+   - Application pods (`gearpit-core`, `gearpit-web`) MUST be completely stateless (`Deployment`).
 
 3. **Stateless App / Stateful DB**
    - Application pods (`gearpit-core`, `gearpit-web`) MUST be completely stateless (`Deployment`).

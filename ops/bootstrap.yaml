@@ -3,7 +3,6 @@ kind: Application
 metadata:
   name: cluster-bootstrap
   namespace: argocd
-  # 【推奨】これがないと、このAppを削除しても配下のリソースが残ってしまいます
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -14,11 +13,9 @@ spec:
     path: ops
     directory:
       recurse: true
-      # 自分自身を除外（これが無いと無限ループやエラーの原因になります）
       exclude: 'bootstrap.yaml'
   destination:
     server: https://kubernetes.default.svc
-    # Applicationリソース自体は argocd 名前空間に作られる必要があります
     namespace: argocd
   syncPolicy:
     automated:
@@ -26,5 +23,4 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-      # 【推奨】Server Side Applyを使用すると、大きなマニフェストでのエラーを防げます
       - ServerSideApply=true
