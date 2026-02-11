@@ -33,7 +33,7 @@ export default function SettingsPage() {
   const [editingProfile, setEditingProfile] = useState<UserProfile | null>(null);
 
   const form = useForm<ProfileFormValues>({
-    // 修正: as any を追加して型不整合を回避
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(profileSchema) as any,
     defaultValues: {
       name: "",
@@ -48,7 +48,7 @@ export default function SettingsPage() {
     try {
       const data = await profileApi.list();
       setProfiles(data || []);
-    } catch (error) {
+    } catch {
       toast.error("Failed to load profiles");
     } finally {
       setLoading(false);
@@ -93,7 +93,7 @@ export default function SettingsPage() {
       }
       setIsDialogOpen(false);
       fetchProfiles();
-    } catch (error) {
+    } catch {
       toast.error(editingProfile ? "Failed to update profile" : "Failed to create profile");
     }
   };
@@ -104,7 +104,7 @@ export default function SettingsPage() {
       await profileApi.delete(id);
       toast.success("Profile deleted");
       fetchProfiles();
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete profile");
     }
   };
@@ -138,7 +138,7 @@ export default function SettingsPage() {
                     <FormField
                       control={form.control}
                       name="name"
-                      // 修正: field の型を明示的に any に指定
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       render={({ field }: { field: any }) => (
                         <FormItem>
                           <FormLabel>Name</FormLabel>
@@ -153,7 +153,7 @@ export default function SettingsPage() {
                       <FormField
                         control={form.control}
                         name="heightCm"
-                        // 修正: field の型を明示的に any に指定
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         render={({ field }: { field: any }) => (
                           <FormItem>
                             <FormLabel>Height (cm)</FormLabel>
@@ -167,7 +167,7 @@ export default function SettingsPage() {
                       <FormField
                         control={form.control}
                         name="weightKg"
-                        // 修正: field の型を明示的に any に指定
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         render={({ field }: { field: any }) => (
                           <FormItem>
                             <FormLabel>Weight (kg)</FormLabel>
@@ -183,7 +183,7 @@ export default function SettingsPage() {
                       <FormField
                         control={form.control}
                         name="age"
-                        // 修正: field の型を明示的に any に指定
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         render={({ field }: { field: any }) => (
                           <FormItem>
                             <FormLabel>Age</FormLabel>
@@ -197,7 +197,7 @@ export default function SettingsPage() {
                       <FormField
                         control={form.control}
                         name="gender"
-                        // 修正: field の型を明示的に any に指定
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         render={({ field }: { field: any }) => (
                           <FormItem>
                             <FormLabel>Gender</FormLabel>

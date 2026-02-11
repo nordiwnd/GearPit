@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Layers, Loader2, Plus, Check } from 'lucide-react';
+import { Layers, Loader2, Plus } from 'lucide-react';
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -50,7 +50,7 @@ export function AddLoadoutToTripDialog({ tripId, onSuccess }: Props) {
       toast.success(`Added ${itemIds.length} items from "${loadout.name}"`);
       setOpen(false);
       onSuccess();
-    } catch (error) {
+    } catch {
       toast.error("Failed to add items from loadout");
     } finally {
       setAdding(false);

@@ -44,12 +44,8 @@ export function WeightBudgetBar({ items, targetWeightGram, onTargetChange, class
     const hasBudget = targetWeightGram !== undefined && targetWeightGram > 0;
     const isOverweight = hasBudget && stats.total > targetWeightGram!;
 
-    const denominator = hasBudget ? targetWeightGram! : (stats.total || 1);
-
     // Calculate widths relative to denominator (capped at 100% for individual segments if not compressed)
     // If overweight, we scale everything down so it fits in 100%
-    const totalWeight = stats.total;
-    const scaleFactor = (hasBudget && totalWeight > denominator) ? (denominator / totalWeight) : 1;
 
     // Percentage relative to the BAR WIDTH (which is 100% of container)
     // If hasBudget: Bar Width = Target. 

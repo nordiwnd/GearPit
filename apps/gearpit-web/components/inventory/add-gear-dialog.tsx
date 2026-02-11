@@ -121,7 +121,7 @@ export function AddGearDialog() {
             <FormField
               control={form.control}
               name="name"
-              render={({ field }: { field: any }) => (
+              render={({ field }) => (
                 <FormItem>
                   <FormLabel>Item Name</FormLabel>
                   <FormControl>
@@ -135,7 +135,7 @@ export function AddGearDialog() {
               <FormField
                 control={form.control}
                 name="brand"
-                render={({ field }: { field: any }) => (
+                render={({ field }) => (
                   <FormItem>
                     <FormLabel>Brand</FormLabel>
                     <FormControl>
@@ -148,7 +148,7 @@ export function AddGearDialog() {
               <FormField
                 control={form.control}
                 name="weightGram"
-                render={({ field }: { field: any }) => (
+                render={({ field }) => (
                   <FormItem>
                     <FormLabel>Weight (g)</FormLabel>
                     <FormControl>
@@ -164,7 +164,7 @@ export function AddGearDialog() {
               <FormField
                 control={form.control}
                 name="maintenanceInterval"
-                render={({ field }: { field: any }) => (
+                render={({ field }) => (
                   <FormItem>
                     <FormLabel>Maint. Interval (Trips)</FormLabel>
                     <FormControl>
@@ -177,7 +177,7 @@ export function AddGearDialog() {
               <FormField
                 control={form.control}
                 name="usageCount"
-                render={({ field }: { field: any }) => (
+                render={({ field }) => (
                   <FormItem>
                     <FormLabel>Current Usage</FormLabel>
                     <FormControl>
@@ -192,7 +192,7 @@ export function AddGearDialog() {
             <FormField
               control={form.control}
               name="weightType"
-              render={({ field }: { field: any }) => (
+              render={({ field }) => (
                 <FormItem>
                   <FormLabel>Weight Type</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -214,7 +214,7 @@ export function AddGearDialog() {
             <FormField
               control={form.control}
               name="category"
-              render={({ field }: { field: any }) => (
+              render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category</FormLabel>
                   <FormControl>
@@ -227,7 +227,7 @@ export function AddGearDialog() {
             <FormField
               control={form.control}
               name="tags"
-              render={({ field }: { field: any }) => (
+              render={({ field }) => (
                 <FormItem>
                   <FormLabel>Tags (comma-separated)</FormLabel>
                   <FormControl>

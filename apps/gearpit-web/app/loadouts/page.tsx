@@ -32,6 +32,7 @@ export default function LoadoutPage() {
     }
   }, []);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchLoadouts(); }, [fetchLoadouts]);
 
   const executeDelete = async (id: string) => {

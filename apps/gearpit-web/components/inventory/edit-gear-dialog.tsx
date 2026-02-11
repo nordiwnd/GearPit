@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Pencil, Loader2, Trash2 } from "lucide-react";
+import { Pencil, Loader2 } from "lucide-react";
 
 import { gearApi, GearItem } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -88,7 +88,7 @@ export function EditGearDialog({ item, trigger }: EditGearDialogProps) {
       setOpen(false);
       router.refresh();
       toast.success("Gear updated successfully");
-    } catch (error) {
+    } catch {
       toast.error("Failed to update gear");
     } finally {
       setIsSubmitting(false);
@@ -110,31 +110,31 @@ export function EditGearDialog({ item, trigger }: EditGearDialogProps) {
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField control={form.control} name="name" render={({ field }: { field: any }) => (
+            <FormField control={form.control} name="name" render={({ field }) => (
               <FormItem><FormLabel>Item Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
             )} />
             <div className="grid grid-cols-2 gap-4">
-              <FormField control={form.control} name="brand" render={({ field }: { field: any }) => (
+              <FormField control={form.control} name="brand" render={({ field }) => (
                 <FormItem><FormLabel>Brand</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
               )} />
-              <FormField control={form.control} name="weightGram" render={({ field }: { field: any }) => (
+              <FormField control={form.control} name="weightGram" render={({ field }) => (
                 <FormItem><FormLabel>Weight (g)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <FormField control={form.control} name="maintenanceInterval" render={({ field }: { field: any }) => (
+              <FormField control={form.control} name="maintenanceInterval" render={({ field }) => (
                 <FormItem><FormLabel>Maint. Interval</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
-              <FormField control={form.control} name="usageCount" render={({ field }: { field: any }) => (
+              <FormField control={form.control} name="usageCount" render={({ field }) => (
                 <FormItem><FormLabel>Usage</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
             </div>
 
-            <FormField control={form.control} name="category" render={({ field }: { field: any }) => (
+            <FormField control={form.control} name="category" render={({ field }) => (
               <FormItem><FormLabel>Category</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
             )} />
-            <FormField control={form.control} name="tags" render={({ field }: { field: any }) => (
+            <FormField control={form.control} name="tags" render={({ field }) => (
               <FormItem><FormLabel>Tags (comma-separated)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
             )} />
 

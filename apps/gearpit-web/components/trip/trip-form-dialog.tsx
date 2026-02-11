@@ -91,7 +91,7 @@ export function TripFormDialog({ tripToEdit, trigger, onSuccess }: Props) {
       setOpen(false);
       router.refresh();
       if (onSuccess) onSuccess();
-    } catch (error) {
+    } catch {
       toast.error("Failed to save trip");
     } finally {
       setLoading(false);
@@ -113,21 +113,21 @@ export function TripFormDialog({ tripToEdit, trigger, onSuccess }: Props) {
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField control={form.control} name="name" render={({ field }: { field: any }) => (
+            <FormField control={form.control} name="name" render={({ field }) => (
               <FormItem><FormLabel>Trip Name</FormLabel><FormControl><Input placeholder="Hokkaido Ski Trip" {...field} /></FormControl><FormMessage /></FormItem>
             )} />
-            <FormField control={form.control} name="location" render={({ field }: { field: any }) => (
+            <FormField control={form.control} name="location" render={({ field }) => (
               <FormItem><FormLabel>Location</FormLabel><FormControl><Input placeholder="Niseko" {...field} /></FormControl><FormMessage /></FormItem>
             )} />
             <div className="grid grid-cols-2 gap-4">
-              <FormField control={form.control} name="startDate" render={({ field }: { field: any }) => (
+              <FormField control={form.control} name="startDate" render={({ field }) => (
                 <FormItem><FormLabel>Start Date</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
-              <FormField control={form.control} name="endDate" render={({ field }: { field: any }) => (
+              <FormField control={form.control} name="endDate" render={({ field }) => (
                 <FormItem><FormLabel>End Date</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
             </div>
-            <FormField control={form.control} name="description" render={({ field }: { field: any }) => (
+            <FormField control={form.control} name="description" render={({ field }) => (
               <FormItem><FormLabel>Notes</FormLabel><FormControl><Textarea placeholder="Details..." {...field} /></FormControl><FormMessage /></FormItem>
             )} />
             <div className="flex justify-end pt-4">

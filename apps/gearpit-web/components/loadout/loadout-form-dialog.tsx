@@ -90,7 +90,7 @@ export function LoadoutFormDialog({ loadoutToEdit, trigger, onSuccess }: Props) 
         onSuccess();
       }
 
-    } catch (error) {
+    } catch {
       toast.error(isEdit ? "Failed to update loadout" : "Failed to create loadout");
     } finally {
       setLoading(false);
@@ -114,10 +114,10 @@ export function LoadoutFormDialog({ loadoutToEdit, trigger, onSuccess }: Props) 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 flex-1 flex flex-col min-h-0">
             <div className="grid grid-cols-2 gap-4">
-              <FormField control={form.control} name="name" render={({ field }: { field: any }) => (
+              <FormField control={form.control} name="name" render={({ field }) => (
                 <FormItem><FormLabel>Name</FormLabel><FormControl><Input placeholder="Ex: Summer Hike 2026" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
-              <FormField control={form.control} name="activityType" render={({ field }: { field: any }) => (
+              <FormField control={form.control} name="activityType" render={({ field }) => (
                 <FormItem><FormLabel>Activity</FormLabel><FormControl><Input placeholder="Ex: Hiking" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
             </div>
@@ -128,9 +128,10 @@ export function LoadoutFormDialog({ loadoutToEdit, trigger, onSuccess }: Props) 
                 <FormField control={form.control} name="selectedItemIds" render={() => (
                   <div className="space-y-2">
                     {gears.map((gear) => (
-                      <FormField key={gear.id} control={form.control} name="selectedItemIds" render={({ field }: { field: any }) => (
+                      <FormField key={gear.id} control={form.control} name="selectedItemIds" render={({ field }) => (
                         <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border bg-card p-3 shadow-sm">
                           <FormControl>
+                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                             <Checkbox checked={field.value?.includes(gear.id)} onCheckedChange={(checked) => checked ? field.onChange([...field.value, gear.id]) : field.onChange(field.value?.filter((v: any) => v !== gear.id))} />
                           </FormControl>
                           <div className="space-y-1 leading-none flex-1 flex justify-between">

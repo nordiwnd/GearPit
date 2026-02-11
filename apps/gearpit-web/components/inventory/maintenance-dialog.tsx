@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -54,7 +54,7 @@ export function MaintenanceDialog({ item }: Props) {
   const [loading, setLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema) as any,
+    resolver: zodResolver(formSchema),
     defaultValues: {
       performedAt: format(new Date(), "yyyy-MM-dd"),
       type: "cleaning",
@@ -63,20 +63,20 @@ export function MaintenanceDialog({ item }: Props) {
     },
   });
 
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     try {
       const data = await maintenanceApi.getItemLogs(item.id);
       setLogs(data || []);
-    } catch (error) {
+    } catch {
       toast.error("Failed to load maintenance logs");
     }
-  };
+  }, [item.id]);
 
   useEffect(() => {
     if (open) {
       fetchLogs();
     }
-  }, [open, item.id]);
+  }, [open, item.id, fetchLogs]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setLoading(true);
@@ -93,7 +93,7 @@ export function MaintenanceDialog({ item }: Props) {
         cost: 0,
       });
       fetchLogs();
-    } catch (error) {
+    } catch {
       toast.error("Failed to add log");
     } finally {
       setLoading(false);
@@ -105,7 +105,7 @@ export function MaintenanceDialog({ item }: Props) {
       await maintenanceApi.deleteLog(id);
       toast.success("Log deleted");
       fetchLogs();
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete log");
     }
   };
@@ -134,8 +134,7 @@ export function MaintenanceDialog({ item }: Props) {
                 <FormField
                   control={form.control}
                   name="performedAt"
-                  // 修正: 型を明示的に指定
-                  render={({ field }: { field: any }) => (
+                  render={({ field }) => (
                     <FormItem>
                       <FormLabel>Date</FormLabel>
                       <FormControl>
@@ -148,8 +147,7 @@ export function MaintenanceDialog({ item }: Props) {
                 <FormField
                   control={form.control}
                   name="type"
-                  // 修正: 型を明示的に指定
-                  render={({ field }: { field: any }) => (
+                  render={({ field }) => (
                     <FormItem>
                       <FormLabel>Type</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -172,8 +170,7 @@ export function MaintenanceDialog({ item }: Props) {
                 <FormField
                   control={form.control}
                   name="cost"
-                  // 修正: 型を明示的に指定
-                  render={({ field }: { field: any }) => (
+                  render={({ field }) => (
                     <FormItem>
                       <FormLabel>Cost</FormLabel>
                       <FormControl>
@@ -186,8 +183,7 @@ export function MaintenanceDialog({ item }: Props) {
                 <FormField
                   control={form.control}
                   name="description"
-                  // 修正: 型を明示的に指定
-                  render={({ field }: { field: any }) => (
+                  render={({ field }) => (
                     <FormItem>
                       <FormLabel>Notes</FormLabel>
                       <FormControl>

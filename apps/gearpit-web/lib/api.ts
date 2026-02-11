@@ -45,7 +45,7 @@ export interface GearItem {
     brand?: string;
     category?: string;
     color?: string;
-    [key: string]: any;
+    [key: string]: string | number | boolean | undefined;
   };
   tags?: string[];
   usageCount: number;
@@ -85,7 +85,7 @@ export const gearApi = {
     return res.json();
   },
 
-  createItem: async (payload: any): Promise<GearItem> => {
+  createItem: async (payload: Partial<GearItem>): Promise<GearItem> => {
     const res = await fetch(`${getBaseUrl()}/gears`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -95,7 +95,7 @@ export const gearApi = {
     return res.json();
   },
 
-  updateItem: async (id: string, payload: any): Promise<GearItem> => {
+  updateItem: async (id: string, payload: Partial<GearItem>): Promise<GearItem> => {
     const res = await fetch(`${getBaseUrl()}/gears/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -134,7 +134,7 @@ export const kitApi = {
     if (!res.ok) throw new Error('Failed to fetch kit');
     return res.json();
   },
-  create: async (payload: any): Promise<Kit> => {
+  create: async (payload: Partial<Kit>): Promise<Kit> => {
     const res = await fetch(`${getBaseUrl()}/kits`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -174,7 +174,7 @@ export const loadoutApi = {
     if (!res.ok) throw new Error('Failed to fetch loadout');
     return res.json();
   },
-  create: async (payload: any): Promise<Loadout> => {
+  create: async (payload: Partial<Loadout>): Promise<Loadout> => {
     const res = await fetch(`${getBaseUrl()}/loadouts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -183,7 +183,7 @@ export const loadoutApi = {
     if (!res.ok) throw new Error('Failed to create loadout');
     return res.json();
   },
-  update: async (id: string, payload: any): Promise<Loadout> => {
+  update: async (id: string, payload: Partial<Loadout>): Promise<Loadout> => {
     const res = await fetch(`${getBaseUrl()}/loadouts/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -213,7 +213,7 @@ export interface MaintenanceLog {
 }
 
 export const maintenanceApi = {
-  addLog: async (payload: any): Promise<MaintenanceLog> => {
+  addLog: async (payload: Partial<MaintenanceLog> & { itemId: string }): Promise<MaintenanceLog> => {
     const res = await fetch(`${getBaseUrl()}/maintenance`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -227,7 +227,7 @@ export const maintenanceApi = {
     if (!res.ok) throw new Error('Failed to fetch logs');
     return res.json();
   },
-  updateLog: async (id: string, payload: any): Promise<MaintenanceLog> => {
+  updateLog: async (id: string, payload: Partial<MaintenanceLog>): Promise<MaintenanceLog> => {
     const res = await fetch(`${getBaseUrl()}/maintenance/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },

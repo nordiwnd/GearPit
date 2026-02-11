@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
 import {
@@ -26,25 +26,25 @@ export default function TripDetailPage() {
   const [trip, setTrip] = useState<Trip | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchTrip = async () => {
+  const fetchTrip = useCallback(async () => {
     try {
       const data = await tripApi.get(id);
       setTrip(data);
-    } catch (error) {
+    } catch {
       toast.error("Failed to load trip details");
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  useEffect(() => { fetchTrip(); }, [id]);
+  useEffect(() => { fetchTrip(); }, [id, fetchTrip]);
 
   const handleRemoveItem = async (itemId: string) => {
     try {
       await tripApi.removeItems(id, [itemId]);
       toast.success("Item removed");
       fetchTrip();
-    } catch (error) {
+    } catch {
       toast.error("Failed to remove item");
     }
   };
@@ -55,7 +55,7 @@ export default function TripDetailPage() {
     try {
       await tripApi.updateItemQuantity(id, itemId, newQty);
       fetchTrip();
-    } catch (error) {
+    } catch {
       toast.error("Failed to update quantity");
     }
   };
@@ -67,7 +67,7 @@ export default function TripDetailPage() {
       if (!res.ok) throw new Error("Failed to complete trip");
       toast.success("Trip completed! Gear usage updated.");
       fetchTrip();
-    } catch (error) {
+    } catch {
       toast.error("Failed to complete trip");
     }
   };
@@ -178,7 +178,7 @@ export default function TripDetailPage() {
                       ))}
                     </Pie>
                     <RechartsTooltip
-                      formatter={(value: any) => `${value}g`}
+                      formatter={(value: number | string | undefined) => `${value ?? 0}g`}
                       contentStyle={{
                         backgroundColor: 'hsl(var(--popover))',
                         borderColor: 'hsl(var(--border))',
@@ -266,7 +266,7 @@ export default function TripDetailPage() {
                   <TableRow>
                     <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
                       No items in this trip yet. <br />
-                      Click "Add Gear" to build your packing list.
+                      Click &quot;Add Gear&quot; to build your packing list.
                     </TableCell>
                   </TableRow>
                 )}

@@ -52,7 +52,7 @@ export function AddGearToTripDialog({ tripId, currentItems, onSuccess }: Props) 
       toast.success(`Added ${selectedIds.length} items to trip`);
       setOpen(false);
       onSuccess();
-    } catch (error) {
+    } catch {
       toast.error("Failed to add items");
     } finally {
       setLoading(false);
