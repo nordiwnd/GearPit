@@ -4,34 +4,39 @@ description: Executes End-to-End tests using Playwright to verify critical user 
 tags: [e2e, playwright, testing]
 ---
 
-# Skill: Run Local E2E / Integration Verification
+# Skill: Run E2E Smoke Tests (Playwright)
 
 ## 1. Concept
-In the new GearPit workflow, **Local E2E = Tilt Environment**.
-We do not spin up a separate "test stack". We verify against the running development cluster (k3d).
+We use Playwright to run "Smoke Tests" against the **Local Tilt Environment**.
+These tests verify that the Frontend, Backend, and Database are correctly wired together.
 
-## 2. Preparation
-- **Command:** `tilt ci` (Must be running in background)
-- **Status Check:**
-  - Open Tilt UI (default: `http://localhost:10350`).
-  - Verify `gearpit-core`, `gearpit-web`, and `gearpit-db` are **Green (Active)**.
+## 2. Prerequisites
+- **Tilt:** Must be running (`tilt ci` or `tilt up`).
+- **App Status:** `gearpit-web` must be accessible at `http://localhost:3000`.
 
-## 3. Execution Steps
+## 3. Execution
 
-### A. Manual Smoke Test (Browser)
-1. Open **`http://localhost:3000`** (Next.js via Ingress/PortForward).
-2. **Critical Path:**
-   - Create a new Gear Item.
-   - Verify it appears in the list.
-   - (This confirms Frontend -> Backend -> DB write/read flow).
+```bash
+cd apps/e2e
 
-### B. API Verification (Curl)
-1. Check Backend Health:
-   - `curl http://localhost:8080/healthz` (or equivalent endpoint).
-2. Check specific API (optional):
-   - `curl http://localhost:8080/api/v1/gears`
+# Install dependencies if needed (first run)
+# npm ci && npx playwright install --with-deps chromium
 
-## 4. Troubleshooting
-- **If Frontend cannot connect to Backend:**
-  - Check `gearpit-web` logs in Tilt.
-  - Verify `NEXT_PUBLIC_API_URL` is correctly configured in the k8s manifest (likely pointing to `/api/v1` or full URL).
+# Run all tests (Headless)
+npx playwright test
+
+# Run specific test file
+npx playwright test tests/smoke.spec.ts
+
+# Debug mode (Opens browser inspector)
+npx playwright test --debug
+```
+
+## 4. Test Scope
+The E2E tests in `apps/e2e/tests/` cover:
+- **Smoke:** Basic navigation and rendering.
+- **Critical Flows:** Creating items, checking weight analytics.
+
+## 5. Troubleshooting
+- **Connection Refused:** Ensure Tilt is running and `gearpit-web` is green.
+- **Timeouts:** K3d might be slow. Try increasing timeouts in `playwright.config.ts` or using `--debug` to step through.
