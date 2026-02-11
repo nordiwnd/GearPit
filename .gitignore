@@ -40,3 +40,6 @@ mycert.pem
 # !.agent/skills/frontend/
 # !.agent/skills/ops/
 # !.agent/skills/e2e-local/
+# Dependencies
+node_modules/
+**/node_modules/
