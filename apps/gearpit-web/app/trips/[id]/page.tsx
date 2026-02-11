@@ -143,15 +143,15 @@ export default function TripDetailPage() {
 
       <div className="max-w-7xl mx-auto px-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="space-y-6 lg:col-span-1">
-          <Card className="bg-primary text-primary-foreground border-primary">
+          <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-primary-foreground/80 text-sm font-medium">Total Pack Weight</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Pack Weight</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-4xl font-bold font-mono">
-                {stats ? (stats.totalWeight / 1000).toFixed(2) : "0.00"} <span className="text-lg text-primary-foreground/60">kg</span>
+                {stats ? (stats.totalWeight / 1000).toFixed(2) : "0.00"} <span className="text-lg text-muted-foreground">kg</span>
               </div>
-              <div className="mt-2 flex items-center gap-2 text-sm text-primary-foreground/70">
+              <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
                 <Package className="h-4 w-4" /> {stats?.totalItems} items packed
               </div>
             </CardContent>
@@ -179,7 +179,14 @@ export default function TripDetailPage() {
                     </Pie>
                     <RechartsTooltip
                       formatter={(value: any) => `${value}g`}
-                      contentStyle={{ backgroundColor: 'var(--background)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--popover))',
+                        borderColor: 'hsl(var(--border))',
+                        color: 'hsl(var(--popover-foreground))',
+                        borderRadius: 'var(--radius)'
+                      }}
+                      itemStyle={{ color: 'hsl(var(--foreground))' }}
+                      animationDuration={300}
                     />
                     <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
                   </PieChart>
