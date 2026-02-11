@@ -204,10 +204,11 @@ export const loadoutApi = {
 export interface MaintenanceLog {
   id: string;
   itemId: string;
-  date: string;
+  performedAt: string;
   type: string;
   description: string;
   cost: number;
+  snapshotUsage: number;
   createdAt: string;
 }
 

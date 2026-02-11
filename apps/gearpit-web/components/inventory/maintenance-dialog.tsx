@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -37,7 +38,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { maintenanceApi, MaintenanceLog, GearItem } from "@/lib/api";
 
 const formSchema = z.object({
-  date: z.string().min(1, "Date is required"),
+  performedAt: z.string().min(1, "Date is required"),
   type: z.string().min(1, "Type is required"),
   description: z.string().optional(),
   cost: z.coerce.number().min(0),
@@ -55,7 +56,7 @@ export function MaintenanceDialog({ item }: Props) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema) as any,
     defaultValues: {
-      date: format(new Date(), "yyyy-MM-dd"),
+      performedAt: format(new Date(), "yyyy-MM-dd"),
       type: "cleaning",
       description: "",
       cost: 0,
@@ -86,7 +87,7 @@ export function MaintenanceDialog({ item }: Props) {
       });
       toast.success("Log added");
       form.reset({
-        date: format(new Date(), "yyyy-MM-dd"),
+        performedAt: format(new Date(), "yyyy-MM-dd"),
         type: "cleaning",
         description: "",
         cost: 0,
@@ -119,6 +120,9 @@ export function MaintenanceDialog({ item }: Props) {
       <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Maintenance Log: {item.name}</DialogTitle>
+          <DialogDescription>
+            Track maintenance, repairs, and inspections for this item.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex gap-6 h-full overflow-hidden">
@@ -129,7 +133,7 @@ export function MaintenanceDialog({ item }: Props) {
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
                 <FormField
                   control={form.control}
-                  name="date"
+                  name="performedAt"
                   // 修正: 型を明示的に指定
                   render={({ field }: { field: any }) => (
                     <FormItem>
@@ -220,7 +224,7 @@ export function MaintenanceDialog({ item }: Props) {
                           </span>
                           <span className="text-muted-foreground text-xs flex items-center">
                             <Calendar className="h-3 w-3 mr-1" />
-                            {format(parseISO(log.date), "MMM d, yyyy")}
+                            {format(parseISO(log.performedAt), "MMM d, yyyy")}
                           </span>
                         </div>
                         {log.cost > 0 && (
@@ -231,7 +235,7 @@ export function MaintenanceDialog({ item }: Props) {
                         )}
                       </div>
                       <p className="text-zinc-700 dark:text-zinc-300 pl-1">{log.description}</p>
-                      
+
                       <Button
                         variant="ghost"
                         size="icon"
