@@ -55,6 +55,7 @@ export function WeightDistribution({ stats }: WeightDistributionProps) {
                                 borderRadius: 'var(--radius)',
                             }}
                             itemStyle={{ color: 'hsl(var(--foreground))' }}
+                            animationDuration={300}
                         />
                         <Legend
                             verticalAlign="bottom"

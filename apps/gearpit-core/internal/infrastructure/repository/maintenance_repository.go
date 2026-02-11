@@ -26,7 +26,7 @@ func (r *maintenanceRepository) Create(ctx context.Context, log *domain.Maintena
 
 func (r *maintenanceRepository) GetByItemID(ctx context.Context, itemID string) ([]domain.MaintenanceLog, error) {
 	var logs []domain.MaintenanceLog
-	if err := r.db.WithContext(ctx).Where("item_id = ?", itemID).Order("date DESC").Find(&logs).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("item_id = ?", itemID).Order("performed_at DESC").Find(&logs).Error; err != nil {
 		return nil, fmt.Errorf("failed to get maintenance logs: %w", err)
 	}
 	return logs, nil

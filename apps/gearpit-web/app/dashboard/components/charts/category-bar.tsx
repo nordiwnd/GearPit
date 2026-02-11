@@ -51,10 +51,11 @@ export function CategoryBar({ stats }: CategoryBarProps) {
                             }}
                             formatter={(value: number | undefined) => [`${value ?? 0} items`, 'Count']}
                             labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 'bold', marginBottom: '4px' }}
+                            animationDuration={300}
                         />
                         <Bar
                             dataKey="count"
-                            fill="hsl(var(--primary))"
+                            fill="#3b82f6"
                             radius={[4, 4, 0, 0]}
                             name="Items"
                         />
