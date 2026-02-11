@@ -54,7 +54,8 @@ export function MaintenanceDialog({ item }: Props) {
   const [loading, setLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(formSchema) as any,
     defaultValues: {
       performedAt: format(new Date(), "yyyy-MM-dd"),
       type: "cleaning",
