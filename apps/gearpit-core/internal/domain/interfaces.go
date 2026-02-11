@@ -7,6 +7,30 @@ import (
 
 // --- Existing Gear & Inventory ---
 
+type CreateGearParams struct {
+	Name                string
+	Description         string
+	Manufacturer        string
+	WeightGram          int
+	WeightType          WeightType
+	Category            string
+	Brand               string
+	UsageCount          int
+	MaintenanceInterval int
+}
+
+type UpdateGearParams struct {
+	Name                string
+	Description         string
+	Manufacturer        string
+	WeightGram          int
+	WeightType          WeightType
+	Category            string
+	Brand               string
+	UsageCount          int
+	MaintenanceInterval int
+}
+
 type GearRepository interface {
 	Create(ctx context.Context, item *Item) error
 	GetByID(ctx context.Context, id string) (*Item, error)
@@ -22,10 +46,10 @@ type GearRepository interface {
 }
 
 type GearService interface {
-	CreateItem(ctx context.Context, name, description, manufacturer string, weight int, weightType WeightType, category, brand string, usageCount, maintenanceInterval int) (*Item, error)
+	CreateItem(ctx context.Context, params CreateGearParams) (*Item, error)
 	GetItem(ctx context.Context, id string) (*Item, error)
 	ListItems(ctx context.Context) ([]Item, error)
-	UpdateItem(ctx context.Context, id, name, description, manufacturer string, weight int, weightType WeightType, category, brand string, usageCount, maintenanceInterval int) (*Item, error)
+	UpdateItem(ctx context.Context, id string, params UpdateGearParams) (*Item, error)
 	DeleteItem(ctx context.Context, id string) error
 	SearchItems(ctx context.Context, query string) ([]Item, error)
 }

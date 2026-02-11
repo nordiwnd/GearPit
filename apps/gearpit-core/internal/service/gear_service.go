@@ -16,23 +16,23 @@ func NewGearService(repo domain.GearRepository) domain.GearService {
 	return &gearService{repo: repo}
 }
 
-func (s *gearService) CreateItem(ctx context.Context, name, description, manufacturer string, weight int, weightType domain.WeightType, category, brand string, usageCount, maintenanceInterval int) (*domain.Item, error) {
+func (s *gearService) CreateItem(ctx context.Context, params domain.CreateGearParams) (*domain.Item, error) {
 	// プロパティをJSONとして構築
 	props := map[string]string{
-		"category": category,
-		"brand":    brand,
+		"category": params.Category,
+		"brand":    params.Brand,
 	}
 	propsJSON, _ := json.Marshal(props)
 
 	item := &domain.Item{
-		Name:                name,
-		Description:         description,
-		Manufacturer:        manufacturer,
-		WeightGram:          weight,
-		WeightType:          weightType,
+		Name:                params.Name,
+		Description:         params.Description,
+		Manufacturer:        params.Manufacturer,
+		WeightGram:          params.WeightGram,
+		WeightType:          params.WeightType,
 		Properties:          datatypes.JSON(propsJSON),
-		UsageCount:          usageCount,
-		MaintenanceInterval: maintenanceInterval,
+		UsageCount:          params.UsageCount,
+		MaintenanceInterval: params.MaintenanceInterval,
 	}
 
 	if err := s.repo.Create(ctx, item); err != nil {
@@ -49,7 +49,7 @@ func (s *gearService) ListItems(ctx context.Context) ([]domain.Item, error) {
 	return s.repo.List(ctx)
 }
 
-func (s *gearService) UpdateItem(ctx context.Context, id, name, description, manufacturer string, weight int, weightType domain.WeightType, category, brand string, usageCount, maintenanceInterval int) (*domain.Item, error) {
+func (s *gearService) UpdateItem(ctx context.Context, id string, params domain.UpdateGearParams) (*domain.Item, error) {
 	item, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -57,19 +57,19 @@ func (s *gearService) UpdateItem(ctx context.Context, id, name, description, man
 
 	// プロパティ更新
 	props := map[string]string{
-		"category": category,
-		"brand":    brand,
+		"category": params.Category,
+		"brand":    params.Brand,
 	}
 	propsJSON, _ := json.Marshal(props)
 
-	item.Name = name
-	item.Description = description
-	item.Manufacturer = manufacturer
-	item.WeightGram = weight
-	item.WeightType = weightType
+	item.Name = params.Name
+	item.Description = params.Description
+	item.Manufacturer = params.Manufacturer
+	item.WeightGram = params.WeightGram
+	item.WeightType = params.WeightType
 	item.Properties = datatypes.JSON(propsJSON)
-	item.UsageCount = usageCount
-	item.MaintenanceInterval = maintenanceInterval
+	item.UsageCount = params.UsageCount
+	item.MaintenanceInterval = params.MaintenanceInterval
 
 	if err := s.repo.Update(ctx, item); err != nil {
 		return nil, err
