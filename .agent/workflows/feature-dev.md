@@ -4,6 +4,10 @@ description: Autonomously implements and verifies features locally using Tilt & 
 
 This workflow guides the agent through the full feature development lifecycle using the local Kubernetes environment.
 
+# 0. Create Branch
+Create an appropriately named branch.
+(eg. feat/feat-name-branch, fix/fix-name-branch)
+
 # 1. Environment Check
 Check if the local development environment is ready.
 // turbo
@@ -44,4 +48,7 @@ Ensure the feature works end-to-end in the local k3d cluster.
 
 # 5. Commit & Push
 1. Create a conventional commit message (e.g., `feat: add new gear type`).
-2. Push to the feature branch.
+2. Push to the feature/fix branch.
+
+# 6. Launch Preview workflow
+Run the preview environment workflow according to `.agent/workflows/feature-preview.md`.

@@ -113,19 +113,19 @@ export function CreateLoadoutDialog() {
 
               <div className="space-y-2">
                 <FormLabel>Select Gears</FormLabel>
-                <div className="border rounded-md p-4 h-[300px] overflow-y-auto bg-zinc-50/50">
+                <div className="border rounded-md p-4 h-[300px] overflow-y-auto bg-muted/50">
                   <FormField control={form.control} name="selectedItemIds" render={() => (
                     <div className="space-y-2">
                       {gears.map((gear) => (
                         <FormField key={gear.id} control={form.control} name="selectedItemIds" render={({ field }: { field: any }) => (
-                          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border bg-white p-3 shadow-sm">
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border bg-card p-3 shadow-sm">
                             <FormControl>
                               <Checkbox checked={field.value?.includes(gear.id)} onCheckedChange={(checked) => checked ? field.onChange([...field.value, gear.id]) : field.onChange(field.value?.filter((v: any) => v !== gear.id))} />
                             </FormControl>
                             <div className="space-y-1 leading-none flex-1 flex justify-between">
                               <div>
-                                <FormLabel className="font-medium text-zinc-900 cursor-pointer">{gear.name}</FormLabel>
-                                <p className="text-xs text-zinc-500">{gear.properties?.brand || '-'}</p>
+                                <FormLabel className="font-medium text-foreground cursor-pointer">{gear.name}</FormLabel>
+                                <p className="text-xs text-muted-foreground">{gear.properties?.brand || '-'}</p>
                               </div>
                               <Badge variant="outline" className="ml-auto font-mono">{gear.weightGram}g</Badge>
                             </div>

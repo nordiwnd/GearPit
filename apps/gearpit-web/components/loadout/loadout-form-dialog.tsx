@@ -124,12 +124,12 @@ export function LoadoutFormDialog({ loadoutToEdit, trigger, onSuccess }: Props) 
 
             <div className="space-y-2 flex-1 flex flex-col min-h-0">
               <FormLabel>Select Gears</FormLabel>
-              <div className="border rounded-md p-4 overflow-y-auto bg-zinc-50/50 flex-1 dark:bg-zinc-900/50">
+              <div className="border rounded-md p-4 overflow-y-auto bg-muted/50 flex-1">
                 <FormField control={form.control} name="selectedItemIds" render={() => (
                   <div className="space-y-2">
                     {gears.map((gear) => (
                       <FormField key={gear.id} control={form.control} name="selectedItemIds" render={({ field }: { field: any }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border bg-white p-3 shadow-sm dark:bg-zinc-950">
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border bg-card p-3 shadow-sm">
                           <FormControl>
                             <Checkbox checked={field.value?.includes(gear.id)} onCheckedChange={(checked) => checked ? field.onChange([...field.value, gear.id]) : field.onChange(field.value?.filter((v: any) => v !== gear.id))} />
                           </FormControl>

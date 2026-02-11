@@ -96,30 +96,30 @@ export default function TripDetailPage() {
   if (!trip) return <div className="p-8 text-center text-zinc-500 dark:text-zinc-400">Trip not found</div>;
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 pb-20 transition-colors">
-      <div className="bg-white dark:bg-zinc-900 border-b dark:border-zinc-800 px-8 py-6 mb-8 transition-colors">
+    <div className="min-h-screen bg-muted/30 pb-20 transition-colors">
+      <div className="bg-background border-b px-8 py-6 mb-8 transition-colors">
         <div className="max-w-7xl mx-auto">
-          <Button variant="ghost" className="mb-4 pl-0 hover:bg-transparent hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400" onClick={() => router.push('/trips')}>
+          <Button variant="ghost" className="mb-4 pl-0 hover:bg-transparent hover:text-primary text-muted-foreground" onClick={() => router.push('/trips')}>
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Plans
           </Button>
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
             <div>
-              <h1 className="text-4xl font-bold text-zinc-900 dark:text-zinc-50 mb-2">{trip.name}</h1>
-              <div className="flex flex-wrap gap-4 text-zinc-500 dark:text-zinc-400 text-sm mb-2">
+              <h1 className="text-4xl font-bold text-foreground mb-2">{trip.name}</h1>
+              <div className="flex flex-wrap gap-4 text-muted-foreground text-sm mb-2">
                 <div className="flex items-center"><Calendar className="mr-1 h-4 w-4" /> {format(parseISO(trip.startDate), "yyyy/MM/dd")} - {format(parseISO(trip.endDate), "yyyy/MM/dd")}</div>
                 {trip.location && <div className="flex items-center"><MapPin className="mr-1 h-4 w-4" /> {trip.location}</div>}
               </div>
 
               {trip.userProfile && (
-                <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-full w-fit">
+                <div className="flex items-center gap-2 text-sm text-foreground bg-muted px-3 py-1 rounded-full w-fit">
                   <User className="h-4 w-4" />
                   <span className="font-medium">{trip.userProfile.name}</span>
-                  <span className="text-zinc-400">|</span>
+                  <span className="text-muted-foreground">|</span>
                   <span>{trip.userProfile.heightCm}cm / {trip.userProfile.weightKg}kg</span>
                 </div>
               )}
 
-              {trip.description && <p className="mt-4 text-zinc-600 dark:text-zinc-400 max-w-2xl">{trip.description}</p>}
+              {trip.description && <p className="mt-4 text-muted-foreground max-w-2xl">{trip.description}</p>}
             </div>
 
             <div className="flex gap-2">
@@ -143,23 +143,23 @@ export default function TripDetailPage() {
 
       <div className="max-w-7xl mx-auto px-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="space-y-6 lg:col-span-1">
-          <Card className="bg-zinc-900 dark:bg-black text-white border-zinc-800 dark:border-zinc-800">
+          <Card className="bg-primary text-primary-foreground border-primary">
             <CardHeader className="pb-2">
-              <CardTitle className="text-zinc-400 text-sm font-medium">Total Pack Weight</CardTitle>
+              <CardTitle className="text-primary-foreground/80 text-sm font-medium">Total Pack Weight</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-4xl font-bold font-mono">
-                {stats ? (stats.totalWeight / 1000).toFixed(2) : "0.00"} <span className="text-lg text-zinc-500">kg</span>
+                {stats ? (stats.totalWeight / 1000).toFixed(2) : "0.00"} <span className="text-lg text-primary-foreground/60">kg</span>
               </div>
-              <div className="mt-2 flex items-center gap-2 text-sm text-zinc-400">
+              <div className="mt-2 flex items-center gap-2 text-sm text-primary-foreground/70">
                 <Package className="h-4 w-4" /> {stats?.totalItems} items packed
               </div>
             </CardContent>
           </Card>
 
           {stats && stats.totalWeight > 0 && (
-            <Card className="dark:bg-zinc-900 dark:border-zinc-800">
-              <CardHeader><CardTitle className="text-base dark:text-zinc-100">Weight Analysis</CardTitle></CardHeader>
+            <Card>
+              <CardHeader><CardTitle className="text-base">Weight Analysis</CardTitle></CardHeader>
               <CardContent className="h-[250px] -ml-4">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -191,15 +191,15 @@ export default function TripDetailPage() {
 
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold flex items-center gap-2 dark:text-zinc-50">
+            <h2 className="text-xl font-bold flex items-center gap-2 text-foreground">
               <Package className="h-5 w-5" /> Packing List
             </h2>
           </div>
 
-          <Card className="dark:bg-zinc-900 dark:border-zinc-800">
+          <Card>
             <Table>
               <TableHeader>
-                <TableRow className="dark:border-zinc-800">
+                <TableRow>
                   <TableHead className="w-[40%]">Item Name</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead className="text-center">Qty</TableHead>
@@ -210,12 +210,12 @@ export default function TripDetailPage() {
               <TableBody>
                 {trip.tripItems && trip.tripItems.length > 0 ? (
                   trip.tripItems.map((ti) => (
-                    <TableRow key={ti.itemId} className="group dark:border-zinc-800">
+                    <TableRow key={ti.itemId} className="group">
                       <TableCell className="font-medium">
                         <EditGearDialog
                           item={ti.item}
                           trigger={
-                            <div className="cursor-pointer hover:underline decoration-dotted underline-offset-4 flex items-center gap-2 dark:text-zinc-200">
+                            <div className="cursor-pointer hover:underline decoration-dotted underline-offset-4 flex items-center gap-2 text-foreground">
                               {ti.item.name}
                               <span className="text-xs text-muted-foreground font-normal">{ti.item.properties?.brand}</span>
                             </div>
@@ -223,7 +223,7 @@ export default function TripDetailPage() {
                         />
                       </TableCell>
                       <TableCell>
-                        <Badge variant="secondary" className="font-normal text-xs dark:bg-zinc-800 dark:text-zinc-300">{ti.item.properties?.category || "Other"}</Badge>
+                        <Badge variant="secondary" className="font-normal text-xs">{ti.item.properties?.category || "Other"}</Badge>
                       </TableCell>
 
                       <TableCell className="text-center">
@@ -238,7 +238,7 @@ export default function TripDetailPage() {
                         </div>
                       </TableCell>
 
-                      <TableCell className="text-right font-mono dark:text-zinc-300">
+                      <TableCell className="text-right font-mono text-foreground">
                         {ti.item.weightGram * ti.quantity}g
                         {ti.quantity > 1 && <div className="text-[10px] text-muted-foreground">({ti.item.weightGram}g ea)</div>}
                       </TableCell>
