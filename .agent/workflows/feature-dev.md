@@ -22,6 +22,9 @@ Iterate on code changes.
    - Check Tilt status (via `kubectl get pods` or Tilt UI if accessible).
    - Ensure Pods restart and become `Running`.
    - Check logs for errors: `kubectl logs -l app=gearpit-app` or `kubectl logs -l app=gearpit-web`.
+5. **Data Seeding**:
+   - If the feature changes the data model, you **MUST** update `apps/gearpit-core/cmd/seeder/main.go` to reflect these changes.
+   - Run the seeder locally to verify: `go run apps/gearpit-core/cmd/seeder/main.go`
 
 # 3. Security & Quality Check
 Run static analysis before committing.
