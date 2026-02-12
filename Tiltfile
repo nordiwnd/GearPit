@@ -65,5 +65,30 @@ run('cd /app && npm install', trigger='apps/gearpit-web/package.json'),
 )
 
 k8s_resource('gearpit-web', 
-port_forwards=['9000:80'],
+# port_forwards=['9000:80'],
 labels=['frontend'])
+
+ingress_yaml_content = """
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+name: gearpit-dev-ingress  # 名前を固定
+namespace: default
+annotations:
+kubernetes.io/ingress.class: traefik
+spec:
+rules:
+- host: gearpit-dev.localhost  # 本番と被らないホスト名
+http:
+paths:
+- path: /
+pathType: Prefix
+backend:
+service:
+name: gearpit-web-svc
+port:
+number: 80
+"""
+
+# blob() を使い、確実に文字列データとして渡す
+k8s_yaml(blob(ingress_yaml_content))
