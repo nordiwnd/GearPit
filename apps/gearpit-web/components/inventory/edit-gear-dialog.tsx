@@ -38,7 +38,7 @@ const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   description: z.string().optional(),
   weightGram: z.string().regex(/^\d*$/, "Weight must be a positive number."),
-  weightType: z.enum(["base", "consumable", "worn", "long"]),
+  weightType: z.enum(["base", "consumable", "worn", "long", "accessory"]),
   brand: z.string().optional(),
   category: z.string().optional(),
   tags: z.string().optional(),
@@ -149,6 +149,7 @@ export function EditGearDialog({ item, trigger }: EditGearDialogProps) {
                       <SelectItem value="consumable">Consumable (Food/Water)</SelectItem>
                       <SelectItem value="worn">Worn (Clothing)</SelectItem>
                       <SelectItem value="long">Long Gear (Skis/Poles)</SelectItem>
+                      <SelectItem value="accessory">Accessory (Essentials)</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

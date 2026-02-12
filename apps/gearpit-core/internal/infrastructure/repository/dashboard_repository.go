@@ -32,9 +32,9 @@ func (r *dashboardRepository) GetStats(ctx context.Context) (*domain.DashboardSt
 	}
 	stats.TotalWeight = int(totalWeight)
 
-	// 2.1 Long Gear Weight (Sum where weight_type = 'long')
+	// 2.1 Long Gear (Skis/Poles/Accessories) Weight (Sum where weight_type = 'long' or 'accessory')
 	var longWeight int64
-	if err := db.Model(&domain.Item{}).Where("weight_type = ?", domain.WeightTypeLong).Select("COALESCE(SUM(weight_gram), 0)").Scan(&longWeight).Error; err != nil {
+	if err := db.Model(&domain.Item{}).Where("weight_type IN ?", []domain.WeightType{domain.WeightTypeLong, domain.WeightTypeAccessory}).Select("COALESCE(SUM(weight_gram), 0)").Scan(&longWeight).Error; err != nil {
 		return nil, fmt.Errorf("failed to sum long weight: %w", err)
 	}
 	stats.LongWeight = int(longWeight)

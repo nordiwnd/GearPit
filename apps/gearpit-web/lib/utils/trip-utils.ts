@@ -35,10 +35,10 @@ export function categorizeTripItems(items: TripItem[]): CategoryItems {
       result.wearable.push(item);
     } else if (weightType === 'long') {
       result.long_gear.push(item);
-    } else if (tags.includes('essentials') || tags.includes('safety') || tags.includes('electronics')) {
+    } else if (weightType === 'accessory' || tags.includes('essentials') || tags.includes('safety') || tags.includes('electronics')) {
       result.essentials.push(item);
     } else {
-      // Both 'base' and 'consumable' go into Pack section
+      // both 'base' and 'consumable' go into Pack
       result.pack.push(item);
     }
   });

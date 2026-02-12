@@ -39,7 +39,7 @@ run('cd /app && go build -o /app/main ./main.go', trigger=['apps/gearpit-core'])
 k8s_resource('gearpit-app', 
 new_name='gearpit-core',
 resource_deps=['gearpit-db'], # Wait for DB
-# port_forwards='8080:8080', # k3d exposes this
+# port_forwards='8888:8080', # k3d exposes this
 labels=['backend'])
 
 # 3. Frontend (gearpit-web)
@@ -65,5 +65,5 @@ run('cd /app && npm install', trigger='apps/gearpit-web/package.json'),
 )
 
 k8s_resource('gearpit-web', 
-# port_forwards='3000:3000', # k3d exposes this
+port_forwards=['9000:80'],
 labels=['frontend'])

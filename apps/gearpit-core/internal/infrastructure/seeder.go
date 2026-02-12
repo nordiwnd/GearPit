@@ -1,7 +1,6 @@
 package infrastructure
 
 import (
-	"encoding/json"
 	"log/slog"
 	"time"
 
@@ -14,19 +13,37 @@ import (
 func SeedDB(db *gorm.DB) {
 	slog.Info("Starting database seeding...")
 
-	// Create generic properties
-	propsMap := map[string]string{"brand": "Montbell", "category": "Clothing"}
-	propsBytes, _ := json.Marshal(propsMap)
-	props := datatypes.JSON(propsBytes)
-
 	items := []domain.Item{
 		{
 			Name:         "Storm Cruiser Jacket",
 			Description:  "Gore-Tex Rain Jacket",
 			Manufacturer: "Montbell",
 			WeightGram:   254,
+			WeightType:   domain.WeightTypeWorn,
 			Unit:         "g",
-			Properties:   props,
+			Properties:   datatypes.JSON(`{"brand": "Montbell", "category": "Clothing"}`),
+			CreatedAt:    time.Now(),
+			UpdatedAt:    time.Now(),
+		},
+		{
+			Name:         "Sawyer Squeeze",
+			Description:  "Water Filter",
+			Manufacturer: "Sawyer",
+			WeightGram:   85,
+			WeightType:   domain.WeightTypeAccessory,
+			Unit:         "g",
+			Properties:   datatypes.JSON(`{"brand": "Sawyer", "category": "Electronics"}`),
+			CreatedAt:    time.Now(),
+			UpdatedAt:    time.Now(),
+		},
+		{
+			Name:         "Atomic Bent 100",
+			Description:  "Freeride skis",
+			Manufacturer: "Atomic",
+			WeightGram:   3400,
+			WeightType:   domain.WeightTypeLong,
+			Unit:         "g",
+			Properties:   datatypes.JSON(`{"brand": "Atomic", "category": "Skis"}`),
 			CreatedAt:    time.Now(),
 			UpdatedAt:    time.Now(),
 		},
@@ -35,8 +52,9 @@ func SeedDB(db *gorm.DB) {
 			Description:  "Warm down jacket",
 			Manufacturer: "Montbell",
 			WeightGram:   380,
+			WeightType:   domain.WeightTypeBase,
 			Unit:         "g",
-			Properties:   props,
+			Properties:   datatypes.JSON(`{"brand": "Montbell", "category": "Clothing"}`),
 			CreatedAt:    time.Now(),
 			UpdatedAt:    time.Now(),
 		},

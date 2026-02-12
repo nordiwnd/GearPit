@@ -59,7 +59,7 @@ func (s *loadoutService) calculateWeights(l *domain.Loadout) {
 			consumable += w
 		case domain.WeightTypeWorn:
 			worn += w
-		case domain.WeightTypeLong:
+		case domain.WeightTypeLong, domain.WeightTypeAccessory:
 			long += w
 		default: // "base" or empty defaults to base
 			base += w

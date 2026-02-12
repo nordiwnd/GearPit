@@ -33,7 +33,7 @@ const getBaseUrl = () => {
 // -----------------------------------------------------------------------------
 // Gear (Inventory) API
 // -----------------------------------------------------------------------------
-export type WeightType = 'base' | 'consumable' | 'worn' | 'long';
+export type WeightType = 'base' | 'consumable' | 'worn' | 'long' | 'accessory';
 
 export interface GearItem {
   id: string;

@@ -133,7 +133,8 @@ export function TripDetailsView({ initialTrip }: TripDetailsViewProps) {
                     <div className="lg:col-span-1 h-full">
                         <div
                             onDragOver={(e) => e.preventDefault()}
-                            onDrop={() => {
+                            onDrop={(e) => {
+                                e.preventDefault();
                                 if (draggingItemId) {
                                     handleDragItem(draggingItemId, 'long');
                                     setDraggingItemId(null);
@@ -157,7 +158,8 @@ export function TripDetailsView({ initialTrip }: TripDetailsViewProps) {
                     <div className="lg:col-span-1 h-full">
                         <div
                             onDragOver={(e) => e.preventDefault()}
-                            onDrop={() => {
+                            onDrop={(e) => {
+                                e.preventDefault();
                                 if (draggingItemId) {
                                     handleDragItem(draggingItemId, 'worn');
                                     setDraggingItemId(null);
@@ -182,7 +184,8 @@ export function TripDetailsView({ initialTrip }: TripDetailsViewProps) {
                     <div className="lg:col-span-1 h-full">
                         <div
                             onDragOver={(e) => e.preventDefault()}
-                            onDrop={() => {
+                            onDrop={(e) => {
+                                e.preventDefault();
                                 if (draggingItemId) {
                                     handleDragItem(draggingItemId, 'base');
                                     setDraggingItemId(null);
@@ -206,9 +209,10 @@ export function TripDetailsView({ initialTrip }: TripDetailsViewProps) {
                     <div className="lg:col-span-1 h-full">
                         <div
                             onDragOver={(e) => e.preventDefault()}
-                            onDrop={() => {
+                            onDrop={(e) => {
+                                e.preventDefault();
                                 if (draggingItemId) {
-                                    handleDragItem(draggingItemId, 'base');
+                                    handleDragItem(draggingItemId, 'accessory');
                                     setDraggingItemId(null);
                                 }
                             }}

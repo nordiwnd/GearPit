@@ -15,6 +15,7 @@ const (
 	WeightTypeConsumable WeightType = "consumable"
 	WeightTypeWorn       WeightType = "worn"
 	WeightTypeLong       WeightType = "long"
+	WeightTypeAccessory  WeightType = "accessory"
 )
 
 // --- Core Entities ---
