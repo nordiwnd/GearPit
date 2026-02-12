@@ -28,7 +28,7 @@ type CreateItemRequest struct {
 	Description         string `json:"description"`
 	Manufacturer        string `json:"manufacturer"`
 	WeightGram          int    `json:"weightGram" validate:"min=0"`
-	WeightType          string `json:"weightType" validate:"oneof=base consumable worn"`
+	WeightType          string `json:"weightType" validate:"oneof=base consumable worn long accessory"`
 	Category            string `json:"category"`
 	Brand               string `json:"brand"`
 	UsageCount          int    `json:"usageCount" validate:"min=0"`

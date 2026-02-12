@@ -34,6 +34,12 @@ export function OverviewCards({ stats }: OverviewCardsProps) {
             value: `¥${stats.totalCost.toLocaleString()}`,
             sub: "Maintenance expenses",
         },
+        {
+            title: "Long Gear Weight",
+            icon: Scale,
+            value: `${(stats.longWeight / 1000).toFixed(2)} kg`,
+            sub: "Skis, Poles, etc.",
+        },
     ];
 
     return (

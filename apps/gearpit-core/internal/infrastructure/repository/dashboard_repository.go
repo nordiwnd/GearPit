@@ -32,6 +32,13 @@ func (r *dashboardRepository) GetStats(ctx context.Context) (*domain.DashboardSt
 	}
 	stats.TotalWeight = int(totalWeight)
 
+	// 2.1 Long Gear (Skis/Poles/Accessories) Weight (Sum where weight_type = 'long' or 'accessory')
+	var longWeight int64
+	if err := db.Model(&domain.Item{}).Where("weight_type IN ?", []domain.WeightType{domain.WeightTypeLong, domain.WeightTypeAccessory}).Select("COALESCE(SUM(weight_gram), 0)").Scan(&longWeight).Error; err != nil {
+		return nil, fmt.Errorf("failed to sum long weight: %w", err)
+	}
+	stats.LongWeight = int(longWeight)
+
 	// 3. Total Loadouts
 	if err := db.Model(&domain.Loadout{}).Count(&stats.TotalLoadouts).Error; err != nil {
 		return nil, fmt.Errorf("failed to count loadouts: %w", err)

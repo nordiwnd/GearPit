@@ -128,6 +128,11 @@ func seedItems(db *gorm.DB) map[string]domain.Item {
 		{Name: "Base Layer Top", Description: "Merino wool", Manufacturer: "Icebreaker", WeightGram: 150, Unit: "g", WeightType: domain.WeightTypeWorn, Properties: createProps("Icebreaker", "Clothing")},
 		{Name: "GPS Watch", Description: "Garmin Fenix", Manufacturer: "Garmin", WeightGram: 80, Unit: "g", WeightType: domain.WeightTypeWorn, Properties: createProps("Garmin", "Electronics")},
 		{Name: "Hat", Description: "Sun hat", Manufacturer: "Sunday Afternoons", WeightGram: 70, Unit: "g", WeightType: domain.WeightTypeWorn, Properties: createProps("Sunday Afternoons", "Clothing")},
+
+		// Long Gear (Skis, Poles, etc.)
+		{Name: "Atomic Bent 100", Description: "Freeride skis", Manufacturer: "Atomic", WeightGram: 3400, Unit: "g", WeightType: domain.WeightTypeLong, Properties: createProps("Atomic", "Skis")},
+		{Name: "Ski Poles", Description: "Telescopic poles", Manufacturer: "Black Diamond", WeightGram: 500, Unit: "g", WeightType: domain.WeightTypeLong, Properties: createProps("Black Diamond", "Poles")},
+		{Name: "Avalanche Probe", Description: "300cm carbon probe", Manufacturer: "Mammut", WeightGram: 300, Unit: "g", WeightType: domain.WeightTypeLong, Properties: createProps("Mammut", "Safety")},
 	}
 
 	createdItems := make(map[string]domain.Item)
@@ -315,7 +320,7 @@ func seedTrips(db *gorm.DB, user *domain.UserProfile, items map[string]domain.It
 				db.Where("name = ?", trip.Name).First(&t)
 
 				// Add TripItems
-				itemNames := []string{"Tent (UL 1P)", "Sleeping Bag (-5C)"}
+				itemNames := []string{"Tent (UL 1P)", "Sleeping Bag (-5C)", "Atomic Bent 100"}
 				for _, name := range itemNames {
 					if item, exists := items[name]; exists {
 						tripItem := domain.TripItem{

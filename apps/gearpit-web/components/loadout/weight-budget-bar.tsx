@@ -22,6 +22,7 @@ export function WeightBudgetBar({ items, targetWeightGram, onTargetChange, class
         let base = 0;
         let consumable = 0;
         let worn = 0;
+        let long = 0;
 
         items.forEach(item => {
             const w = item.weightGram || 0;
@@ -33,12 +34,15 @@ export function WeightBudgetBar({ items, targetWeightGram, onTargetChange, class
                 case 'worn':
                     worn += w;
                     break;
+                case 'long':
+                    long += w;
+                    break;
                 default:
                     base += w;
             }
         });
 
-        return { total, base, consumable, worn };
+        return { total, base, consumable, worn, long };
     }, [items]);
 
     const hasBudget = targetWeightGram !== undefined && targetWeightGram > 0;
@@ -65,6 +69,7 @@ export function WeightBudgetBar({ items, targetWeightGram, onTargetChange, class
     const basePct = (stats.base / safeMax) * 100;
     const consPct = (stats.consumable / safeMax) * 100;
     const wornPct = (stats.worn / safeMax) * 100;
+    const longPct = (stats.long / safeMax) * 100;
 
     // If there is a budget, we might want to show a marker line at the budget limit if Budget < Total.
     // Since we set maxValue = Max(Total, Budget), if Budget < Total, the Budget line is at (Budget/Total)*100 %.
@@ -139,6 +144,7 @@ export function WeightBudgetBar({ items, targetWeightGram, onTargetChange, class
             <div className="relative h-3 w-full bg-secondary/50 rounded-full overflow-hidden flex">
                 <div style={{ width: `${basePct}%` }} className="h-full bg-emerald-500 transition-all duration-500" title={`Base: ${stats.base}g`} />
                 <div style={{ width: `${consPct}%` }} className="h-full bg-blue-500 transition-all duration-500" title={`Consumable: ${stats.consumable}g`} />
+                <div style={{ width: `${longPct}%` }} className="h-full bg-amber-500 transition-all duration-500" title={`Long Gear: ${stats.long}g`} />
                 <div style={{ width: `${wornPct}%` }} className="h-full bg-rose-500 transition-all duration-500" title={`Worn: ${stats.worn}g`} />
 
                 {/* Budget Limit Marker (only if Budget < Total, meaning we are over budget and the bar represents Total) */}
@@ -155,6 +161,7 @@ export function WeightBudgetBar({ items, targetWeightGram, onTargetChange, class
             <div className="flex justify-start gap-4 mt-1 text-[10px] text-muted-foreground">
                 <div className="flex items-center"><div className="w-2 h-2 rounded-full bg-emerald-500 mr-1" /> Base: {stats.base.toLocaleString()}g</div>
                 <div className="flex items-center"><div className="w-2 h-2 rounded-full bg-blue-500 mr-1" /> Consumable: {stats.consumable.toLocaleString()}g</div>
+                <div className="flex items-center"><div className="w-2 h-2 rounded-full bg-amber-500 mr-1" /> Long Gear: {stats.long.toLocaleString()}g</div>
                 <div className="flex items-center"><div className="w-2 h-2 rounded-full bg-rose-500 mr-1" /> Worn: {stats.worn.toLocaleString()}g</div>
             </div>
         </div>

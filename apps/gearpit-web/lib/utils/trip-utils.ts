@@ -1,80 +1,81 @@
 import { TripItem } from "@/lib/api";
 
-export type TripCategory = 'wearable' | 'pack' | 'essentials' | 'long_gear' | 'consumable';
-
-export interface CategorizedItems {
-  wearable: TripItem[];
-  pack: TripItem[];
-  essentials: TripItem[];
-  long_gear: TripItem[];
-  consumable: TripItem[];
-  uncategorized: TripItem[];
-}
-
 export interface WeightStats {
-  total: number;
-  base: number;
-  consumable: number;
-  worn: number;
+  total: number;      // Total weight in pack (Base + Consumable + Long)
+  base: number;       // Carried base weight
+  consumable: number; // Food, water, fuel
+  worn: number;       // Items worn on body
+  long: number;       // Long gear like skis/poles
 }
 
-export function categorizeTripItems(items: TripItem[]): CategorizedItems {
-  const result: CategorizedItems = {
+export type CategoryItems = Record<'wearable' | 'pack' | 'essentials' | 'long_gear', TripItem[]>;
+
+/**
+ * Categorizes trip items based on weightType and tags.
+ * Priority: 
+ * 1. WeightType 'worn' -> wearable
+ * 2. WeightType 'consumable' -> pack/consumable
+ * 3. WeightType 'long' -> long_gear
+ * 4. Tag 'essentials' -> essentials
+ * 5. Default -> pack
+ */
+export function categorizeTripItems(items: TripItem[]): CategoryItems {
+  const result: CategoryItems = {
     wearable: [],
     pack: [],
     essentials: [],
     long_gear: [],
-    consumable: [],
-    uncategorized: []
   };
 
   items.forEach(item => {
-    const tags = item.item.tags || [];
-    
-    // Check tags for categorization
-    // Priority: Consumable > Long Gear > Wearable > Essentials > Pack
-    if (tags.some(t => t.toLowerCase() === 'consumable' || t.toLowerCase() === 'food' || t.toLowerCase() === 'fuel')) {
-      result.consumable.push(item);
-    } else if (tags.some(t => t.toLowerCase() === 'long_gear' || t.toLowerCase() === 'ski' || t.toLowerCase() === 'pole')) {
-      result.long_gear.push(item);
-    } else if (tags.some(t => t.toLowerCase() === 'wearable' || t.toLowerCase() === 'clothing' || t.toLowerCase() === 'boots')) {
+    const weightType = item.item.weightType;
+    const tags = item.item.tags?.map(t => t.toLowerCase()) || [];
+
+    if (weightType === 'worn') {
       result.wearable.push(item);
-    } else if (tags.some(t => t.toLowerCase() === 'essentials' || t.toLowerCase() === 'safety' || t.toLowerCase() === 'first_aid' || t.toLowerCase() === 'electronics')) {
+    } else if (weightType === 'long') {
+      result.long_gear.push(item);
+    } else if (weightType === 'accessory' || tags.includes('essentials') || tags.includes('safety') || tags.includes('electronics')) {
       result.essentials.push(item);
-    } else if (tags.some(t => t.toLowerCase() === 'pack' || t.toLowerCase() === 'backpack')) {
-      result.pack.push(item);
     } else {
-      // Default to pack if it's not wearable/long/consumable, typical for hiking gear
-      // But let's verify if there are other indicators. 
-      // For now, if no specific tag matches, put in uncategorized (or pack? Design showed 'Backpack & Contents')
-      // The design implies "Backpack & Contents" is the main bucket.
-      result.pack.push(item); 
+      // both 'base' and 'consumable' go into Pack
+      result.pack.push(item);
     }
   });
 
   return result;
 }
 
+/**
+ * Calculates total weight statistics for a trip.
+ */
 export function calculateTripStats(items: TripItem[]): WeightStats {
-  let total = 0;
-  let base = 0;
-  let consumable = 0;
-  let worn = 0;
+  const stats: WeightStats = {
+    total: 0,
+    base: 0,
+    consumable: 0,
+    worn: 0,
+    long: 0,
+  };
 
   items.forEach(ti => {
     const weight = ti.item.weightGram * ti.quantity;
-    const tags = ti.item.tags || [];
-    
-    total += weight;
+    const type = ti.item.weightType;
 
-    if (tags.some(t => t.toLowerCase() === 'consumable')) {
-        consumable += weight;
-    } else if (tags.some(t => t.toLowerCase() === 'wearable')) {
-        worn += weight;
+    if (type === 'worn') {
+      stats.worn += weight;
+    } else if (type === 'long') {
+      stats.long += weight;
+      stats.total += weight;
+    } else if (type === 'consumable') {
+      stats.consumable += weight;
+      stats.total += weight;
     } else {
-        base += weight;
+      // Default to base weight
+      stats.base += weight;
+      stats.total += weight;
     }
   });
 
-  return { total, base, consumable, worn };
+  return stats;
 }

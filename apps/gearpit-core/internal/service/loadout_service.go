@@ -49,7 +49,7 @@ func (s *loadoutService) GetLoadout(ctx context.Context, id string) (*domain.Loa
 }
 
 func (s *loadoutService) calculateWeights(l *domain.Loadout) {
-	var total, base, consumable, worn int
+	var total, base, consumable, worn, long int
 
 	countItem := func(item domain.Item) {
 		w := item.WeightGram
@@ -59,6 +59,8 @@ func (s *loadoutService) calculateWeights(l *domain.Loadout) {
 			consumable += w
 		case domain.WeightTypeWorn:
 			worn += w
+		case domain.WeightTypeLong, domain.WeightTypeAccessory:
+			long += w
 		default: // "base" or empty defaults to base
 			base += w
 		}
@@ -78,6 +80,7 @@ func (s *loadoutService) calculateWeights(l *domain.Loadout) {
 	l.BaseWeightGram = base
 	l.ConsumableWeightGram = consumable
 	l.WornWeightGram = worn
+	l.LongWeightGram = long
 }
 
 func (s *loadoutService) ListLoadouts(ctx context.Context) ([]domain.Loadout, error) {

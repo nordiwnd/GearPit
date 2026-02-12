@@ -11,6 +11,13 @@ import { gearApi, GearItem } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -31,6 +38,7 @@ const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   description: z.string().optional(),
   weightGram: z.string().regex(/^\d*$/, "Weight must be a positive number."),
+  weightType: z.enum(["base", "consumable", "worn", "long", "accessory"]),
   brand: z.string().optional(),
   category: z.string().optional(),
   tags: z.string().optional(),
@@ -56,6 +64,7 @@ export function EditGearDialog({ item, trigger }: EditGearDialogProps) {
       name: item.name,
       description: item.description || "",
       weightGram: item.weightGram.toString(),
+      weightType: item.weightType || "base",
       brand: item.properties?.brand || "",
       category: item.properties?.category || "",
       tags: item.tags?.join(", ") || "",
@@ -76,6 +85,7 @@ export function EditGearDialog({ item, trigger }: EditGearDialogProps) {
         name: data.name,
         description: data.description || "",
         weightGram: weight,
+        weightType: data.weightType,
         tags: tagsArray,
         usageCount: usage,
         maintenanceInterval: interval,
@@ -121,6 +131,31 @@ export function EditGearDialog({ item, trigger }: EditGearDialogProps) {
                 <FormItem><FormLabel>Weight (g)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
             </div>
+
+            <FormField
+              control={form.control}
+              name="weightType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Weight Type</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select weight type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="base">Base Weight (Carried)</SelectItem>
+                      <SelectItem value="consumable">Consumable (Food/Water)</SelectItem>
+                      <SelectItem value="worn">Worn (Clothing)</SelectItem>
+                      <SelectItem value="long">Long Gear (Skis/Poles)</SelectItem>
+                      <SelectItem value="accessory">Accessory (Essentials)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="grid grid-cols-2 gap-4">
               <FormField control={form.control} name="maintenanceInterval" render={({ field }) => (

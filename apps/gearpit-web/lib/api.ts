@@ -33,13 +33,15 @@ const getBaseUrl = () => {
 // -----------------------------------------------------------------------------
 // Gear (Inventory) API
 // -----------------------------------------------------------------------------
+export type WeightType = 'base' | 'consumable' | 'worn' | 'long' | 'accessory';
+
 export interface GearItem {
   id: string;
   name: string;
   description: string;
   manufacturer: string;
   weightGram: number;
-  weightType?: 'base' | 'consumable' | 'worn';
+  weightType?: WeightType;
   unit: string;
   properties?: {
     brand?: string;
@@ -161,6 +163,7 @@ export interface Loadout {
   baseWeightGram: number;
   consumableWeightGram: number;
   wornWeightGram: number;
+  longWeightGram: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -250,6 +253,7 @@ export const maintenanceApi = {
 export interface DashboardStats {
   totalItems: number;
   totalWeight: number;
+  longWeight: number;
   totalLoadouts: number;
   totalCost: number;
   categoryStats: {

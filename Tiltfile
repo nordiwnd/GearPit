@@ -1,5 +1,5 @@
 load('ext://restart_process', 'docker_build_with_restart')
-allow_k8s_contexts('default')
+allow_k8s_contexts(['default', 'k3d-gearpit-dev'])
 # 1. Database
 # The user asked to apply the base postgres yaml.
 # However, the local-dev overlay of gearpit-core includes base.
@@ -39,7 +39,7 @@ run('cd /app && go build -o /app/main ./main.go', trigger=['apps/gearpit-core'])
 k8s_resource('gearpit-app', 
 new_name='gearpit-core',
 resource_deps=['gearpit-db'], # Wait for DB
-# port_forwards='8080:8080', # k3d exposes this
+# port_forwards='8888:8080', # k3d exposes this
 labels=['backend'])
 
 # 3. Frontend (gearpit-web)
@@ -65,5 +65,30 @@ run('cd /app && npm install', trigger='apps/gearpit-web/package.json'),
 )
 
 k8s_resource('gearpit-web', 
-# port_forwards='3000:3000', # k3d exposes this
+# port_forwards=['9000:80'],
 labels=['frontend'])
+
+ingress_yaml_content = """
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+name: gearpit-dev-ingress  # 名前を固定
+namespace: default
+annotations:
+kubernetes.io/ingress.class: traefik
+spec:
+rules:
+- host: gearpit-dev.localhost  # 本番と被らないホスト名
+http:
+paths:
+- path: /
+pathType: Prefix
+backend:
+service:
+name: gearpit-web-svc
+port:
+number: 80
+"""
+
+# blob() を使い、確実に文字列データとして渡す
+k8s_yaml(blob(ingress_yaml_content))

@@ -42,7 +42,13 @@ Run static analysis before committing.
 
 # 4. Final verification
 Ensure the feature works end-to-end in the local k3d cluster.
-1. Perform manual testing or run integration tests against the local ingress.
+
+1. **Automated E2E (Critical)**: Run the full E2E suite to ensure no regressions.
+   - **Command**: `tilt ci`
+   - *Note*: This runs the `e2e` resource defined in Tiltfile and exits automatically upon success/failure.
+   - *Skill Ref*: See `@run_e2e_scenarios` for debugging failures.
+
+2. **Manual Verification**: Perform ad-hoc testing against the local ingress.
    - Core: `curl http://localhost:8080/api/v1/...`
    - Web: Open browser (if applicable) or `curl http://localhost:3000`.
 
