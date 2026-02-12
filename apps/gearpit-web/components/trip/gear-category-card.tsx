@@ -15,7 +15,8 @@ interface GearCategoryCardProps {
     totalWeight: number;
     onUpdateQuantity: (itemId: string, currentQty: number, change: number) => void;
     onRemoveItem: (itemId: string) => void;
-    variant?: 'default' | 'featured'; // 'featured' could be for Wearable System to make it larger
+    onDragStart?: (itemId: string) => void;
+    variant?: 'default' | 'featured';
 }
 
 export function GearCategoryCard({
@@ -25,6 +26,7 @@ export function GearCategoryCard({
     totalWeight,
     onUpdateQuantity,
     onRemoveItem,
+    onDragStart,
     variant = 'default'
 }: GearCategoryCardProps) {
 
@@ -50,7 +52,12 @@ export function GearCategoryCard({
                             </div>
                         ) : (
                             items.map((ti) => (
-                                <div key={ti.itemId} className="flex items-center justify-between p-3 hover:bg-muted/30 group transition-colors">
+                                <div
+                                    key={ti.itemId}
+                                    draggable
+                                    onDragStart={() => onDragStart?.(ti.itemId)}
+                                    className="flex items-center justify-between p-3 hover:bg-muted/30 group transition-colors cursor-move"
+                                >
                                     <div className="flex-1 min-w-0 pr-4">
                                         <div className="flex items-center gap-2 mb-1">
                                             <span className="font-medium text-sm truncate">{ti.item.name}</span>

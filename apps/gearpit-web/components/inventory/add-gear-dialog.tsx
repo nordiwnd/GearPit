@@ -39,7 +39,7 @@ const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   description: z.string().optional(),
   weightGram: z.string().regex(/^\d*$/, "Weight must be a positive number."),
-  weightType: z.enum(["base", "consumable", "worn"]),
+  weightType: z.enum(["base", "consumable", "worn", "long"]),
   brand: z.string().optional(),
   category: z.string().optional(),
   tags: z.string().optional(),
@@ -205,6 +205,7 @@ export function AddGearDialog() {
                       <SelectItem value="base">Base Weight (Carried)</SelectItem>
                       <SelectItem value="consumable">Consumable (Food/Water)</SelectItem>
                       <SelectItem value="worn">Worn (Clothing)</SelectItem>
+                      <SelectItem value="long">Long Gear (Skis/Poles)</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

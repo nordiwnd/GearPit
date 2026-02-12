@@ -14,6 +14,7 @@ const (
 	WeightTypeBase       WeightType = "base"
 	WeightTypeConsumable WeightType = "consumable"
 	WeightTypeWorn       WeightType = "worn"
+	WeightTypeLong       WeightType = "long"
 )
 
 // --- Core Entities ---
@@ -56,6 +57,7 @@ type Loadout struct {
 	BaseWeightGram       int       `json:"baseWeightGram" gorm:"-"`       // Computed
 	ConsumableWeightGram int       `json:"consumableWeightGram" gorm:"-"` // Computed
 	WornWeightGram       int       `json:"wornWeightGram" gorm:"-"`       // Computed
+	LongWeightGram       int       `json:"longWeightGram" gorm:"-"`       // Computed
 	CreatedAt            time.Time `json:"createdAt"`
 	UpdatedAt            time.Time `json:"updatedAt"`
 }
@@ -135,5 +137,6 @@ type DashboardStats struct {
 	TotalWeight   int            `json:"totalWeight"`
 	TotalLoadouts int64          `json:"totalLoadouts"`
 	TotalCost     int            `json:"totalCost"`
+	LongWeight    int            `json:"longWeight"`
 	CategoryStats []CategoryStat `json:"categoryStats"`
 }
