@@ -4,18 +4,19 @@ description: Autonomously implements and verifies features locally using Tilt & 
 
 This workflow guides the agent through the full feature development lifecycle using the local Kubernetes environment.
 
-# 0. Create Branch
+# 1. Create Branch
 Create an appropriately named branch.
 (eg. feat/feat-name-branch, fix/fix-name-branch)
 
-# 1. Environment Check
+# 2. Environment Check
 Check if the local development environment is ready.
 // turbo
-1. Check if `k3d` cluster is running: `k3d cluster list`
-2. If not, run setup script: `./scripts/setup-dev.sh`
-3. Start Tilt in the background (or ensure it's running): `tilt ci --stream` (Use a separate terminal or background process if possible, otherwise rely on `kubectl` for status checks).
+1. please following skill @run_e2e_scenarios_local
+2. Check if `k3d` cluster is running: `k3d cluster list`
+3. If not, run setup script: `./scripts/setup-dev.sh`
+4. Start Tilt in the background (or ensure it's running): `tilt ci --stream` (Use a separate terminal or background process if possible, otherwise rely on `kubectl` for status checks).
 
-# 2. Implementation Loop (TDD/Inner Loop)
+# 3. Implementation Loop (TDD/Inner Loop)
 Iterate on code changes.
 1. **Plan**: Analyze requirements and create an implementation plan.
 2. **Code**: Implement changes in `apps/gearpit-core` (Go) or `apps/gearpit-web` (Next.js).
@@ -46,11 +47,11 @@ Ensure the feature works end-to-end in the local k3d cluster.
 1. **Automated E2E (Critical)**: Run the full E2E suite to ensure no regressions.
    - **Command**: `tilt ci`
    - *Note*: This runs the `e2e` resource defined in Tiltfile and exits automatically upon success/failure.
-   - *Skill Ref*: See `@run_e2e_scenarios` for debugging failures.
+   - *Skill Ref*: See `@run_e2e_scenarios_local` for debugging failures.
 
 2. **Manual Verification**: Perform ad-hoc testing against the local ingress.
    - Core: `curl http://localhost:8080/api/v1/...`
-   - Web: Open browser (if applicable) or `curl http://localhost:3000`.
+   - Web: Open browser (if applicable) or `curl http://localhost:9000`.
 
 # 5. Commit & Push
 1. Create a conventional commit message (e.g., `feat: add new gear type`).

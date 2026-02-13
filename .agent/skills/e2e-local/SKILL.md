@@ -11,8 +11,8 @@ We use Playwright to run "Smoke Tests" against the **Local Tilt Environment**.
 These tests verify that the Frontend, Backend, and Database are correctly wired together.
 
 ## 2. Prerequisites
-- **Tilt:** Must be running (`tilt ci` or `tilt up`).
-- **App Status:** `gearpit-web` must be accessible at `http://localhost:9000/dashboard`.
+- **Tilt:** Must be running (`tilt ci`).
+- **App Status:** `gearpit-web` must be accessible at `http://localhost:9000`.
 
 ## 3. Execution
 
