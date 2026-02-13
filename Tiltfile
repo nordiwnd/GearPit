@@ -1,6 +1,6 @@
 load('ext://restart_process', 'docker_build_with_restart')
 allow_k8s_contexts(['default', 'k3d-gearpit-dev'])
-
+# default_registry('localhost:5000')
 # 1. Database
 # Note: The local-dev overlay relies on the base postgres definition.
 # Defining a resource here allows for port-forwarding visibility in Tilt.
@@ -28,7 +28,6 @@ RUN go build -o /app/main ./main.go
 ENTRYPOINT ["/app/main"]
 ''',
 entrypoint='/app/main',
-# 修正: ローカル(AMD64)に合わせてプラットフォームを固定
 platform='linux/amd64',
 live_update=[
 sync('apps/gearpit-core', '/app'),
@@ -58,7 +57,6 @@ RUN npm install
 COPY apps/gearpit-web/ .
 CMD ["npm", "run", "dev"]
 ''',
-# 修正: ローカル(AMD64)に合わせてプラットフォームを固定
 platform='linux/amd64',
 live_update=[
 sync('apps/gearpit-web', '/app'),
