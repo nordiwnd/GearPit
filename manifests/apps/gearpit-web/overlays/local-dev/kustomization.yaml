@@ -4,3 +4,6 @@ resources:
   - ../../base
 patches:
   - path: patch-deploy.yaml
+images:
+  - name: ghcr.io/nordiwnd/gearpit-web
+    newName: gearpit-web

@@ -9,7 +9,7 @@ This document defines the immutable constraints for Physical, Local, and Preview
 | **Cluster**      | k3d (Docker on WSL2)         | k3s (Raspberry Pi Cluster)               | k3s (Raspberry Pi Cluster)       |
 | **Architecture** | `linux/amd64` (Native Speed) | **`linux/arm64` (Strict)**               | **`linux/arm64` (Strict)**       |
 | **Namespace**    | `gearpit-dev` / default      | `pr{{number}}`                           | `gearpit`                        |
-| **Ingress Host** | `localhost` / `127.0.0.1`    | `web-pr{{number}}.192.168.40.100.nip.io` | `gearpit.192.168.40.100.nip.io`  |
+| **Ingress Host** | `http://localhost:9000/`     | `web-pr{{number}}.192.168.40.100.nip.io` | `gearpit.192.168.40.100.nip.io`  |
 | **DB Storage**   | Ephemeral (Empty on restart) | Ephemeral (Seeded via init)              | **Persistent (StatefulSet PVC)** |
 | **Deployment**   | `tilt` / `kubectl apply`     | ArgoCD (ApplicationSet)                  | ArgoCD (ApplicationSet)          |
 

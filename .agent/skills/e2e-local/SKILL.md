@@ -1,7 +1,7 @@
 ---
-name: run_e2e_scenarios
-description: Executes End-to-End tests using Playwright to verify critical user flows.
-tags: [e2e, playwright, testing]
+name: run_e2e_scenarios_local
+description: Executes End-to-End tests on Local environment using Playwright to verify critical user flows.
+tags: [e2e, playwright, testing, local]
 ---
 
 # Skill: Run E2E Smoke Tests (Playwright)
@@ -12,7 +12,7 @@ These tests verify that the Frontend, Backend, and Database are correctly wired 
 
 ## 2. Prerequisites
 - **Tilt:** Must be running (`tilt ci` or `tilt up`).
-- **App Status:** `gearpit-web` must be accessible at `http://localhost:3000`.
+- **App Status:** `gearpit-web` must be accessible at `http://localhost:9000/dashboard`.
 
 ## 3. Execution
 
@@ -37,6 +37,13 @@ The E2E tests in `apps/e2e/tests/` cover:
 - **Smoke:** Basic navigation and rendering.
 - **Critical Flows:** Creating items, checking weight analytics.
 
-## 5. Troubleshooting
-- **Connection Refused:** Ensure Tilt is running and `gearpit-web` is green.
-- **Timeouts:** K3d might be slow. Try increasing timeouts in `playwright.config.ts` or using `--debug` to step through.
+## 5. Automated Troubleshooting (For AI Agent)
+If `npx playwright test` fails, the agent **MUST** follow these steps before reporting:
+
+1.  **Collect Diagnostics:** Run the debug script to gather the current cluster/app status.
+    ```bash
+    ./collect_debug_logs.sh
+    ```
+2.  **Analyze Context:** Read the generated single-file log to identify the root cause (e.g., CrashLoopBackOff, DB connection errors, or Build failures).
+    - **Log Location:** `./.agent/skills/e2e-local/scripts/_ALL_DEBUG_CONTEXT.txt`
+3.  **Cross-Reference:** Compare the timestamps in the log with the Playwright failure time to ensure the data is fresh[cite: 1].

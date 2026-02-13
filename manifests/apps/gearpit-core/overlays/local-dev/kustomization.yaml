@@ -3,6 +3,9 @@ kind: Kustomization
 resources:
   - ../../base
   - service-local.yaml
+images:
+  - name: ghcr.io/nordiwnd/gearpit-app
+    newName: gearpit-app
 patches:
   - path: patch-deploy.yaml
   - path: patch-db-svc.yaml
