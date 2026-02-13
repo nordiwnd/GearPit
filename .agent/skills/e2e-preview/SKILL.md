@@ -20,7 +20,7 @@ The agent should invoke the diagnostic script whenever a Preview environment dep
 
 ```bash
 # Execute from project root. Replace <PR_NUMBER> with the actual ID.
-./collect_preview_logs.sh <PR_NUMBER>
+./collect_preview_logs.sh <PR_NUMBER> <BRANCH_NAME> 
 ```
 
 ### Automated Steps Performed:

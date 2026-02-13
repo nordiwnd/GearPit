@@ -4,6 +4,7 @@
 # 設定: パス解決と初期化
 # ==========================================
 PR_NUM=$1
+BRANCH_NAME=$2
 if [ -z "$PR_NUM" ]; then
     echo "Usage: ./collect_preview_logs.sh <PR_NUMBER>"
     exit 1
@@ -11,7 +12,7 @@ fi
 
 NAMESPACE="pr${PR_NUM}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-TARGET_DIR="${SCRIPT_DIR}/.agent/skills/e2e-preview"
+TARGET_DIR="${SCRIPT_DIR}"
 LOG_FILE="${TARGET_DIR}/_PREVIEW_DEBUG_CONTEXT.txt"
 # コンテキストを default に固定
 TARGET_CONTEXT="default"
@@ -23,7 +24,11 @@ mkdir -p "${TARGET_DIR}"
 # ==========================================
 echo "### Stage 1: Waiting for GitHub Actions build..."
 
-RUN_ID=$(gh run list --branch "pr-${PR_NUM}" --limit 1 --json databaseId -q '.[0].databaseId')
+if [ -z "${BRANCH_NAME}" ]; then
+    BRANCH_NAME=$(git branch --show-current)
+fi
+
+RUN_ID=$(gh run list --branch "${BRANCH_NAME}" --limit 1 --json databaseId -q '.[0].databaseId')
 
 if [ -z "$RUN_ID" ]; then
     echo "Error: No GitHub Actions run found for PR ${PR_NUM}."
