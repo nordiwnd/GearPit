@@ -18,12 +18,13 @@ func NewTripHandler(s domain.TripService) *TripHandler {
 }
 
 type TripRequest struct {
-	Name          string  `json:"name"`
-	Description   string  `json:"description"`
-	Location      string  `json:"location"`
-	StartDate     string  `json:"startDate"`
-	EndDate       string  `json:"endDate"`
-	UserProfileID *string `json:"userProfileId"` // 追加
+	Name               string  `json:"name"`
+	Description        string  `json:"description"`
+	Location           string  `json:"location"`
+	StartDate          string  `json:"startDate"`
+	EndDate            string  `json:"endDate"`
+	UserProfileID      *string `json:"userProfileId"`
+	PlannedHikingHours float64 `json:"plannedHikingHours"` // 追加
 }
 
 // 既存の一括追加用（数量指定なし）
@@ -52,7 +53,7 @@ func (h *TripHandler) CreateTrip(w http.ResponseWriter, r *http.Request) {
 		durationDays = 1
 	}
 
-	trip, err := h.service.CreateTrip(r.Context(), req.Name, req.Description, req.Location, start, end, req.UserProfileID, durationDays)
+	trip, err := h.service.CreateTrip(r.Context(), req.Name, req.Description, req.Location, start, end, req.UserProfileID, durationDays, req.PlannedHikingHours)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -104,7 +105,7 @@ func (h *TripHandler) UpdateTrip(w http.ResponseWriter, r *http.Request) {
 		durationDays = 1
 	}
 
-	trip, err := h.service.UpdateTrip(r.Context(), id, req.Name, req.Description, req.Location, start, end, req.UserProfileID, durationDays)
+	trip, err := h.service.UpdateTrip(r.Context(), id, req.Name, req.Description, req.Location, start, end, req.UserProfileID, durationDays, req.PlannedHikingHours)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

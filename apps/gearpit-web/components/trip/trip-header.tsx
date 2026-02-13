@@ -5,6 +5,7 @@ import { Trip } from "@/lib/api";
 import { Calendar, MapPin, User, ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
+import { TripFormDialog } from "./trip-form-dialog";
 
 interface TripHeaderProps {
     trip: Trip;
@@ -25,6 +26,10 @@ export function TripHeader({ trip, onComplete }: TripHeaderProps) {
                             Back to Trips
                         </Button>
                         <div className="flex gap-2">
+                            <TripFormDialog
+                                tripToEdit={trip}
+                                trigger={<Button variant="outline" size="sm">Edit Trip</Button>}
+                            />
                             <Button
                                 size="sm"
                                 onClick={onComplete}

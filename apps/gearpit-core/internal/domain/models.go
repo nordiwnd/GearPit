@@ -98,6 +98,12 @@ type Trip struct {
 	Status       string `gorm:"default:'planned'" json:"status"` // 'planned' | 'completed'
 	DurationDays int    `gorm:"default:1" json:"durationDays"`
 
+	PlannedHikingHours float64 `gorm:"default:0" json:"plannedHikingHours"`
+
+	// Computed Stats (Not persisted)
+	PredictedHydrationML int `gorm:"-" json:"predictedHydrationML"`
+	PredictedCalories    int `gorm:"-" json:"predictedCalories"`
+
 	// User Profile Link
 	UserProfileID *string      `gorm:"type:uuid" json:"userProfileId,omitempty"` // Nullable
 	UserProfile   *UserProfile `gorm:"foreignKey:UserProfileID" json:"userProfile,omitempty"`

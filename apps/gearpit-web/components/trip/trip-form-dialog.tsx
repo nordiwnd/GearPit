@@ -22,9 +22,18 @@ const formSchema = z.object({
   description: z.string().optional(),
   startDate: z.string().min(1, "Start date is required"),
   endDate: z.string().min(1, "End date is required"),
+  plannedHikingHours: z.coerce.number().min(0).default(0),
 });
 
-type FormValues = z.infer<typeof formSchema>;
+// Explicitly define FormValues to avoid inference issues
+interface FormValues {
+  name: string;
+  location?: string;
+  description?: string;
+  startDate: string;
+  endDate: string;
+  plannedHikingHours: number;
+}
 
 interface Props {
   tripToEdit?: Trip; // 編集モード用
@@ -40,17 +49,18 @@ export function TripFormDialog({ tripToEdit, trigger, onSuccess }: Props) {
   const isEdit = !!tripToEdit;
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema) as any, // Cast to any to bypass strict compatibility check
     defaultValues: {
       name: tripToEdit?.name || "",
       location: tripToEdit?.location || "",
       description: tripToEdit?.description || "",
       startDate: tripToEdit ? format(new Date(tripToEdit.startDate), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
       endDate: tripToEdit ? format(new Date(tripToEdit.endDate), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
+      plannedHikingHours: tripToEdit?.plannedHikingHours || 0,
     },
   });
 
-  // Dialogが開くたびに値をリセット（特に新規作成時）
+  // Dialogが開くたびに値をリセット
   useEffect(() => {
     if (open) {
       form.reset({
@@ -59,6 +69,7 @@ export function TripFormDialog({ tripToEdit, trigger, onSuccess }: Props) {
         description: tripToEdit?.description || "",
         startDate: tripToEdit ? format(new Date(tripToEdit.startDate), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
         endDate: tripToEdit ? format(new Date(tripToEdit.endDate), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
+        plannedHikingHours: tripToEdit?.plannedHikingHours || 0,
       });
     }
   }, [open, tripToEdit, form]);
@@ -72,17 +83,12 @@ export function TripFormDialog({ tripToEdit, trigger, onSuccess }: Props) {
         location: values.location || "",
         startDate: values.startDate,
         endDate: values.endDate,
+        plannedHikingHours: values.plannedHikingHours,
       };
 
       if (isEdit && tripToEdit) {
-        // APIにUpdateメソッドが必要ですが、現在未実装の場合はCreateのみ、または要API追加
-        // ★注意: BackendのTripHandlerにUpdate実装済みと仮定して tripApi.update を呼ぶ必要がありますが、
-        // 前回の Backend 実装で UpdateTrip は Service にはありましたが Handler/Route で実装しましたか？
-        // main.go を確認すると PUT ルートがありませんでした。
-        // なので、今回は「作成」のみ動きます。Updateを動かすにはBackendのUpdateルート追加が必要です。
-        // いったんCreateと同じ動きをさせますが、本当はUpdateが必要です。
-        // BackendにPUTルートがないため、一旦エラーになりますがUIとしてはこうあるべきです。
-        toast.error("Update API is not connected yet in Backend.");
+        await tripApi.update(tripToEdit.id, payload);
+        toast.success("Trip plan updated successfully");
       } else {
         await tripApi.create(payload);
         toast.success("Trip plan created successfully");
@@ -127,6 +133,17 @@ export function TripFormDialog({ tripToEdit, trigger, onSuccess }: Props) {
                 <FormItem><FormLabel>End Date</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
             </div>
+
+            <FormField control={form.control} name="plannedHikingHours" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Planned Hiking Hours</FormLabel>
+                <FormControl>
+                  <Input type="number" step="0.5" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+
             <FormField control={form.control} name="description" render={({ field }) => (
               <FormItem><FormLabel>Notes</FormLabel><FormControl><Textarea placeholder="Details..." {...field} /></FormControl><FormMessage /></FormItem>
             )} />

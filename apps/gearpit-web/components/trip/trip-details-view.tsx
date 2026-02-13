@@ -113,7 +113,11 @@ export function TripDetailsView({ initialTrip }: TripDetailsViewProps) {
 
                 {/* KPIS & Stats */}
                 <section>
-                    <TripStats stats={stats} />
+                    <TripStats
+                        stats={stats}
+                        hydration={trip.predictedHydrationML}
+                        calories={trip.predictedCalories}
+                    />
                 </section>
 
                 {/* Action Bar */}
