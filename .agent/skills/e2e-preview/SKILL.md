@@ -7,7 +7,7 @@ tags: [e2e, preview, troubleshooting, gha, k8s]
 # Skill: Preview Environment Diagnostics & Troubleshooting
 
 ## 1. Concept
-This skill allows the agent to wait for a CI build to complete and then collect deep diagnostic information from a specific PR namespace (`pr-xxx`) in the **default** Kubernetes context. This is essential for debugging failures in the Preview environment before running E2E tests.
+This skill allows the agent to wait for a CI build to complete and then collect deep diagnostic information from a specific PR namespace (`prxxx`) in the **default** Kubernetes context. This is essential for debugging failures in the Preview environment before running E2E tests.
 
 ## 2. Prerequisites
 - **Context:** The agent MUST operate within the **`default`** context for Preview environments.

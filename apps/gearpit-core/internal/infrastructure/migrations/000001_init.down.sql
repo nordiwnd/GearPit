@@ -1,0 +1,10 @@
+DROP TABLE IF EXISTS trip_items;
+DROP TABLE IF EXISTS loadout_items;
+DROP TABLE IF EXISTS loadout_kits;
+DROP TABLE IF EXISTS kit_items;
+DROP TABLE IF EXISTS trips;
+DROP TABLE IF EXISTS user_profiles;
+DROP TABLE IF EXISTS maintenance_logs;
+DROP TABLE IF EXISTS loadouts;
+DROP TABLE IF EXISTS kits;
+DROP TABLE IF EXISTS items;
