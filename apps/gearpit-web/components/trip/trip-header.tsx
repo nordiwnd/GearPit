@@ -6,6 +6,8 @@ import { Calendar, MapPin, User, ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
 import { TripFormDialog } from "./trip-form-dialog";
+import { TripHydrationChart } from "./trip-hydration-chart";
+import { TripWaterInput } from "./trip-water-input";
 
 interface TripHeaderProps {
     trip: Trip;
@@ -42,8 +44,8 @@ export function TripHeader({ trip, onComplete }: TripHeaderProps) {
                     </div>
 
                     {/* Main Content */}
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 pb-2">
-                        <div>
+                    <div className="flex flex-col md:flex-row justify-between items-start gap-4 pb-2">
+                        <div className="flex-1">
                             <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground mb-2">{trip.name}</h1>
                             <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                                 <div className="flex items-center gap-1.5 bg-muted/50 px-2.5 py-1 rounded-md">
@@ -64,6 +66,15 @@ export function TripHeader({ trip, onComplete }: TripHeaderProps) {
                                     </div>
                                 )}
                             </div>
+                        </div>
+
+                        {/* Hydration & Water Input Section */}
+                        <div className="flex flex-col gap-2 w-full md:w-auto min-w-[320px]">
+                            <TripHydrationChart
+                                hydration={trip.predictedHydrationML || 0}
+                                calories={trip.predictedCalories || 0}
+                            />
+                            <TripWaterInput trip={trip} onSuccess={() => router.refresh()} />
                         </div>
                     </div>
                 </div>
