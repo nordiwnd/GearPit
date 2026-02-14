@@ -103,7 +103,7 @@ export function TripWaterInput({ trip, onSuccess }: TripWaterInputProps) {
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-center gap-2 border rounded-md p-1 bg-background shadow-sm max-w-[240px]">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-center gap-2 border rounded-md p-1 bg-background shadow-sm w-full">
                 <div className="pl-2">
                     <Droplet className="h-4 w-4 text-blue-500" />
                 </div>
@@ -111,14 +111,14 @@ export function TripWaterInput({ trip, onSuccess }: TripWaterInputProps) {
                     control={form.control}
                     name="amount"
                     render={({ field }) => (
-                        <FormItem className="mb-0 space-y-0 relative">
+                        <FormItem className="mb-0 space-y-0 relative w-full">
                             <FormControl>
-                                <div className="relative">
+                                <div className="relative w-full">
                                     <Input
                                         type="number"
                                         step="100"
                                         placeholder="0"
-                                        className="h-8 w-20 border-none shadow-none focus-visible:ring-0 text-right pr-6"
+                                        className="h-8 w-full border-none shadow-none focus-visible:ring-0 text-right pr-6"
                                         {...field}
                                     />
                                     <span className="absolute right-1 top-1.5 text-xs text-muted-foreground pointer-events-none">ml</span>

@@ -8,6 +8,7 @@ import { format, parseISO } from "date-fns";
 import { TripFormDialog } from "./trip-form-dialog";
 import { TripHydrationChart } from "./trip-hydration-chart";
 import { TripWaterInput } from "./trip-water-input";
+import { TripHikingHours } from "./trip-hiking-hours";
 
 interface TripHeaderProps {
     trip: Trip;
@@ -70,6 +71,9 @@ export function TripHeader({ trip, onComplete }: TripHeaderProps) {
 
                         {/* Hydration & Water Input Section */}
                         <div className="flex flex-col gap-2 w-full md:w-auto min-w-[320px]">
+                            <div className="flex justify-end mb-1">
+                                <TripHikingHours trip={trip} onSuccess={() => router.refresh()} />
+                            </div>
                             <TripHydrationChart
                                 hydration={trip.predictedHydrationML || 0}
                                 calories={trip.predictedCalories || 0}

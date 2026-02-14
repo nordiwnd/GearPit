@@ -47,7 +47,12 @@ export function TripDetailsView({ initialTrip }: TripDetailsViewProps) {
 
     const handleUpdateQuantity = async (itemId: string, currentQty: number, change: number) => {
         const newQty = currentQty + change;
-        if (newQty < 1) return;
+
+        if (newQty < 1) {
+            // User requested to reduce quantity below 1, treat as removal
+            await handleRemoveItem(itemId);
+            return;
+        }
 
         try {
             // Optimistic update
