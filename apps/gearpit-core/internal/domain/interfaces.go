@@ -15,6 +15,7 @@ type CreateGearParams struct {
 	WeightType          WeightType
 	Category            string
 	Brand               string
+	Tags                []string
 	UsageCount          int
 	MaintenanceInterval int
 }
@@ -27,6 +28,7 @@ type UpdateGearParams struct {
 	WeightType          WeightType
 	Category            string
 	Brand               string
+	Tags                []string
 	UsageCount          int
 	MaintenanceInterval int
 }
