@@ -56,6 +56,19 @@ export interface GearItem {
   updatedAt: string;
 }
 
+export interface CreateGearPayload {
+  name: string;
+  description: string;
+  manufacturer?: string;
+  weightGram: number;
+  weightType: string;
+  category: string;
+  brand: string;
+  tags: string[];
+  usageCount: number;
+  maintenanceInterval: number;
+}
+
 export const gearApi = {
   searchItems: async (query: string): Promise<GearItem[]> => {
     const url = `${getBaseUrl()}/gears?q=${encodeURIComponent(query)}`;
@@ -87,7 +100,7 @@ export const gearApi = {
     return res.json();
   },
 
-  createItem: async (payload: Partial<GearItem>): Promise<GearItem> => {
+  createItem: async (payload: Partial<CreateGearPayload>): Promise<GearItem> => {
     const res = await fetch(`${getBaseUrl()}/gears`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -97,7 +110,7 @@ export const gearApi = {
     return res.json();
   },
 
-  updateItem: async (id: string, payload: Partial<GearItem>): Promise<GearItem> => {
+  updateItem: async (id: string, payload: Partial<CreateGearPayload>): Promise<GearItem> => {
     const res = await fetch(`${getBaseUrl()}/gears/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
