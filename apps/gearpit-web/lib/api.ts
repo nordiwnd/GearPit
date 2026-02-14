@@ -335,6 +335,9 @@ export interface Trip {
   endDate: string;
   status: string;
   durationDays: number;
+  plannedHikingHours?: number; // Added
+  predictedHydrationML?: number; // Added
+  predictedCalories?: number; // Added
   tripItems?: TripItem[];
   items?: GearItem[];
   userProfileId?: string;
@@ -350,6 +353,7 @@ export interface CreateTripPayload {
   startDate: string;
   endDate: string;
   userProfileId?: string;
+  plannedHikingHours?: number; // Added
 }
 
 export const tripApi = {
@@ -372,6 +376,16 @@ export const tripApi = {
       body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error('Failed to create trip');
+    return res.json();
+  },
+
+  update: async (id: string, payload: CreateTripPayload): Promise<Trip> => {
+    const res = await fetch(`${getBaseUrl()}/trips/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error('Failed to update trip');
     return res.json();
   },
 

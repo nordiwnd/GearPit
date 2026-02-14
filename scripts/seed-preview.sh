@@ -1,3 +1,4 @@
+#!/bin/bash
 set -e
 
 # Usage: ./scripts/seed-preview.sh <PR_NUMBER>
@@ -8,31 +9,38 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
+# --- Kubernetes 設定 ---
+# 明示的にコンテキストを指定
+KUBE_CONTEXT="default"
+KUBECTL="kubectl --context=${KUBE_CONTEXT}"
+
 PR_NUMBER=$1
 NAMESPACE="pr${PR_NUMBER}"
-LOCAL_PORT=5433 # Use a different port to avoid conflict with local dev DB (usually 5432)
+LOCAL_PORT=5433
 
-echo "=== Seeding Data for PR #${PR_NUMBER} (Namespace: ${NAMESPACE}) ==="
+echo "=== Seeding Data for PR #${PR_NUMBER} (Context: ${KUBE_CONTEXT}, Namespace: ${NAMESPACE}) ==="
 
-# 1. Check if namespace exists
-if ! kubectl get namespace "${NAMESPACE}" > /dev/null 2>&1; then
+# 1. コンテキストが存在するか事前にチェック
+if ! ${KUBECTL} config get-contexts "${KUBE_CONTEXT}" > /dev/null 2>&1; then
+  echo "Error: Kubernetes context '${KUBE_CONTEXT}' not found."
+  exit 1
+fi
+
+# 2. Namespace の存在確認
+if ! ${KUBECTL} get namespace "${NAMESPACE}" > /dev/null 2>&1; then
   echo "Error: Namespace ${NAMESPACE} not found. Is the Preview Environment deployed?"
   exit 1
 fi
 
-# 2. Find the PostgreSQL Pod
-# Assumption: The statefulset or pod label selector matches "app.kubernetes.io/name=postgresql" or similar.
-# Adjust selector based on actual helm chart / manifest.
-POD_NAME=$(kubectl get pods -n "${NAMESPACE}" -l app.kubernetes.io/name=postgresql -o jsonpath="{.items[0].metadata.name}" 2>/dev/null || true)
+# 3. PostgreSQL Pod の特定
+POD_NAME=$(${KUBECTL} get pods -n "${NAMESPACE}" -l app.kubernetes.io/name=postgresql -o jsonpath="{.items[0].metadata.name}" 2>/dev/null || true)
 
 if [ -z "$POD_NAME" ]; then
-    # Fallback try generic app label if postgres specific one fails, or standard storage label
-    POD_NAME=$(kubectl get pods -n "${NAMESPACE}" -l app=gearpit-db -o jsonpath="{.items[0].metadata.name}" 2>/dev/null || true)
+    POD_NAME=$(${KUBECTL} get pods -n "${NAMESPACE}" -l app=gearpit-db -o jsonpath="{.items[0].metadata.name}" 2>/dev/null || true)
 fi
 
 if [ -z "$POD_NAME" ]; then
-    # Fallback try generic app label if postgres specific one fails, or standard storage label
-    POD_NAME=$(kubectl get pods -n "${NAMESPACE}" -l app=postgresql -o jsonpath="{.items[0].metadata.name}" 2>/dev/null || true)
+    POD_NAME=$(${KUBECTL} get pods -n "${NAMESPACE}" -l app=postgresql -o jsonpath="{.items[0].metadata.name}" 2>/dev/null || true)
 fi
 
 if [ -z "$POD_NAME" ]; then
@@ -42,9 +50,10 @@ fi
 
 echo "Found Database Pod: ${POD_NAME}"
 
-# 3. Start Port Forward
+# 4. Port Forward 開始
 echo "Starting port-forward to localhost:${LOCAL_PORT}..."
-kubectl port-forward "pod/${POD_NAME}" "${LOCAL_PORT}:5432" -n "${NAMESPACE}" > /dev/null 2>&1 &
+# バックグラウンド実行でもコンテキストを維持
+${KUBECTL} port-forward "pod/${POD_NAME}" "${LOCAL_PORT}:5432" -n "${NAMESPACE}" > /dev/null 2>&1 &
 PF_PID=$!
 
 # Cleanup trap
@@ -54,18 +63,13 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Wait for port-forward to be ready
+# ポートフォワードの準備待ち
 sleep 3
 
-# 4. Run Seeder
+# 5. Seeder 実行
 echo "Running Go Seeder..."
-# DB Connection params for the preview environment (default user/pass from helm chart usually)
-# If these differ per environment, we might need to fetch secrets.
-# For now assuming defaults as per infrastructure docs or common dev practice.
-
 export DATABASE_URL="host=localhost port=${LOCAL_PORT} user=gearpit password=password dbname=gearpit sslmode=disable"
 
-# Run the seeder
 if go run apps/gearpit-core/cmd/seeder/main.go -host localhost -port "${LOCAL_PORT}" -pr "${PR_NUMBER}"; then
     echo "✅ Seeding Completed Successfully for PR #${PR_NUMBER}"
 else

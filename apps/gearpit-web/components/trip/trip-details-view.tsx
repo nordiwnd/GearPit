@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { tripApi, gearApi, Trip, WeightType } from "@/lib/api";
 import { categorizeTripItems, calculateTripStats } from "@/lib/utils/trip-utils";
@@ -18,6 +18,11 @@ interface TripDetailsViewProps {
 export function TripDetailsView({ initialTrip }: TripDetailsViewProps) {
     const [trip, setTrip] = useState<Trip>(initialTrip);
     const [draggingItemId, setDraggingItemId] = useState<string | null>(null);
+
+    // Sync state with server-side updates (e.g. router.refresh())
+    useEffect(() => {
+        setTrip(initialTrip);
+    }, [initialTrip]);
 
     // Refresh trip data from server (used after mutations)
     const refreshTrip = useCallback(async () => {
@@ -47,7 +52,12 @@ export function TripDetailsView({ initialTrip }: TripDetailsViewProps) {
 
     const handleUpdateQuantity = async (itemId: string, currentQty: number, change: number) => {
         const newQty = currentQty + change;
-        if (newQty < 1) return;
+
+        if (newQty < 1) {
+            // User requested to reduce quantity below 1, treat as removal
+            await handleRemoveItem(itemId);
+            return;
+        }
 
         try {
             // Optimistic update
@@ -113,7 +123,9 @@ export function TripDetailsView({ initialTrip }: TripDetailsViewProps) {
 
                 {/* KPIS & Stats */}
                 <section>
-                    <TripStats stats={stats} />
+                    <TripStats
+                        stats={stats}
+                    />
                 </section>
 
                 {/* Action Bar */}
