@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { tripApi, gearApi, Trip, WeightType } from "@/lib/api";
 import { categorizeTripItems, calculateTripStats } from "@/lib/utils/trip-utils";
@@ -18,6 +18,11 @@ interface TripDetailsViewProps {
 export function TripDetailsView({ initialTrip }: TripDetailsViewProps) {
     const [trip, setTrip] = useState<Trip>(initialTrip);
     const [draggingItemId, setDraggingItemId] = useState<string | null>(null);
+
+    // Sync state with server-side updates (e.g. router.refresh())
+    useEffect(() => {
+        setTrip(initialTrip);
+    }, [initialTrip]);
 
     // Refresh trip data from server (used after mutations)
     const refreshTrip = useCallback(async () => {

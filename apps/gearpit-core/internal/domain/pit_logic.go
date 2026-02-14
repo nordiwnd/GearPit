@@ -14,7 +14,7 @@ func CalculateHydration(bodyWeightKg, packWeightKg float64, hours float64) int {
 }
 
 // CalculateCalories estimates calories burned in kcal.
-// Formula: 6 * (BodyWeight + PackWeight) * Hours (METs approximation)
+// Formula: 1.55 * (BodyWeight + PackWeight) * Hours
 // bodyWeightKg: Body weight in kg
 // packWeightKg: Pack weight in kg
 // hours: Duration in hours
@@ -23,5 +23,5 @@ func CalculateCalories(bodyWeightKg, packWeightKg float64, hours float64) int {
 		return 0
 	}
 	totalWeight := bodyWeightKg + packWeightKg
-	return int(6 * totalWeight * hours)
+	return int(1.55 * totalWeight * hours)
 }
