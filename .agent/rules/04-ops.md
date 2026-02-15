@@ -29,7 +29,7 @@ description: Implementation and testing using CICD pipeline
 
 | Service | Access from Host (Browser/Tests) | Access from Pods (Internal) |
 | :--- | :--- | :--- |
-| **Web App** | `http://gearpit.localhost` | `http://gearpit-web:9000` |
+| **Web App** | `http://web.gearpit.localhost:9000/` | `http://gearpit-web:9000` |
 | **API** | `http://gearpit.localhost/api` | `http://gearpit-core:8080` |
 | **DB** | `localhost:5432` (Requires Port Forward) | `postgres:5432` |
 | **Registry**| `k3d-registry.localhost:5001` | `k3d-gearpit-registry:5000` |

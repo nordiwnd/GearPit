@@ -41,7 +41,7 @@ run('cd /app && go build -o /app/main ./main.go', trigger=['apps/gearpit-core'])
 k8s_resource('gearpit-app', 
 new_name='gearpit-core',
 resource_deps=['gearpit-db'], # Wait for DB
-labels=['backend']
+labels=['backend'],
 )
 
 # 3. Frontend (gearpit-web)
@@ -68,6 +68,6 @@ run('cd /app && npm install', trigger='apps/gearpit-web/package.json'),
 )
 
 k8s_resource('gearpit-web', 
-port_forwards=['9000:3000'], # 3000番へトンネルを掘る
+port_forwards=['9000:3000'],
 labels=['frontend']
 )
