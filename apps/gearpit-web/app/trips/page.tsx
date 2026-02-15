@@ -40,6 +40,7 @@ export default function TripsPage() {
     try {
       await tripApi.delete(id);
       toast.success("Trip plan deleted");
+      fetchTrips();
       setLoading(false);
     } catch {
       toast.error("Failed to delete trip");

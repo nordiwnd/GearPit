@@ -90,8 +90,8 @@ export function TripFormDialog({ tripToEdit, trigger, onSuccess }: Props) {
         name: values.name,
         description: values.description || "",
         location: values.location || "",
-        startDate: values.startDate,
-        endDate: values.endDate,
+        startDate: `${values.startDate}T00:00:00Z`,
+        endDate: `${values.endDate}T00:00:00Z`,
         plannedHikingHours: values.plannedHikingHours,
         userProfileId: values.userProfileId,
       };
