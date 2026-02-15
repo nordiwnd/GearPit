@@ -1,6 +1,9 @@
 load('ext://restart_process', 'docker_build_with_restart')
-allow_k8s_contexts(['default', 'k3d-gearpit-dev'])
-# default_registry('localhost:5000')
+allow_k8s_contexts(['k3d-gearpit-dev'])
+default_registry(
+'localhost:5001',
+host_from_cluster='k3d-gearpit-registry:5000'
+)
 # 1. Database
 # Note: The local-dev overlay relies on the base postgres definition.
 # Defining a resource here allows for port-forwarding visibility in Tilt.
