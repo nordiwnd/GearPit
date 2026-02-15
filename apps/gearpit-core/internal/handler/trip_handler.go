@@ -38,6 +38,14 @@ type TripItemUpsertRequest struct {
 	Quantity int    `json:"quantity"`
 }
 
+// parseDate handles both RFC3339 (frontend default) and YYYY-MM-DD formats
+func parseDate(dateStr string) (time.Time, error) {
+	if t, err := time.Parse(time.RFC3339, dateStr); err == nil {
+		return t, nil
+	}
+	return time.Parse("2006-01-02", dateStr)
+}
+
 func (h *TripHandler) CreateTrip(w http.ResponseWriter, r *http.Request) {
 	var req TripRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -45,8 +53,16 @@ func (h *TripHandler) CreateTrip(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	start, _ := time.Parse("2006-01-02", req.StartDate)
-	end, _ := time.Parse("2006-01-02", req.EndDate)
+	start, err := parseDate(req.StartDate)
+	if err != nil {
+		http.Error(w, "Invalid start date format (expected RFC3339 or YYYY-MM-DD)", http.StatusBadRequest)
+		return
+	}
+	end, err := parseDate(req.EndDate)
+	if err != nil {
+		http.Error(w, "Invalid end date format (expected RFC3339 or YYYY-MM-DD)", http.StatusBadRequest)
+		return
+	}
 
 	durationDays := int(end.Sub(start).Hours() / 24)
 	if durationDays < 1 {
@@ -97,8 +113,16 @@ func (h *TripHandler) UpdateTrip(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	start, _ := time.Parse("2006-01-02", req.StartDate)
-	end, _ := time.Parse("2006-01-02", req.EndDate)
+	start, err := parseDate(req.StartDate)
+	if err != nil {
+		http.Error(w, "Invalid start date format (expected RFC3339 or YYYY-MM-DD)", http.StatusBadRequest)
+		return
+	}
+	end, err := parseDate(req.EndDate)
+	if err != nil {
+		http.Error(w, "Invalid end date format (expected RFC3339 or YYYY-MM-DD)", http.StatusBadRequest)
+		return
+	}
 
 	durationDays := int(end.Sub(start).Hours() / 24)
 	if durationDays < 1 {
