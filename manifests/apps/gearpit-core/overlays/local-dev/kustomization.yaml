@@ -9,3 +9,4 @@ images:
 patches:
   - path: patch-deploy.yaml
   - path: patch-db-svc.yaml
+  - path: ingress-patch.yaml

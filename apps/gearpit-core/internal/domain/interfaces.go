@@ -15,6 +15,7 @@ type CreateGearParams struct {
 	WeightType          WeightType
 	Category            string
 	Brand               string
+	Tags                []string
 	UsageCount          int
 	MaintenanceInterval int
 }
@@ -27,6 +28,7 @@ type UpdateGearParams struct {
 	WeightType          WeightType
 	Category            string
 	Brand               string
+	Tags                []string
 	UsageCount          int
 	MaintenanceInterval int
 }
@@ -153,10 +155,10 @@ type TripRepository interface {
 }
 
 type TripService interface {
-	CreateTrip(ctx context.Context, name, description, location string, startDate, endDate time.Time, userProfileID *string, durationDays int) (*Trip, error)
+	CreateTrip(ctx context.Context, name, description, location string, startDate, endDate time.Time, userProfileID *string, durationDays int, plannedHikingHours float64) (*Trip, error)
 	GetTrip(ctx context.Context, id string) (*Trip, error)
 	ListTrips(ctx context.Context) ([]Trip, error)
-	UpdateTrip(ctx context.Context, id, name, description, location string, startDate, endDate time.Time, userProfileID *string, durationDays int) (*Trip, error)
+	UpdateTrip(ctx context.Context, id, name, description, location string, startDate, endDate time.Time, userProfileID *string, durationDays int, plannedHikingHours float64) (*Trip, error)
 	DeleteTrip(ctx context.Context, id string) error
 	CompleteTrip(ctx context.Context, id string) error
 

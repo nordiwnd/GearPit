@@ -72,7 +72,7 @@ export function AddGearToTripDialog({ tripId, currentItems, onSuccess }: Props) 
           <Plus className="mr-2 h-4 w-4" /> Add Gear
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl h-[80vh] flex flex-col">
+      <DialogContent className="max-w-2xl h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Add Gear from Inventory</DialogTitle>
         </DialogHeader>

@@ -18,12 +18,13 @@ func NewTripHandler(s domain.TripService) *TripHandler {
 }
 
 type TripRequest struct {
-	Name          string  `json:"name"`
-	Description   string  `json:"description"`
-	Location      string  `json:"location"`
-	StartDate     string  `json:"startDate"`
-	EndDate       string  `json:"endDate"`
-	UserProfileID *string `json:"userProfileId"` // 追加
+	Name               string  `json:"name"`
+	Description        string  `json:"description"`
+	Location           string  `json:"location"`
+	StartDate          string  `json:"startDate"`
+	EndDate            string  `json:"endDate"`
+	UserProfileID      *string `json:"userProfileId"`
+	PlannedHikingHours float64 `json:"plannedHikingHours"` // 追加
 }
 
 // 既存の一括追加用（数量指定なし）
@@ -37,6 +38,14 @@ type TripItemUpsertRequest struct {
 	Quantity int    `json:"quantity"`
 }
 
+// parseDate handles both RFC3339 (frontend default) and YYYY-MM-DD formats
+func parseDate(dateStr string) (time.Time, error) {
+	if t, err := time.Parse(time.RFC3339, dateStr); err == nil {
+		return t, nil
+	}
+	return time.Parse("2006-01-02", dateStr)
+}
+
 func (h *TripHandler) CreateTrip(w http.ResponseWriter, r *http.Request) {
 	var req TripRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -44,15 +53,23 @@ func (h *TripHandler) CreateTrip(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	start, _ := time.Parse("2006-01-02", req.StartDate)
-	end, _ := time.Parse("2006-01-02", req.EndDate)
+	start, err := parseDate(req.StartDate)
+	if err != nil {
+		http.Error(w, "Invalid start date format (expected RFC3339 or YYYY-MM-DD)", http.StatusBadRequest)
+		return
+	}
+	end, err := parseDate(req.EndDate)
+	if err != nil {
+		http.Error(w, "Invalid end date format (expected RFC3339 or YYYY-MM-DD)", http.StatusBadRequest)
+		return
+	}
 
 	durationDays := int(end.Sub(start).Hours() / 24)
 	if durationDays < 1 {
 		durationDays = 1
 	}
 
-	trip, err := h.service.CreateTrip(r.Context(), req.Name, req.Description, req.Location, start, end, req.UserProfileID, durationDays)
+	trip, err := h.service.CreateTrip(r.Context(), req.Name, req.Description, req.Location, start, end, req.UserProfileID, durationDays, req.PlannedHikingHours)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -96,15 +113,23 @@ func (h *TripHandler) UpdateTrip(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	start, _ := time.Parse("2006-01-02", req.StartDate)
-	end, _ := time.Parse("2006-01-02", req.EndDate)
+	start, err := parseDate(req.StartDate)
+	if err != nil {
+		http.Error(w, "Invalid start date format (expected RFC3339 or YYYY-MM-DD)", http.StatusBadRequest)
+		return
+	}
+	end, err := parseDate(req.EndDate)
+	if err != nil {
+		http.Error(w, "Invalid end date format (expected RFC3339 or YYYY-MM-DD)", http.StatusBadRequest)
+		return
+	}
 
 	durationDays := int(end.Sub(start).Hours() / 24)
 	if durationDays < 1 {
 		durationDays = 1
 	}
 
-	trip, err := h.service.UpdateTrip(r.Context(), id, req.Name, req.Description, req.Location, start, end, req.UserProfileID, durationDays)
+	trip, err := h.service.UpdateTrip(r.Context(), id, req.Name, req.Description, req.Location, start, end, req.UserProfileID, durationDays, req.PlannedHikingHours)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -1,8 +1,0 @@
-apiVersion: core.gearpit.io/v1alpha1
-kind: PreviewEnv
-metadata:
-  name: pr-test
-spec:
-  prNumber: 1
-  imageTag: "191e3d4" # ビルドされたSHAs
-  includeDB: true

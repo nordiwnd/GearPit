@@ -3,8 +3,20 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { gearApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface DeleteGearButtonProps {
   itemId: string;
@@ -13,33 +25,64 @@ interface DeleteGearButtonProps {
 
 export function DeleteGearButton({ itemId, itemName }: DeleteGearButtonProps) {
   const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
   const router = useRouter();
 
-  const handleDelete = async () => {
-    if (!confirm(`Are you sure you want to delete "${itemName}"?`)) return;
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
 
     setLoading(true);
     try {
       await gearApi.deleteItem(itemId);
-      router.refresh(); // 削除後、一覧を自動リフレッシュ
+      toast.success("Gear item deleted");
+      router.refresh(); // Match the behavior of Trip Plans (though page.tsx used fetchTrips, here we are in a component so router.refresh is appropriate for RSC)
+      setOpen(false);
     } catch (error) {
       console.error(error);
-      alert("Failed to delete item.");
+      toast.error("Failed to delete item");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Button 
-      variant="ghost" 
-      size="icon" 
-      onClick={handleDelete} 
-      disabled={loading}
-      title="Delete Gear"
-      className="text-muted-foreground hover:text-red-500 hover:bg-red-50"
-    >
-      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-    </Button>
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          disabled={loading}
+          title="Delete Gear"
+          className="text-muted-foreground hover:text-red-500 hover:bg-red-50"
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen(true);
+          }}
+        >
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete &quot;{itemName}&quot;?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure? This will delete the gear item from your inventory.
+            This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={(e) => e.stopPropagation()}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDelete}
+            className="bg-red-500 hover:bg-red-600"
+            disabled={loading}
+          >
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

@@ -56,6 +56,19 @@ export interface GearItem {
   updatedAt: string;
 }
 
+export interface CreateGearPayload {
+  name: string;
+  description: string;
+  manufacturer?: string;
+  weightGram: number;
+  weightType: string;
+  category: string;
+  brand: string;
+  tags: string[];
+  usageCount: number;
+  maintenanceInterval: number;
+}
+
 export const gearApi = {
   searchItems: async (query: string): Promise<GearItem[]> => {
     const url = `${getBaseUrl()}/gears?q=${encodeURIComponent(query)}`;
@@ -87,7 +100,7 @@ export const gearApi = {
     return res.json();
   },
 
-  createItem: async (payload: Partial<GearItem>): Promise<GearItem> => {
+  createItem: async (payload: Partial<CreateGearPayload>): Promise<GearItem> => {
     const res = await fetch(`${getBaseUrl()}/gears`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -97,7 +110,7 @@ export const gearApi = {
     return res.json();
   },
 
-  updateItem: async (id: string, payload: Partial<GearItem>): Promise<GearItem> => {
+  updateItem: async (id: string, payload: Partial<CreateGearPayload>): Promise<GearItem> => {
     const res = await fetch(`${getBaseUrl()}/gears/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -335,6 +348,9 @@ export interface Trip {
   endDate: string;
   status: string;
   durationDays: number;
+  plannedHikingHours?: number; // Added
+  predictedHydrationML?: number; // Added
+  predictedCalories?: number; // Added
   tripItems?: TripItem[];
   items?: GearItem[];
   userProfileId?: string;
@@ -350,6 +366,7 @@ export interface CreateTripPayload {
   startDate: string;
   endDate: string;
   userProfileId?: string;
+  plannedHikingHours?: number; // Added
 }
 
 export const tripApi = {
@@ -372,6 +389,16 @@ export const tripApi = {
       body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error('Failed to create trip');
+    return res.json();
+  },
+
+  update: async (id: string, payload: CreateTripPayload): Promise<Trip> => {
+    const res = await fetch(`${getBaseUrl()}/trips/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error('Failed to update trip');
     return res.json();
   },
 

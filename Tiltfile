@@ -1,6 +1,9 @@
 load('ext://restart_process', 'docker_build_with_restart')
-allow_k8s_contexts(['default', 'k3d-gearpit-dev'])
-# default_registry('localhost:5000')
+allow_k8s_contexts(['k3d-gearpit-dev'])
+default_registry(
+'localhost:5001',
+host_from_cluster='k3d-gearpit-registry:5000'
+)
 # 1. Database
 # Note: The local-dev overlay relies on the base postgres definition.
 # Defining a resource here allows for port-forwarding visibility in Tilt.
@@ -38,7 +41,7 @@ run('cd /app && go build -o /app/main ./main.go', trigger=['apps/gearpit-core'])
 k8s_resource('gearpit-app', 
 new_name='gearpit-core',
 resource_deps=['gearpit-db'], # Wait for DB
-labels=['backend']
+labels=['backend'],
 )
 
 # 3. Frontend (gearpit-web)
@@ -65,6 +68,6 @@ run('cd /app && npm install', trigger='apps/gearpit-web/package.json'),
 )
 
 k8s_resource('gearpit-web', 
-port_forwards=['9000:3000'], # 3000番へトンネルを掘る
+port_forwards=['9000:3000'],
 labels=['frontend']
 )

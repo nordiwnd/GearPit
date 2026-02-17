@@ -85,10 +85,8 @@ export function AddGearDialog() {
         tags: tagsArray,
         usageCount: usage,
         maintenanceInterval: interval,
-        properties: {
-          brand: data.brand || "",
-          category: data.category || "",
-        },
+        brand: data.brand || "",
+        category: data.category || "",
       });
 
       setOpen(false);

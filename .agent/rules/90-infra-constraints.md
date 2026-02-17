@@ -13,7 +13,7 @@ Before modifying any infrastructure code, you **MUST** read `docs/90-infrastruct
    - Local is **AMD64** (k3d on WSL2).
 2. **Ingress**:
    - Production uses `192.168.40.100.nip.io`.
-   - Local uses `localhost`.
+   - Local uses `gearpit.localhost` (or `localhost` via port-forward).
 3. **Database**:
    - Production uses StatefulSet (PVC).
    - Local/Preview is ephemeral.

@@ -18,9 +18,11 @@ func NewGearService(repo domain.GearRepository) domain.GearService {
 
 func (s *gearService) CreateItem(ctx context.Context, params domain.CreateGearParams) (*domain.Item, error) {
 	// プロパティをJSONとして構築
-	props := map[string]string{
+	// プロパティをJSONとして構築
+	props := map[string]interface{}{
 		"category": params.Category,
 		"brand":    params.Brand,
+		"tags":     params.Tags,
 	}
 	propsJSON, _ := json.Marshal(props)
 
@@ -56,9 +58,10 @@ func (s *gearService) UpdateItem(ctx context.Context, id string, params domain.U
 	}
 
 	// プロパティ更新
-	props := map[string]string{
+	props := map[string]interface{}{
 		"category": params.Category,
 		"brand":    params.Brand,
+		"tags":     params.Tags,
 	}
 	propsJSON, _ := json.Marshal(props)
 

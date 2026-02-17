@@ -24,15 +24,16 @@ func NewGearHandler(s domain.GearService) *GearHandler {
 
 // リクエスト用の構造体を定義
 type CreateItemRequest struct {
-	Name                string `json:"name" validate:"required"`
-	Description         string `json:"description"`
-	Manufacturer        string `json:"manufacturer"`
-	WeightGram          int    `json:"weightGram" validate:"min=0"`
-	WeightType          string `json:"weightType" validate:"oneof=base consumable worn long accessory"`
-	Category            string `json:"category"`
-	Brand               string `json:"brand"`
-	UsageCount          int    `json:"usageCount" validate:"min=0"`
-	MaintenanceInterval int    `json:"maintenanceInterval" validate:"min=0"`
+	Name                string   `json:"name" validate:"required"`
+	Description         string   `json:"description"`
+	Manufacturer        string   `json:"manufacturer"`
+	WeightGram          int      `json:"weightGram" validate:"min=0"`
+	WeightType          string   `json:"weightType" validate:"oneof=base consumable worn long accessory"`
+	Category            string   `json:"category"`
+	Brand               string   `json:"brand"`
+	Tags                []string `json:"tags"`
+	UsageCount          int      `json:"usageCount" validate:"min=0"`
+	MaintenanceInterval int      `json:"maintenanceInterval" validate:"min=0"`
 }
 
 func (h *GearHandler) CreateItem(w http.ResponseWriter, r *http.Request) {
@@ -55,6 +56,7 @@ func (h *GearHandler) CreateItem(w http.ResponseWriter, r *http.Request) {
 		WeightType:          domain.WeightType(req.WeightType),
 		Category:            req.Category,
 		Brand:               req.Brand,
+		Tags:                req.Tags,
 		UsageCount:          req.UsageCount,
 		MaintenanceInterval: req.MaintenanceInterval,
 	}
@@ -110,6 +112,7 @@ func (h *GearHandler) UpdateItem(w http.ResponseWriter, r *http.Request) {
 		WeightType:          domain.WeightType(req.WeightType),
 		Category:            req.Category,
 		Brand:               req.Brand,
+		Tags:                req.Tags,
 		UsageCount:          req.UsageCount,
 		MaintenanceInterval: req.MaintenanceInterval,
 	}

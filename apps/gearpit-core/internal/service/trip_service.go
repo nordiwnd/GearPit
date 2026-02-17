@@ -15,17 +15,18 @@ func NewTripService(repo domain.TripRepository) domain.TripService {
 	return &tripService{repo: repo}
 }
 
-// 修正: userProfileID 引数を追加, durationDaysを追加
-func (s *tripService) CreateTrip(ctx context.Context, name, description, location string, startDate, endDate time.Time, userProfileID *string, durationDays int) (*domain.Trip, error) {
+// 修正: userProfileID 引数を追加, durationDaysを追加, plannedHikingHoursを追加
+func (s *tripService) CreateTrip(ctx context.Context, name, description, location string, startDate, endDate time.Time, userProfileID *string, durationDays int, plannedHikingHours float64) (*domain.Trip, error) {
 	trip := &domain.Trip{
-		Name:          name,
-		Description:   description,
-		Location:      location,
-		StartDate:     startDate,
-		EndDate:       endDate,
-		UserProfileID: userProfileID,
-		DurationDays:  durationDays,
-		Status:        "planned",
+		Name:               name,
+		Description:        description,
+		Location:           location,
+		StartDate:          startDate,
+		EndDate:            endDate,
+		UserProfileID:      userProfileID,
+		DurationDays:       durationDays,
+		PlannedHikingHours: plannedHikingHours,
+		Status:             "planned",
 	}
 	if err := s.repo.Create(ctx, trip); err != nil {
 		return nil, err
@@ -34,15 +35,35 @@ func (s *tripService) CreateTrip(ctx context.Context, name, description, locatio
 }
 
 func (s *tripService) GetTrip(ctx context.Context, id string) (*domain.Trip, error) {
-	return s.repo.GetByID(ctx, id)
+	trip, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Calculate Stats
+	var bodyWeightKg float64
+	if trip.UserProfile != nil {
+		bodyWeightKg = trip.UserProfile.WeightKg
+	}
+
+	var packWeightKg float64
+	for _, ti := range trip.TripItems {
+		itemWeightKg := float64(ti.Item.WeightGram*ti.Quantity) / 1000.0
+		packWeightKg += itemWeightKg
+	}
+
+	trip.PredictedHydrationML = domain.CalculateHydration(bodyWeightKg, packWeightKg, trip.PlannedHikingHours)
+	trip.PredictedCalories = domain.CalculateCalories(bodyWeightKg, packWeightKg, trip.PlannedHikingHours)
+
+	return trip, nil
 }
 
 func (s *tripService) ListTrips(ctx context.Context) ([]domain.Trip, error) {
 	return s.repo.List(ctx)
 }
 
-// 修正: userProfileID 引数を追加, durationDaysを追加
-func (s *tripService) UpdateTrip(ctx context.Context, id, name, description, location string, startDate, endDate time.Time, userProfileID *string, durationDays int) (*domain.Trip, error) {
+// 修正: userProfileID 引数を追加, durationDaysを追加, plannedHikingHoursを追加
+func (s *tripService) UpdateTrip(ctx context.Context, id, name, description, location string, startDate, endDate time.Time, userProfileID *string, durationDays int, plannedHikingHours float64) (*domain.Trip, error) {
 	trip, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -54,10 +75,27 @@ func (s *tripService) UpdateTrip(ctx context.Context, id, name, description, loc
 	trip.EndDate = endDate
 	trip.UserProfileID = userProfileID
 	trip.DurationDays = durationDays
+	trip.PlannedHikingHours = plannedHikingHours
 
 	if err := s.repo.Update(ctx, trip); err != nil {
 		return nil, err
 	}
+
+	// Recalculate stats for response
+	var bodyWeightKg float64
+	if trip.UserProfile != nil {
+		bodyWeightKg = trip.UserProfile.WeightKg
+	}
+
+	var packWeightKg float64
+	for _, ti := range trip.TripItems {
+		itemWeightKg := float64(ti.Item.WeightGram*ti.Quantity) / 1000.0
+		packWeightKg += itemWeightKg
+	}
+
+	trip.PredictedHydrationML = domain.CalculateHydration(bodyWeightKg, packWeightKg, trip.PlannedHikingHours)
+	trip.PredictedCalories = domain.CalculateCalories(bodyWeightKg, packWeightKg, trip.PlannedHikingHours)
+
 	return trip, nil
 }
 

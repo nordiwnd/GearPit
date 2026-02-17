@@ -13,16 +13,24 @@ trigger: always_on
   4. `internal/repository/`: Data Access (SQL).
   5. `internal/domain/`: Core Models & Interfaces.
 
-## Technology Choices (MANDATORY)
-- **Router:** `github.com/go-chi/chi/v5`
-- **Database:** `github.com/jackc/pgx/v5` (Raw SQL or stdlib wrapper. NO complex ORMs like GORM unless specified).
-- **Logging:** `log/slog` (Structured).
-- **Validation:** `github.com/go-playground/validator/v10`
+## Domain Purity
+* **Rule:** `internal/domain` MUST NOT depend on external infrastructure libraries.
+    * 🚫 No `gorm`, `gin`, `sqlx`, `k8s.io` imports in domain entities.
+    * ✅ Use standard library (`time`, `context`) only.
+* **Goal:** Domain logic must be testable without Docker/K8s.
 
 ## Database & Schema
 - **Primary Keys:** ALWAYS use UUID v7.
 - **Reference:** Check `docs/04-db-schema.md` for current table definitions before modifying queries.
 
-## Testing
-- **Style:** Table-driven tests.
-- **Scope:** Unit tests for Service layer; Integration tests for Repository layer.
+## Testing Strategy
+* **Priority 1: Domain Unit Tests** (Fast, Host-based)
+    * Focus on `_test.go` in `internal/domain`.
+    * Use **Table-Driven Tests**.
+    * Mock interfaces manually or with `gomock` if strictly necessary, but prefer pure logic tests.
+* **Priority 2: Handler/Integration Tests**
+    * Only write these if domain logic is stable.
+
+## Error Handling
+* Use custom error types defined in `domain/errors.go`.
+* Do not return raw DB errors to the handler layer.
