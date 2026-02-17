@@ -3,37 +3,22 @@ trigger: always_on
 description: Implementation and testing using CICD pipeline
 ---
 
-# Operations & GitOps Guidelines
+# 04-ops.md: Operations & Quality Assurance
 
-## CI/CD Pipeline
-1. **Build:** GitHub Actions builds Production images (Target: `linux/arm64`).
-   - *Note:* Local builds (Tilt/WSL2) MUST use Native Architecture (**AMD64**) for performance.
-2. **Push:** Push to Container Registry (ghcr.io).
-3. **Deploy:** ArgoCD syncs manifests from `manifests/` directory.
+## 1. The "Ephemeral" Testing Strategy
+* **Philosophy:** Tests run on a clean slate.
+* **Mechanism:**
+    * `scripts/test-e2e.sh`: Starts a fresh DB container, runs migrations, seeds minimal admin user.
+    * Playwright tests execute against this fresh environment.
+    * Container is torn down after tests.
 
-## Manifest Management (Kustomize)
-- **Base:** `manifests/apps/[app]/base` (Common resources).
-- **Overlays:**
-  - `overlays/preview`: For PR previews (Ephemeral, patched for AMD64/ARM64).
-  - `overlays/main`: Production (RasPi Cluster, strictly **ARM64**).
+## 2. E2E Guidelines (Playwright)
+* **The "Golden Path":** Create `tests/golden-path.spec.ts`.
+    1.  **Bulk Import:** Add 20 items via the Grid UI.
+    2.  **Kit Creation:** Create a "Winter Kit".
+    3.  **Trip Planning:** Create a Trip, assign the Kit.
+    4.  **Verification:** Assert that `Total Weight` displayed matches the sum of individual items perfectly.
+* **Resilience:** Use `await expect(...).toBeVisible()` to handle async UI updates.
 
-## Constraints
-- **Architecture Agnostic:**
-  - Dockerfiles MUST use `$BUILDPLATFORM` / `$TARGETARCH` pattern.
-  - DO NOT hardcode `FROM --platform=...` unless absolutely necessary.
-- **SealedSecrets:** NEVER commit raw secrets. Use `kubeseal`.
-- **Reference:** See `docs/90-infrastructure.md` for the full Environment Matrix.
-- **Reference:** See `docs/03-gitops-k8s.md` for the full GitOps Guidelines.
-
-## Network Topology (Source of Truth)
-
-| Service | Access from Host (Browser/Tests) | Access from Pods (Internal) |
-| :--- | :--- | :--- |
-| **Web App** | `http://web.gearpit.localhost:9000/` | `http://gearpit-web:9000` |
-| **API** | `http://gearpit.localhost/api` | `http://gearpit-core:8080` |
-| **DB** | `localhost:5432` (Requires Port Forward) | `postgres:5432` |
-| **Registry**| `k3d-registry.localhost:5001` | `k3d-gearpit-registry:5000` |
-
-## Kubernetes Access
-* **Context:** Assume the current kubecontext is already set to the local k3d cluster (`k3d-gearpit`).
-* **Port Forwarding:** Use `kubectl port-forward` only when absolutely necessary for debugging DB or internal metrics. Use Ingress (`gearpit.localhost`) for standard access.
+## 3. Local Development (Tilt)
+* **Cargo Watch:** Use `tilt` to run `cargo watch -x run` for hot reloading the Rust backend.

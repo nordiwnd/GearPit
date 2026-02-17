@@ -2,39 +2,27 @@
 trigger: always_on
 ---
 
-# Frontend Guidelines (Next.js)
+# 03-frontend.md: Frontend & UX Guidelines
 
-## Framework Standard
-- **Core:** Next.js 15 (App Router).
-- **Language:** TypeScript (Strict).
-- **State:** React Server Components (RSC) by default. Use `"use client"` sparingly.
+## 1. "Command Center" UI Pattern
+* **Layout:** **3-Pane Layout** (Sidebar | Main Grid | Inspector).
+* **Density:** Use `text-sm` or `text-xs`. Reduce padding. Aim for "Data Density".
+* **Visual Hierarchy:**
+    * Primary: High contrast action buttons.
+    * Data: Monospaced numbers for weights/stats.
+    * Theme: Dark Mode by default. Glassmorphism accents.
 
-## UI Stack (MANDATORY)
-- **Styling:** Tailwind CSS.
-- **Components:** shadcn/ui (Radix UI based).
-- **Icons:** Lucide React.
-- **Forms:** React Hook Form + Zod.
-- **Data Fetching:** TanStack Query (React Query) or Server Actions.
+## 2. State Management (URL as Truth)
+* **Nuqs:** Use `nuqs` to sync state with the URL.
+    * e.g., `?tab=planning`, `?gearId=123`, `?sort=weight-desc`.
+    * Reloading the page must restore the exact previous state.
+* **Instant Feedback:** Optimistic UI updates. When a user changes a weight, update the total *instantly* on the client, then sync with the server.
 
-## Project Structure
-- `app/`: Routes and Pages.
-- `components/ui/`: Primitive components (shadcn).
-- `components/[feature]/`: Feature-specific components.
-- `lib/`: Utilities and API clients.
+## 3. Component Architecture
+* **Islands:** Break complex views (Trip Details) into isolated components.
+* **Headless:** Use `TanStack Table` for all lists.
+* **Server/Client:** Use Server Components for initial fetch, Client Components for interactivity.
 
-## Reference
-- See `docs/02-nextjs-frontend.md` for component usage examples.
-
-
-## Development Workflow
-* **Reflect Changes:** Rely on Tilt's live update. Do not manually restart development servers.
-* **Logs:** Check `k3d` logs for build errors if changes don't appear.
-
-## Architecture
-* **Server Components (RSC):** Default choice.
-* **Client Components:** Use `"use client"` ONLY for interactive elements (buttons, forms, hooks).
-* **Data Fetching:** Fetch data in RSC, pass to Client Components as props.
-
-## API Interaction
-* **Base URL:** Ensure API calls work both SSR (internal k8s network) and CSR (ingress/localhost).
-* *Note:* In Dev (Tilt), `gearpit-web` container talks to `gearpit-core` service directly.
+## 4. Performance
+* **Debounce:** Debounce all auto-save inputs (500ms).
+* **Memoization:** Use `useMemo` for heavy calculations (Trip Stats) to prevent render lag during animations.

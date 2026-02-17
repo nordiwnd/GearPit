@@ -2,35 +2,25 @@
 trigger: always_on
 ---
 
-# Backend Guidelines (Go)
+# 02-backend.md: Rust Backend Guidelines
 
-## Architecture Standard
-- **Pattern:** Clean Architecture (Strict Layering).
-- **Layers:**
-  1. `cmd/`: Entrypoints.
-  2. `internal/handler/`: HTTP transport (Decode -> Service -> Encode).
-  3. `internal/service/`: Business Logic.
-  4. `internal/repository/`: Data Access (SQL).
-  5. `internal/domain/`: Core Models & Interfaces.
+## 1. Domain Modeling
+* **Type Safety:** Use **NewTypes** for units (e.g., `struct Grams(i32)`, `struct Milliliters(i32)`) to prevent unit confusion.
+* **Enums for Variants:** Use Rust Enums to model different gear types (e.g., `enum GearProps { Hiking(HikingProps), PC(PCProps) }`).
+* **Rich Domain:** Logic should reside in the Domain layer, not in the HTTP Handlers.
 
-## Domain Purity
-* **Rule:** `internal/domain` MUST NOT depend on external infrastructure libraries.
-    * 🚫 No `gorm`, `gin`, `sqlx`, `k8s.io` imports in domain entities.
-    * ✅ Use standard library (`time`, `context`) only.
-* **Goal:** Domain logic must be testable without Docker/K8s.
+## 2. Database (SQLx)
+* **Schema First:** Always define the schema in `migrations/` (.sql files) first.
+* **Compile-Time Checks:** Use `sqlx::query_as!` macros to ensure SQL queries match the DB schema at compile time.
+* **JSONB Handling:** Map PostgreSQL `JSONB` columns to Rust structs deriving `serde::Serialize` and `serde::Deserialize`.
 
-## Database & Schema
-- **Primary Keys:** ALWAYS use UUID v7.
-- **Reference:** Check `docs/04-db-schema.md` for current table definitions before modifying queries.
+## 3. Project Structure (Clean/Hexagonal)
+* `src/domain`: Pure Rust logic, structs, and traits. No external dependencies (except serde/thiserror).
+* `src/infrastructure`: Database implementations (SQLx), external APIs.
+* `src/api`: Axum handlers, DTOs, routing logic.
+* `src/main.rs`: Application wiring and dependency injection.
 
-## Testing Strategy
-* **Priority 1: Domain Unit Tests** (Fast, Host-based)
-    * Focus on `_test.go` in `internal/domain`.
-    * Use **Table-Driven Tests**.
-    * Mock interfaces manually or with `gomock` if strictly necessary, but prefer pure logic tests.
-* **Priority 2: Handler/Integration Tests**
-    * Only write these if domain logic is stable.
-
-## Error Handling
-* Use custom error types defined in `domain/errors.go`.
-* Do not return raw DB errors to the handler layer.
+## 4. Error Handling
+* **Libraries:** Use `thiserror` for library/domain errors.
+* **Applications:** Use `anyhow` or a custom `AppError` enum that implements `IntoResponse` for Axum handlers.
+* **Panic:** NEVER panic in production code (`unwrap()` is forbidden outside of tests). Use `expect("msg")` only at startup.

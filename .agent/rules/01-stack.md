@@ -2,46 +2,33 @@
 trigger: always_on
 ---
 
-# Tech Stack & Execution Context
+# 01-stack.md: Technology Stack & Standards
 
+## 1. Frontend (The Cockpit)
+* **Framework:** Next.js 16 (App Router)
+* **Language:** TypeScript (Strict Mode)
+* **Styling:** Tailwind CSS + Radix UI (shadcn/ui)
+* **State Management:**
+    * **URL State (Truth):** `nuqs` (URL params as the single source of truth).
+    * **Server State:** `TanStack Query` (via Connect-Web or REST).
+    * **UI State:** `React.useState` (transient only).
+* **Data Grid:** `TanStack Table` (Headless, high-performance).
+* **Motion:** `Framer Motion` (Micro-interactions, counters).
 
-## 1. Core Versions
-- **Backend:** Go 1.25.6 (Monorepo path: `apps/gearpit-core`)
-- **Frontend:** Next.js 15 (Monorepo path: `apps/gearpit-web`)
-- **Database:** PostgreSQL 16 (Primary Key: UUID v7)
+## 2. Backend (The Engine)
+* **Language:** **Rust** (2021 Edition or newer)
+* **Framework:** **Axum** (Ergonomic, modular web framework)
+* **Database Interface:** **SQLx** (Async, compile-time checked SQL queries). **No ORMs.**
+* **API Protocol:** **Connect** (Buf) or REST with strictly typed JSON schemas.
+    * *Preference:* Connect-Rust for type-safe interaction with the frontend.
+* **Database:** PostgreSQL 17+ (Heavily using `JSONB`).
+* **Runtime:** `Tokio`
 
-## 2. Execution Constraints (CRITICAL)
-You must execute commands in the correct context.
+## 3. Testing (The Guardrails)
+* **E2E:** Playwright (TypeScript). Focus on "The Golden Path".
+* **Backend Unit:** Standard `cargo test`.
+* **Backend Integration:** `sqlx::test` with test containers.
 
-| Task Category | Execution Context | Command Example | Forbidden |
-| :--- | :--- | :--- | :--- |
-| **Unit Tests** | **Host Machine** | `go test ./internal/domain/...` | Running inside Pods |
-| **E2E Tests** | **Host Machine** | `npx playwright test` | `kubectl exec ...` |
-| **Build/Sync** | **Automatic (Tilt)** | *N/A (Wait for file save)* | `tilt up`, `docker build` |
-| **DB Ops** | **Host Machine** | `psql -h localhost` (via port-forward) | Direct pod shell |
-
-## 3. Build Tooling
-* **Tilt:** The user is running `tilt up` in the background.
-    * **RULE:** NEVER execute `tilt up`, `tilt down`, or `tilt ci`.
-    * **Action:** Edit files -> Wait for Tilt sync -> Check logs via `kubectl logs`.
-
-## Documentation Reference
-- See `docs/00-architecture.md` for full system diagram.
-
-
-# Tech Stack & Infrastructure Constraints
-
-## Infrastructure (Immutable Laws)
-- **Target:** Raspberry Pi 5 Cluster (k3s).
-- **Architecture:** `linux/arm64`. ALL Dockerfiles/Images MUST support ARM64.
-- **Orchestration:** Kubernetes (K3s) managed via ArgoCD.
-- **Secrets:** SealedSecrets (Bitnami).
-
-## Core Stack
-- **Backend:** Go 1.25.6 (Monorepo path: `apps/gearpit-core`)
-- **Frontend:** Next.js 15 (Monorepo path: `apps/gearpit-web`)
-- **Database:** PostgreSQL 16 (Primary Key: UUID v7)
-- **CI/CD:** GitHub Actions -> ArgoCD
-
-## Documentation Reference
-- See `docs/00-architecture.md` for full system diagram.
+## 4. Infrastructure
+* **Containerization:** Docker (Multi-stage builds using `cargo-chef` for caching).
+*
