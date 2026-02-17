@@ -4,7 +4,7 @@ allow_k8s_contexts('k3d-gearpit-dev')
 docker_build('gearpit-core', '.',
     dockerfile='apps/gearpit-core/Dockerfile',
     live_update=[
-        sync('apps/gearpit-core/src', '/app/src'),
+        sync('apps/gearpit-core', '/app'),
         # Trigger rebuild on Cargo.toml change?
         # For now, just syncing src is enough for cargo-watch
     ]
@@ -14,8 +14,7 @@ docker_build('gearpit-core', '.',
 docker_build('gearpit-web', '.',
     dockerfile='apps/gearpit-web/Dockerfile',
     live_update=[
-        sync('apps/gearpit-web/app', '/app/apps/gearpit-web/app'),
-        sync('apps/gearpit-web/public', '/app/apps/gearpit-web/public'),
+        sync('apps/gearpit-web', '/app/apps/gearpit-web'),
     ]
 )
 

@@ -7,6 +7,8 @@ use axum::{
 use serde::Serialize;
 use std::net::SocketAddr;
 
+mod domain;
+
 #[tokio::main]
 async fn main() {
     // Initialize tracing

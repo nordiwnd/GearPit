@@ -15,4 +15,8 @@ WORKDIR /app/apps/gearpit-web
 COPY apps/gearpit-web/package*.json ./
 RUN npm install
 
+ENV PORT 3000
+ENV HOSTNAME "0.0.0.0"
+
+COPY apps/gearpit-web .
 CMD ["npm", "run", "dev"]

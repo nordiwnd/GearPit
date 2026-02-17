@@ -13,5 +13,5 @@ RUN cargo install cargo-watch
 
 # Simplifying for dev: Just use the base image with cargo-watch.
 # Tilt will mount the source code.
-
+COPY apps/gearpit-core .
 CMD ["cargo", "watch", "-x", "run"]
