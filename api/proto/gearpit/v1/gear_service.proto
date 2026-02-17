@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package gearpit.v1;
+
+service GearService {
+  rpc ListGears(ListGearsRequest) returns (ListGearsResponse);
+  rpc GetGear(GetGearRequest) returns (GetGearResponse);
+}
+
+message Gear {
+  string id = 1;
+  string name = 2;
+  int32 weight_g = 3;
+  string category = 4; // e.g. "shelter", "clothing"
+  // properties will be handled as JSON string or struct for now, keeping it simple
+  string properties_json = 5; 
+}
+
+message ListGearsRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+message ListGearsResponse {
+  repeated Gear gears = 1;
+  string next_page_token = 2;
+}
+
+message GetGearRequest {
+  string id = 1;
+}
+
+message GetGearResponse {
+  Gear gear = 1;
+}
