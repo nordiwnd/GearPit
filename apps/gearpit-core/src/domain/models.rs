@@ -8,9 +8,21 @@ use chrono::{DateTime, Utc};
 #[sqlx(transparent)]
 pub struct Grams(pub i32);
 
+impl From<i32> for Grams {
+    fn from(v: i32) -> Self {
+        Self(v)
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(transparent)]
 pub struct Millimeters(pub i32);
+
+impl From<i32> for Millimeters {
+    fn from(v: i32) -> Self {
+        Self(v)
+    }
+}
 
 // Gear Entity
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -57,4 +69,27 @@ pub trait GearRepository {
     async fn create(&self, gear: Gear) -> anyhow::Result<Gear>;
     async fn find_by_id(&self, id: Uuid) -> anyhow::Result<Option<Gear>>;
     async fn list_by_user(&self, user_id: Uuid) -> anyhow::Result<Vec<Gear>>;
+}
+
+// Join Structs for API responses
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct KitItem {
+    pub gear: Gear,
+    pub quantity: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct KitDetails {
+    pub kit: Kit,
+    pub items: Vec<KitItem>,
+    pub total_weight_g: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TripDetails {
+    pub trip: Trip,
+    pub kits: Vec<KitDetails>,
+    pub total_weight_g: i32,
+    pub total_calories: i32,
+    pub water_ml: i32,
 }

@@ -22,6 +22,6 @@ docker_build('gearpit-web', '.',
 k8s_yaml('infra/dev/all.yaml')
 
 # Port Forwards
-k8s_resource('gearpit-web', port_forwards='9000:80')
+k8s_resource('gearpit-web', port_forwards='9000:3000')
 k8s_resource('gearpit-core', port_forwards='3000:3000')
 k8s_resource('postgres', port_forwards='5432:5432')

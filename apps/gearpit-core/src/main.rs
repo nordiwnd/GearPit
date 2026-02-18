@@ -8,15 +8,29 @@ use serde::Serialize;
 use std::net::SocketAddr;
 
 mod domain;
+mod infrastructure;
+
+mod api;
 
 #[tokio::main]
 async fn main() {
     // Initialize tracing
     tracing_subscriber::fmt::init();
 
+    // Setup Database Connection
+    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let pool = sqlx::PgPool::connect(&database_url).await.expect("Failed to connect to DB");
+
+    // Run Migrations
+    sqlx::migrate!("./migrations")
+        .run(&pool)
+        .await
+        .expect("Failed to run migrations");
+
     // Define routes
     let app = Router::new()
-        .route("/health", get(health_check));
+        .route("/health", get(health_check))
+        .merge(api::handlers::api_routes(pool));
 
     // Run app
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));

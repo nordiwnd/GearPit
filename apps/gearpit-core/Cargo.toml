@@ -18,3 +18,5 @@ anyhow = "1.0"
 prost = "0.13"
 prost-types = "0.13"
 http = "1.0"
+chrono = { version = "0.4.43", features = ["serde"] }
+async-trait = "0.1.89"
