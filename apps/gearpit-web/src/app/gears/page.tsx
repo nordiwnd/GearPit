@@ -14,13 +14,16 @@ const generateMockGears = (count: number, query: string): Gear[] => {
         name: `Gear Item ${i + 1}`,
         weight_g: 100 + i * 10,
         price: 50 + i * 5,
-        category: ["Hiking", "Camping", "Climbing"][i % 3],
-        properties: {},
+        manufacturer: ["Black Diamond", "Petzl", "Osprey", "MSR", "Scarpa"][i % 5],
+        category: ["Ski", "Backpack", "Tent", "Pole", "Boots"][i % 5],
+        properties: {}, // Mock properties could be added here if needed for deeper testing
         created_at: new Date().toISOString(),
     })).filter(g => !query || g.name.toLowerCase().includes(query.toLowerCase()))
 }
 
-export default function GearPage() {
+import { Suspense } from "react"
+
+function GearPageContent() {
     const [q, setQ] = useQueryState('q', { defaultValue: '' })
     const [data, setData] = useState<Gear[]>([])
     const [isMounted, setIsMounted] = useState(false)
@@ -38,8 +41,12 @@ export default function GearPage() {
             name: newGear.name,
             weight_g: newGear.weight_g,
             price: newGear.price,
+            manufacturer: newGear.manufacturer,
             category: newGear.category,
-            properties: {},
+            properties: {
+                type: newGear.category,
+                data: newGear.properties,
+            },
             created_at: new Date().toISOString(),
         }
         setData(prev => [gear, ...prev])
@@ -66,5 +73,13 @@ export default function GearPage() {
                 <DataTable columns={columns} data={data} />
             </div>
         </div>
+    )
+}
+
+export default function GearPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <GearPageContent />
+        </Suspense>
     )
 }
