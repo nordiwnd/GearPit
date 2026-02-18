@@ -21,7 +21,7 @@ trigger: always_on
 * **Database Interface:** **SQLx** (Async, compile-time checked SQL queries). **No ORMs.**
 * **API Protocol:** **Connect** (Buf) or REST with strictly typed JSON schemas.
     * *Preference:* Connect-Rust for type-safe interaction with the frontend.
-* **Database:** PostgreSQL 17+ (Heavily using `JSONB`).
+* **Database:** PostgreSQL 18+ (Heavily using `JSONB`).
 * **Runtime:** `Tokio`
 
 ## 3. Testing (The Guardrails)

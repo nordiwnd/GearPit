@@ -54,8 +54,9 @@ pub struct CreateGearRequest {
     pub name: String,
     pub weight_g: i32,
     pub price: i32,
+    pub manufacturer: String,
     pub category: String,
-    pub properties: serde_json::Value,
+    pub properties: crate::domain::models::GearProperties,
 }
 
 // Handlers
@@ -63,7 +64,7 @@ pub async fn create_gear(
     State(state): State<AppState>,
     Json(payload): Json<CreateGearRequest>,
 ) -> impl IntoResponse {
-    let gear = state.gear_repo.create(payload.user_id, payload.name, payload.weight_g, payload.price, payload.category, payload.properties).await.unwrap();
+    let gear = state.gear_repo.create(payload.user_id, payload.name, payload.weight_g, payload.price, payload.manufacturer, payload.category, payload.properties).await.unwrap();
     Json(gear)
 }
 

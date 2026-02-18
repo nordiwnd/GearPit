@@ -25,7 +25,7 @@ _(Skiing, Mountaineering, Motorcycles, PC Building)_
 <backend>
 <language>Go 1.25.6</language>
 <framework>Standard net/http + slog</framework>
-<db>PostgreSQL 16-alpine (StatefulSet)</db>
+<db>PostgreSQL 18</db>
 <architecture>Clean Architecture (Strict separation: domain -> handler -> infrastructure)</architecture>
 </backend>
 <frontend>

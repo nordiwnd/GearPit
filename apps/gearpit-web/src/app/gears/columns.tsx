@@ -32,6 +32,13 @@ export const columns: ColumnDef<Gear>[] = [
         },
     },
     {
+        accessorKey: "manufacturer",
+        header: "Manufacturer",
+        cell: ({ row }) => (
+            <div className="px-2 py-1 text-xs">{row.getValue("manufacturer")}</div>
+        )
+    },
+    {
         accessorKey: "category",
         header: "Category",
         cell: ({ row }) => (

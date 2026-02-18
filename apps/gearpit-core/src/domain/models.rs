@@ -33,10 +33,107 @@ pub struct Gear {
     #[sqlx(try_from = "i32")]
     pub weight_g: Grams,
     pub price: i32,
+    pub manufacturer: String,
     pub category: String,
-    pub properties: Json<serde_json::Value>, // Flexible JSONB
+    pub properties: Json<GearProperties>, // Flexible JSONB
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(tag = "type", content = "data")]
+pub enum GearProperties {
+    Ski(SkiProps),
+    Backpack(BackpackProps),
+    Tent(TentProps),
+    Pole(PoleProps),
+    Boots(BootsProps),
+    IceAxe(IceAxeProps),
+    Crampons(CramponsProps),
+    HardShell(HardShellProps),
+    Other(serde_json::Value),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct SkiProps {
+    pub length_mm: i32,
+    pub radius_m: f64,
+    pub dimensions_mm: Dimensions,
+    pub binding_type: String,
+    pub is_preloaded_binding: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct Dimensions {
+    pub tip: i32,
+    pub waist: i32,
+    pub tail: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct BackpackProps {
+    pub capacity_liters: i32,
+    pub back_length_size: String,
+    pub has_frame: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct TentProps {
+    pub capacity_persons: i32,
+    pub water_resistance_mm: i32,
+    pub shape: String,
+    pub is_double_wall: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct PoleProps {
+    pub is_adjustable: bool,
+    pub adjustment_stages: i32,
+    pub length_range_mm: LengthRange,
+    pub packed_length_mm: i32,
+    pub material: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct LengthRange {
+    pub min: i32,
+    pub max: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct BootsProps {
+    pub size_cm: f64,
+    pub sole_type: String,
+    pub welt_compatibility: WeltCompatibility,
+    pub stiffness: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct WeltCompatibility {
+    pub front: String,
+    pub rear: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct IceAxeProps {
+    pub shaft_shape: String,
+    pub length_mm: i32,
+    pub weight_balance: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct CramponsProps {
+    pub attachment_type: String,
+    pub points_count: i32,
+    pub material: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct HardShellProps {
+    pub water_resistance_mm: i32,
+    pub moisture_permeability_g: i32,
+    pub has_ventilation: bool,
+    pub material_tech: String,
 }
 
 // Kit Entity
@@ -66,7 +163,7 @@ pub struct Trip {
 // Domain Logic Traits (Ports)
 #[async_trait::async_trait]
 pub trait GearRepository {
-    async fn create(&self, gear: Gear) -> anyhow::Result<Gear>;
+    async fn create(&self, user_id: Uuid, name: String, weight_g: i32, price: i32, manufacturer: String, category: String, properties: GearProperties) -> anyhow::Result<Gear>;
     async fn find_by_id(&self, id: Uuid) -> anyhow::Result<Option<Gear>>;
     async fn list_by_user(&self, user_id: Uuid) -> anyhow::Result<Vec<Gear>>;
 }
