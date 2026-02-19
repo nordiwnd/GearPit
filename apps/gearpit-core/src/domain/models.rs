@@ -35,9 +35,21 @@ pub struct Gear {
     pub price: i32,
     pub manufacturer: String,
     pub category: String,
+    pub default_packing_category: Option<PackingCategory>,
     pub properties: Json<GearProperties>, // Flexible JSONB
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
+#[sqlx(type_name = "text", rename_all = "PascalCase")]
+pub enum PackingCategory {
+    Worn,
+    InPack,
+    External,
+    SmallStuff,
+    Consumable,
+    Other,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -160,10 +172,32 @@ pub struct Trip {
     pub updated_at: DateTime<Utc>,
 }
 
+// Loadout Entity
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct Loadout {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub name: String,
+    pub description: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct LoadoutItem {
+    pub id: Uuid,
+    pub loadout_id: Uuid,
+    pub gear_id: Uuid,
+    pub quantity: i32,
+    pub packing_category: Option<PackingCategory>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
 // Domain Logic Traits (Ports)
 #[async_trait::async_trait]
 pub trait GearRepository {
-    async fn create(&self, user_id: Uuid, name: String, weight_g: i32, price: i32, manufacturer: String, category: String, properties: GearProperties) -> anyhow::Result<Gear>;
+    async fn create(&self, user_id: Uuid, name: String, weight_g: i32, price: i32, manufacturer: String, category: String, default_packing_category: Option<PackingCategory>, properties: GearProperties) -> anyhow::Result<Gear>;
     async fn find_by_id(&self, id: Uuid) -> anyhow::Result<Option<Gear>>;
     async fn list_by_user(&self, user_id: Uuid) -> anyhow::Result<Vec<Gear>>;
 }

@@ -1,10 +1,22 @@
 use sqlx::PgPool;
 use uuid::Uuid;
-use crate::domain::models::{Kit, KitDetails, KitItem, Gear, Grams};
+use crate::domain::models::{Kit, KitDetails, KitItem, Gear, Grams, PackingCategory};
 use crate::domain::pit_logic::PitLogic;
 
 pub struct KitRepository {
     pool: PgPool,
+}
+
+struct Row {
+    gear_id: Uuid,
+    gear_name: String,
+    gear_weight: i32,
+    gear_category: String,
+    gear_price: i32,
+    gear_manufacturer: String,
+    gear_default_packing_category: Option<PackingCategory>,
+    gear_properties: serde_json::Value,
+    quantity: i32,
 }
 
 impl KitRepository {
@@ -40,22 +52,17 @@ impl KitRepository {
         // Join gear items
         // Note: In a real app we might want to do this in a single query with JSON_AGG,
         // but for clarity and type safety with sqlx macros, fetching separately is often cleaner initially.
-        struct Row {
-            gear_id: Uuid,
-            gear_name: String,
-            gear_weight: i32,
-            gear_category: String,
-            gear_price: i32,
-            gear_properties: serde_json::Value,
-            quantity: i32,
-        }
+        // struct Row moved to module scope
 
-        let rows = sqlx::query_as!(
+        let rows: Vec<Row> = sqlx::query_as!(
             Row,
             r#"
             SELECT 
                 g.id as gear_id, g.name as gear_name, g.weight_g as gear_weight, 
-                g.category as gear_category, g.price as gear_price, g.properties as gear_properties,
+                g.category as gear_category, g.price as gear_price, 
+                g.manufacturer as gear_manufacturer,
+                g.default_packing_category as "gear_default_packing_category: PackingCategory",
+                g.properties as gear_properties,
                 ki.quantity
             FROM kit_items ki
             JOIN gears g ON g.id = ki.gear_id
@@ -73,8 +80,10 @@ impl KitRepository {
                 name: r.gear_name,
                 weight_g: Grams(r.gear_weight),
                 price: r.gear_price,
+                manufacturer: r.gear_manufacturer,
                 category: r.gear_category,
-                properties: sqlx::types::Json(r.gear_properties),
+                default_packing_category: r.gear_default_packing_category,
+                properties: sqlx::types::Json(serde_json::from_value(r.gear_properties.clone()).unwrap_or(crate::domain::models::GearProperties::Other(r.gear_properties))),
                 created_at: chrono::Utc::now(), // Placeholder, not fetched to save query complexity
                 updated_at: chrono::Utc::now(),
             },
