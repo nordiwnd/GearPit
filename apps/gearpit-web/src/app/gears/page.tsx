@@ -6,6 +6,8 @@ import { DataTable } from "./data-table"
 import { columns } from "./columns"
 import { Input } from "@/components/ui/input"
 import { AddGearDialog, AddGearFormValues } from "@/components/add-gear-dialog"
+import { CreateLoadoutFromSelectionDialog } from "@/components/create-loadout-dialog"
+import { Button } from "@/components/ui/button" // Re-export check (Input was here)
 import { Gear } from "./schema"
 
 const generateMockGears = (count: number, query: string): Gear[] => {
@@ -27,29 +29,34 @@ function GearPageContent() {
     const [q, setQ] = useQueryState('q', { defaultValue: '' })
     const [data, setData] = useState<Gear[]>([])
     const [isMounted, setIsMounted] = useState(false)
+    const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({})
+    const [createLoadoutOpen, setCreateLoadoutOpen] = useState(false)
+
+    // Compute selected gear IDs
+    const selectedGearIds = Object.keys(rowSelection).filter(id => rowSelection[id])
 
     useEffect(() => {
         setIsMounted(true)
-        setData(generateMockGears(50, q))
-    }, [q])
+        const fetchGears = async () => {
+            try {
+                const res = await fetch('/api/gears')
+                if (!res.ok) throw new Error('Failed to fetch gears')
+                const gears = await res.json()
+                setData(gears)
+            } catch (error) {
+                console.error("Error fetching gears:", error)
+            }
+        }
+        fetchGears()
+    }, [])
+
+    // Filter in-memory for now, assuming standard API returns all (or implement search param later)
+    const filteredData = data.filter(g => !q || g.name.toLowerCase().includes(q.toLowerCase()))
 
     if (!isMounted) return null
 
-    const handleAddGear = (newGear: AddGearFormValues) => {
-        const gear: Gear = {
-            id: crypto.randomUUID(),
-            name: newGear.name,
-            weight_g: newGear.weight_g,
-            price: newGear.price,
-            manufacturer: newGear.manufacturer,
-            category: newGear.category,
-            properties: {
-                type: newGear.category,
-                data: newGear.properties,
-            },
-            created_at: new Date().toISOString(),
-        }
-        setData(prev => [gear, ...prev])
+    const handleAddGear = (newGear: Gear) => {
+        setData((prev) => [newGear, ...prev])
     }
 
     return (
@@ -69,9 +76,28 @@ function GearPageContent() {
                     <AddGearDialog onSuccess={handleAddGear} />
                 </div>
             </div>
+            {selectedGearIds.length > 0 && (
+                <div className="flex items-center space-x-2 bg-muted/40 p-2 rounded-md">
+                    <span className="text-xs font-medium">{selectedGearIds.length} items selected</span>
+                    <Button size="sm" variant="secondary" onClick={() => setCreateLoadoutOpen(true)}>
+                        Create Loadout
+                    </Button>
+                </div>
+            )}
             <div className="flex-1 overflow-hidden rounded-md border bg-background shadow-sm">
-                <DataTable columns={columns} data={data} />
+                <DataTable
+                    columns={columns}
+                    data={filteredData}
+                    rowSelection={rowSelection}
+                    setRowSelection={setRowSelection}
+                    getRowId={(row) => row.id}
+                />
             </div>
+            <CreateLoadoutFromSelectionDialog
+                open={createLoadoutOpen}
+                onOpenChange={setCreateLoadoutOpen}
+                selectedGearIds={selectedGearIds}
+            />
         </div>
     )
 }

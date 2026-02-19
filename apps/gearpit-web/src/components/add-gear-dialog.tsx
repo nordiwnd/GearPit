@@ -51,12 +51,32 @@ export function AddGearDialog({ onSuccess }: AddGearDialogProps) {
         },
     })
 
-    function onSubmit(values: z.infer<typeof formSchema>) {
-        // In a real app, this would be an API call
-        console.log("Submitting:", values)
-        onSuccess(values)
-        setOpen(false)
-        form.reset()
+    async function onSubmit(values: z.infer<typeof formSchema>) {
+        try {
+            const payload = {
+                ...values,
+                user_id: "00000000-0000-0000-0000-000000000001",
+                properties: {
+                    type: values.category,
+                    data: values.properties || {}
+                }
+            }
+
+            const res = await fetch('/api/gears', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+
+            if (!res.ok) throw new Error("Failed to create gear")
+
+            const newGear = await res.json()
+            onSuccess(newGear)
+            setOpen(false)
+            form.reset()
+        } catch (error) {
+            console.error("Failed to add gear:", error)
+        }
     }
 
     return (
@@ -253,7 +273,7 @@ export function AddGearDialog({ onSuccess }: AddGearDialogProps) {
                                         render={({ field }) => (
                                             <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                                                 <FormControl>
-                                                    <Input type="checkbox" checked={field.value} onChange={field.onChange} />
+                                                    <Input type="checkbox" checked={field.value ?? false} onChange={field.onChange} />
                                                 </FormControl>
                                                 <div className="space-y-1 leading-none">
                                                     <FormLabel>Preloaded Binding</FormLabel>
@@ -301,7 +321,7 @@ export function AddGearDialog({ onSuccess }: AddGearDialogProps) {
                                         render={({ field }) => (
                                             <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                                                 <FormControl>
-                                                    <Input type="checkbox" checked={field.value} onChange={field.onChange} />
+                                                    <Input type="checkbox" checked={field.value ?? false} onChange={field.onChange} />
                                                 </FormControl>
                                                 <div className="space-y-1 leading-none">
                                                     <FormLabel>Has Frame</FormLabel>
@@ -362,7 +382,7 @@ export function AddGearDialog({ onSuccess }: AddGearDialogProps) {
                                         render={({ field }) => (
                                             <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                                                 <FormControl>
-                                                    <Input type="checkbox" checked={field.value} onChange={field.onChange} />
+                                                    <Input type="checkbox" checked={field.value ?? false} onChange={field.onChange} />
                                                 </FormControl>
                                                 <div className="space-y-1 leading-none">
                                                     <FormLabel>Double Wall</FormLabel>
@@ -410,7 +430,7 @@ export function AddGearDialog({ onSuccess }: AddGearDialogProps) {
                                         render={({ field }) => (
                                             <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                                                 <FormControl>
-                                                    <Input type="checkbox" checked={field.value} onChange={field.onChange} />
+                                                    <Input type="checkbox" checked={field.value ?? false} onChange={field.onChange} />
                                                 </FormControl>
                                                 <div className="space-y-1 leading-none">
                                                     <FormLabel>Adjustable</FormLabel>
@@ -684,7 +704,7 @@ export function AddGearDialog({ onSuccess }: AddGearDialogProps) {
                                         render={({ field }) => (
                                             <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                                                 <FormControl>
-                                                    <Input type="checkbox" checked={field.value} onChange={field.onChange} />
+                                                    <Input type="checkbox" checked={field.value ?? false} onChange={field.onChange} />
                                                 </FormControl>
                                                 <div className="space-y-1 leading-none">
                                                     <FormLabel>Ventilation</FormLabel>

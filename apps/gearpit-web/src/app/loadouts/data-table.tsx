@@ -22,17 +22,11 @@ import { useState } from "react"
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
     data: TData[]
-    rowSelection?: Record<string, boolean>
-    setRowSelection?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
-    getRowId?: (row: TData) => string
 }
 
 export function DataTable<TData, TValue>({
     columns,
     data,
-    rowSelection,
-    setRowSelection,
-    getRowId,
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = useState<SortingState>([])
 
@@ -42,13 +36,9 @@ export function DataTable<TData, TValue>({
         getCoreRowModel: getCoreRowModel(),
         onSortingChange: setSorting,
         getSortedRowModel: getSortedRowModel(),
-        onRowSelectionChange: setRowSelection,
-        getRowId, // Pass getRowId to useReactTable
         state: {
             sorting,
-            rowSelection: rowSelection ?? {},
         },
-        enableRowSelection: true,
     })
 
     const handleKeyDown = (e: React.KeyboardEvent, rowIndex: number, colIndex: number, cellId: string) => {
