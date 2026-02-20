@@ -29,13 +29,14 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { GearFormSchema, GearPropertiesSchema } from "@/app/gears/validation"
+import { Gear } from "@/types/models"
 
 const formSchema = GearFormSchema
 
 export type AddGearFormValues = z.infer<typeof formSchema>
 
 interface AddGearDialogProps {
-    onSuccess: (data: AddGearFormValues) => void
+    onSuccess: (gear: Gear) => void
 }
 
 export function AddGearDialog({ onSuccess }: AddGearDialogProps) {

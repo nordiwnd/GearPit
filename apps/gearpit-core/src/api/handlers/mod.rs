@@ -3,7 +3,7 @@ use axum::{
     response::IntoResponse,
     Json,
     Router,
-    routing::{get, post},
+    routing::{get, post, delete},
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -44,14 +44,18 @@ pub struct AddKitItemRequest {
 pub struct CreateTripRequest {
     pub user_id: Uuid,
     pub name: String,
-    pub start_date: chrono::DateTime<chrono::Utc>,
-    pub duration_hours: f64,
+    pub target_date: chrono::DateTime<chrono::Utc>,
+    pub description: Option<String>,
+    pub base_loadout_id: Option<Uuid>,
+    pub planned_duration_minutes: i32,
+    pub elevation_gain_m: i32,
 }
 
 #[derive(Deserialize)]
-pub struct AddTripKitRequest {
-    pub kit_id: Uuid,
-    pub duration_multiplier: Option<f64>, // Maybe useful later
+pub struct AddTripItemRequest {
+    pub gear_id: Uuid,
+    pub quantity: i32,
+    pub packing_category: Option<crate::domain::models::PackingCategory>,
 }
 
 #[derive(Deserialize)]
@@ -113,7 +117,7 @@ pub async fn create_trip(
     State(state): State<AppState>,
     Json(payload): Json<CreateTripRequest>,
 ) -> impl IntoResponse {
-    let trip = state.trip_repo.create(payload.user_id, payload.name, payload.start_date, payload.duration_hours).await.unwrap();
+    let trip = state.trip_repo.create(payload.user_id, payload.name, payload.target_date, payload.description, payload.base_loadout_id, payload.planned_duration_minutes, payload.elevation_gain_m).await.unwrap();
     Json(trip)
 }
 
@@ -125,13 +129,20 @@ pub async fn get_trip(
     Json(details)
 }
 
-pub async fn add_trip_kit(
+pub async fn add_trip_item(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-    Json(payload): Json<AddTripKitRequest>, // Changed type to match struct name, was AddTripKitRequest in original code?
+    Json(payload): Json<AddTripItemRequest>,
 ) -> impl IntoResponse {
-    // Original code used AddTripKitRequest which was defined above.
-    state.trip_repo.add_kit(id, payload.kit_id).await.unwrap();
+    state.trip_repo.add_item(id, payload.gear_id, payload.quantity, payload.packing_category).await.unwrap();
+    Json(serde_json::json!({"status": "ok"}))
+}
+
+pub async fn remove_trip_item(
+    State(state): State<AppState>,
+    Path((id, gear_id)): Path<(Uuid, Uuid)>,
+) -> impl IntoResponse {
+    state.trip_repo.remove_item(id, gear_id).await.unwrap();
     Json(serde_json::json!({"status": "ok"}))
 }
 
@@ -159,9 +170,8 @@ pub fn api_routes(pool: PgPool) -> Router {
         .route("/kits/:id/items", post(add_kit_item))
         .route("/trips", post(create_trip))
         .route("/trips/:id", get(get_trip))
-        // .route("/trips/:id/kits", post(add_trip_kit)) // Original code had this? Wait, original code:
-        // .route("/trips/:id/kits", post(add_trip_kit))
-        .route("/trips/:id/kits", post(add_trip_kit))
+        .route("/trips/:id/items", post(add_trip_item))
+        .route("/trips/:id/items/:gear_id", delete(remove_trip_item))
         // Loadout routes
         .route("/loadouts", get(loadout::list_loadouts).post(loadout::create_loadout))
         .route("/loadouts/:id", get(loadout::get_loadout))

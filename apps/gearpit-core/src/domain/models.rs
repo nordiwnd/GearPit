@@ -41,7 +41,7 @@ pub struct Gear {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "text", rename_all = "PascalCase")]
 pub enum PackingCategory {
     Worn,
@@ -164,13 +164,26 @@ pub struct Trip {
     pub id: Uuid,
     pub user_id: Uuid,
     pub name: String,
-    pub start_date: DateTime<Utc>,
-    pub duration_hours: f64,
-    pub base_altitude_m: i32,
-    pub max_altitude_m: i32,
+    pub target_date: DateTime<Utc>,
+    pub description: Option<String>,
+    pub base_loadout_id: Option<Uuid>,
+    pub planned_duration_minutes: i32,
+    pub elevation_gain_m: i32,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct TripItem {
+    pub id: Uuid,
+    pub trip_id: Uuid,
+    pub gear_id: Uuid,
+    pub quantity: i32,
+    pub packing_category: Option<PackingCategory>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
 
 // Loadout Entity
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -217,9 +230,22 @@ pub struct KitDetails {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TripItemWithGear {
+    pub item: TripItem,
+    pub gear: Gear,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TripCategorySummary {
+    pub packing_category: Option<PackingCategory>,
+    pub items: Vec<TripItemWithGear>,
+    pub subtotal_weight_g: i32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TripDetails {
     pub trip: Trip,
-    pub kits: Vec<KitDetails>,
+    pub categories: Vec<TripCategorySummary>,
     pub total_weight_g: i32,
     pub total_calories: i32,
     pub water_ml: i32,
