@@ -59,11 +59,11 @@ export default function TripDetailPage() {
         return <div className="p-8 text-center text-muted-foreground">Trip not found.</div>
     }
 
-    const { trip, categories, total_weight_g, calories_needed, water_needed_ml } = tripDetail
+    const { trip, categories, total_weight_g, total_calories, water_ml } = tripDetail
 
     const groupedCategories: GroupedCategoryData[] = categories.map(cat => ({
-        categoryName: cat.category ? cat.category : "Uncategorized",
-        totalWeight: cat.total_weight_g,
+        categoryName: cat.packing_category ? cat.packing_category : "Uncategorized",
+        totalWeight: cat.subtotal_weight_g,
         items: cat.items.map(detail => ({
             id: detail.item.id,
             gearId: detail.gear.id,
@@ -107,8 +107,8 @@ export default function TripDetailPage() {
                         <CardTitle className="text-sm font-medium">Est. Calories Needed</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{calories_needed} kcal</div>
-                        <p className="text-xs text-muted-foreground">Based on weight & duration</p>
+                        <div className="text-2xl font-bold">{total_calories} kcal</div>
+                        <p className="text-xs text-muted-foreground">Based on weight, duration & elevation</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -116,8 +116,8 @@ export default function TripDetailPage() {
                         <CardTitle className="text-sm font-medium">Est. Water Needed</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{water_needed_ml} ml</div>
-                        <p className="text-xs text-muted-foreground">{(water_needed_ml / 1000).toFixed(2)} L minimum</p>
+                        <div className="text-2xl font-bold">{water_ml} ml</div>
+                        <p className="text-xs text-muted-foreground">{(water_ml / 1000).toFixed(2)} L minimum</p>
                     </CardContent>
                 </Card>
             </div>

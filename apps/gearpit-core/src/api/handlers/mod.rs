@@ -13,8 +13,10 @@ use std::sync::Arc;
 use sqlx::PgPool;
 
 use crate::infrastructure::gear_repository::GearRepository;
+use crate::infrastructure::user_profile_repository::UserProfileRepository;
 
 pub mod loadout;
+pub mod user_profile;
 
 // App State
 #[derive(Clone)]
@@ -22,6 +24,7 @@ pub struct AppState {
     pub kit_repo: Arc<KitRepository>,
     pub trip_repo: Arc<TripRepository>,
     pub gear_repo: Arc<GearRepository>,
+    pub user_profile_repo: Arc<UserProfileRepository>,
     pub pool: PgPool, // Added for direct access in loadout handlers
 }
 
@@ -159,8 +162,9 @@ pub fn api_routes(pool: PgPool) -> Router {
     let kit_repo = Arc::new(KitRepository::new(pool.clone()));
     let trip_repo = Arc::new(TripRepository::new(pool.clone()));
     let gear_repo = Arc::new(GearRepository::new(pool.clone()));
+    let user_profile_repo = Arc::new(UserProfileRepository::new(pool.clone()));
     
-    let state = AppState { kit_repo, trip_repo, gear_repo, pool };
+    let state = AppState { kit_repo, trip_repo, gear_repo, user_profile_repo, pool };
 
     Router::new()
         .route("/gears", post(create_gear).get(list_gears))
@@ -175,5 +179,8 @@ pub fn api_routes(pool: PgPool) -> Router {
         // Loadout routes
         .route("/loadouts", get(loadout::list_loadouts).post(loadout::create_loadout))
         .route("/loadouts/:id", get(loadout::get_loadout))
+        // User Profile routes
+        .route("/user_profiles", post(user_profile::upsert_user_profile))
+        .route("/user_profiles/:id", get(user_profile::get_user_profile))
         .with_state(state)
 }

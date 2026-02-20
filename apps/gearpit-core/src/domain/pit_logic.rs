@@ -12,30 +12,44 @@ impl PitLogic {
     }
 
     /// Calculate calories burned based on hiking metrics.
-    /// Formula: 1.55 * (Body Weight + Pack Weight) * Hiking Hours
-    /// Body weight is assumed to be roughly 70kg for now if not provided,
-    /// but ideally should be user profile data.
-    /// For this version we'll just take total weight in kg.
-    /// NOTE: This is a simplified version.
-    pub fn calc_calories(total_weight_kg: f64, duration_hours: f64) -> i32 {
-        let body_weight_kg = 70.0; // Default placeholder
+    /// Formula: 1.8 * duration + 10.0 * elevation (km) for course constant.
+    /// course constant * Total weight (Body + Pack)
+    pub fn calc_calories(
+        total_weight_kg: f64,
+        body_weight_kg: f64,
+        duration_hours: f64,
+        elevation_gain_m: i32,
+    ) -> i32 {
         let total_load_kg = body_weight_kg + total_weight_kg;
-        let _met = 1.55; // Hiking coefficient? Actually 1.55 is a multiplier in the user provided formula.
-                         // Standard MET for backpacking is ~7.0.
-                         // But we strictly follow user instruction:
-                         // "1.55 * (Body Weight + Pack Weight) * Hiking Hours"
-
-        (1.55 * total_load_kg * duration_hours) as i32
+        let course_constant = 1.8 * duration_hours + 10.0 * (elevation_gain_m as f64 / 1000.0);
+        (course_constant * total_load_kg) as i32
     }
 
-    /// Calculate water need: 5ml per kg of body weight + load per hour?
-    /// Or standard 500ml/hr + adjustments?
-    /// User didn't specify formula for water in 06-logic, so we use a standard estimation.
-    /// "Water Need = (Body Weight + Load Weight) * Duration * 5ml" (Hypothetical)
-    /// Let's use a safe fallback: 250ml per hour + 50ml per 500m elevation gain.
-    pub fn calc_water_ml(duration_hours: f64, elevation_gain_m: i32) -> i32 {
-        let base_water = duration_hours * 350.0; // 350ml/hr base
-        let elevation_water = (elevation_gain_m as f64 / 500.0) * 200.0; // 200ml per 500m gain
-        (base_water + elevation_water) as i32
+    /// Calculate water need: Total weight * 5 * duration_hours * water_ratio
+    /// Note: water_ratio defaults to 0.75 in the DB.
+    pub fn calc_water_ml(
+        total_weight_kg: f64,
+        body_weight_kg: f64,
+        duration_hours: f64,
+        water_ratio: f32,
+    ) -> i32 {
+        let total_load_kg = body_weight_kg + total_weight_kg;
+        let water_loss_ml = total_load_kg * 5.0 * duration_hours;
+        (water_loss_ml * water_ratio as f64) as i32
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_calc_calories() {
+        assert_eq!(PitLogic::calc_calories(10.0, 70.0, 5.0, 1000), 1520);
+    }
+
+    #[test]
+    fn test_calc_water_ml() {
+        assert_eq!(PitLogic::calc_water_ml(10.0, 70.0, 5.0, 0.75), 1500);
     }
 }

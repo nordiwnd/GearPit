@@ -250,3 +250,14 @@ pub struct TripDetails {
     pub total_calories: i32,
     pub water_ml: i32,
 }
+
+// User Profile Entity
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct UserProfile {
+    pub user_id: Uuid,
+    pub height_cm: Option<i32>,
+    pub weight_g: Option<i32>,
+    pub water_ratio: Option<f32>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
