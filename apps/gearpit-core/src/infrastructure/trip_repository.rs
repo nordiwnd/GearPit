@@ -181,10 +181,28 @@ impl TripRepository {
             });
         }
 
+        // Fetch UserProfile to calculate metrics accurately
+        #[derive(sqlx::FromRow)]
+        struct UserProfileRow {
+            weight_g: Option<i32>,
+            water_ratio: Option<f32>,
+        }
+        
+        let profile = sqlx::query_as!(
+            UserProfileRow,
+            "SELECT weight_g, water_ratio FROM user_profiles WHERE user_id = $1",
+            trip.user_id
+        )
+        .fetch_optional(&self.pool)
+        .await?;
+
+        let body_weight_kg = profile.as_ref().and_then(|p| p.weight_g).unwrap_or(70000) as f64 / 1000.0;
+        let water_ratio = profile.as_ref().and_then(|p| p.water_ratio).unwrap_or(0.75);
+
         let total_weight_kg = total_trip_weight as f64 / 1000.0;
         let duration_hours = trip.planned_duration_minutes as f64 / 60.0;
-        let calories = PitLogic::calc_calories(total_weight_kg, duration_hours);
-        let water_ml = PitLogic::calc_water_ml(duration_hours, trip.elevation_gain_m);
+        let calories = PitLogic::calc_calories(total_weight_kg, body_weight_kg, duration_hours, trip.elevation_gain_m);
+        let water_ml = PitLogic::calc_water_ml(total_weight_kg, body_weight_kg, duration_hours, water_ratio);
 
         Ok(TripDetails {
             trip,

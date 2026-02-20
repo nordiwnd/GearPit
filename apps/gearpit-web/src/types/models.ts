@@ -85,15 +85,15 @@ export type TripItemWithGear = {
 }
 
 export type TripCategorySummary = {
-    category: PackingCategory | null
+    packing_category: PackingCategory | null
     items: TripItemWithGear[]
-    total_weight_g: number
+    subtotal_weight_g: number
 }
 
 export type TripDetails = {
     trip: Trip
     categories: TripCategorySummary[]
     total_weight_g: number
-    calories_needed: number
-    water_needed_ml: number
+    total_calories: number
+    water_ml: number
 }
