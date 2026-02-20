@@ -8,7 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Separator } from "@/components/ui/separator" // separator.tsx might fail if not exists. I'll check or remove if fails.
 // Assuming Separator exists or I'll implement it or use <hr>. 
 // Wait, generic <hr> with className is fine.
-import { ArrowLeft, Trash2 } from "lucide-react"
+import { ArrowLeft, CalendarPlus } from "lucide-react"
+import { GroupedGearList, GroupedCategoryData } from "@/components/grouped-gear-list"
+import { CreateTripDialog } from "@/components/create-trip-dialog"
 
 export default function LoadoutDetailPage() {
     const params = useParams()
@@ -16,6 +18,7 @@ export default function LoadoutDetailPage() {
     const id = params.id as string
     const [loadoutDetail, setLoadoutDetail] = useState<LoadoutDetail | null>(null)
     const [loading, setLoading] = useState(true)
+    const [createTripOpen, setCreateTripOpen] = useState(false)
 
     useEffect(() => {
         if (!id) return;
@@ -58,16 +61,44 @@ export default function LoadoutDetailPage() {
 
     const categories = Object.keys(PackingCategory) as string[]
 
+    const groupedCategories: GroupedCategoryData[] = categories.map((category: string) => {
+        const categoryItems = groupedItems[category] || []
+        const categoryTotal = categoryItems.reduce((sum, item) => sum + item.subtotal_weight_g, 0)
+
+        return {
+            categoryName: category,
+            totalWeight: categoryTotal,
+            items: categoryItems.map(detail => ({
+                id: detail.item.id,
+                gearId: detail.gear.id,
+                name: detail.gear.name,
+                quantity: detail.item.quantity,
+                subtotalWeight: detail.subtotal_weight_g
+            }))
+        }
+    }).filter(cat => cat.items.length > 0)
+
+    const handleDeleteItem = async (itemId: string, gearId: string) => {
+        // Implement delete logic if needed
+        console.log("Delete item", itemId)
+    }
+
     return (
         <div className="flex flex-col h-full space-y-6 p-6">
-            <div className="flex items-center space-x-4">
-                <Button variant="ghost" size="icon" onClick={() => router.back()}>
-                    <ArrowLeft className="h-4 w-4" />
-                </Button>
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight">{loadout.name}</h1>
-                    {loadout.description && <p className="text-muted-foreground text-sm">{loadout.description}</p>}
+            <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                    <Button variant="ghost" size="icon" onClick={() => router.back()}>
+                        <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight">{loadout.name}</h1>
+                        {loadout.description && <p className="text-muted-foreground text-sm">{loadout.description}</p>}
+                    </div>
                 </div>
+                <Button onClick={() => setCreateTripOpen(true)}>
+                    <CalendarPlus className="mr-2 h-4 w-4" />
+                    Plan Trip
+                </Button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -108,38 +139,17 @@ export default function LoadoutDetailPage() {
             </div>
 
             <div className="space-y-6">
-                {categories.map(category => {
-                    const categoryItems = groupedItems[category]
-                    if (!categoryItems || categoryItems.length === 0) return null
-
-                    const categoryTotal = categoryItems.reduce((sum, item) => sum + item.subtotal_weight_g, 0)
-
-                    return (
-                        <div key={category} className="space-y-2">
-                            <div className="flex items-center justify-between border-b pb-2">
-                                <h3 className="text-lg font-semibold">{category}</h3>
-                                <span className="text-sm text-muted-foreground font-medium">{categoryTotal} g</span>
-                            </div>
-                            <div className="grid grid-cols-1 gap-2">
-                                {categoryItems.map((detail) => (
-                                    <div key={detail.item.id} className="flex items-center justify-between p-3 bg-muted/20 rounded-md">
-                                        <div className="flex items-center space-x-4">
-                                            <div className="font-medium">{detail.gear.name}</div>
-                                            <div className="text-sm text-muted-foreground">x{detail.item.quantity}</div>
-                                        </div>
-                                        <div className="flex items-center space-x-4">
-                                            <div className="text-sm font-mono">{detail.subtotal_weight_g} g</div>
-                                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive">
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )
-                })}
+                <GroupedGearList
+                    categories={groupedCategories}
+                    onRemoveItem={handleDeleteItem}
+                />
             </div>
+
+            <CreateTripDialog
+                open={createTripOpen}
+                onOpenChange={setCreateTripOpen}
+                baseLoadoutId={loadout.id}
+            />
         </div>
     )
 }

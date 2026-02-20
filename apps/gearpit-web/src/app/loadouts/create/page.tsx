@@ -61,6 +61,7 @@ export default function CreateLoadoutPage() {
                     user_id: userId,
                     name: values.name,
                     description: values.description,
+                    items: [],
                 }),
             })
 

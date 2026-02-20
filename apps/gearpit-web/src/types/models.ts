@@ -54,3 +54,46 @@ export type LoadoutItemDetail = {
     gear: Gear
     subtotal_weight_g: number
 }
+
+export type Trip = {
+    id: string
+    user_id: string
+    name: string
+    target_date: string
+    description?: string | null
+    base_loadout_id?: string | null
+    planned_duration_minutes: number
+    elevation_gain_m: number
+    created_at: string
+    updated_at: string
+}
+
+export type TripItem = {
+    id: string
+    trip_id: string
+    gear_id: string
+    quantity: number
+    packing_category?: PackingCategory | null
+    created_at: string
+    updated_at: string
+}
+
+export type TripItemWithGear = {
+    item: TripItem
+    gear: Gear
+    subtotal_weight_g: number
+}
+
+export type TripCategorySummary = {
+    category: PackingCategory | null
+    items: TripItemWithGear[]
+    total_weight_g: number
+}
+
+export type TripDetails = {
+    trip: Trip
+    categories: TripCategorySummary[]
+    total_weight_g: number
+    calories_needed: number
+    water_needed_ml: number
+}
