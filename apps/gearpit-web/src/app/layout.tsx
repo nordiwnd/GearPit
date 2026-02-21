@@ -18,6 +18,7 @@ export const metadata: Metadata = {
 };
 
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
+import { TopNav } from "@/components/top-nav"
 
 export default function RootLayout({
   children,
@@ -31,7 +32,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <NuqsAdapter>
-          {children}
+          <TopNav />
+          <main className="flex-1 overflow-auto h-[calc(100vh-3rem)]">
+            {children}
+          </main>
         </NuqsAdapter>
       </body>
     </html>

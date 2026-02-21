@@ -24,9 +24,11 @@ export default function SettingsPage() {
                     if (text) {
                         try {
                             const data = JSON.parse(text);
-                            if (data.height_cm) setHeightCm(data.height_cm);
-                            if (data.weight_g) setWeightKg(data.weight_g / 1000); // grams to kg
-                            if (data.water_ratio) setWaterRatio(data.water_ratio);
+                            if (data) {
+                                if (data.height_cm) setHeightCm(data.height_cm);
+                                if (data.weight_g) setWeightKg(data.weight_g / 1000); // grams to kg
+                                if (data.water_ratio) setWaterRatio(data.water_ratio);
+                            }
                         } catch (e) {
                             console.error("Failed to parse JSON", e);
                         }
@@ -71,59 +73,65 @@ export default function SettingsPage() {
     if (loading) return <div className="p-8">Loading profile...</div>;
 
     return (
-        <div className="container mx-auto py-8 px-4 max-w-xl text-zinc-100">
-            <h1 className="text-3xl font-semibold mb-6 tracking-tight">User Profile</h1>
-            <p className="text-sm text-zinc-400 mb-8">
-                Your physical attributes are used to calculate physiological metrics like estimated water loss and calories burned during trips.
-            </p>
-
-            <form onSubmit={handleSave} className="space-y-6 bg-zinc-900/50 p-6 rounded-lg border border-zinc-800">
-                <div className="space-y-2">
-                    <Label htmlFor="heightCm">Height (cm)</Label>
-                    <Input
-                        id="heightCm"
-                        type="number"
-                        value={heightCm}
-                        onChange={(e) => setHeightCm(e.target.value ? Number(e.target.value) : "")}
-                        placeholder="e.g. 175"
-                        className="bg-zinc-950 border-zinc-800"
-                    />
+        <div className="flex flex-col h-full overflow-auto bg-[#18181B] text-zinc-200 p-6 md:p-8">
+            <div className="max-w-4xl mx-auto w-full space-y-6">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight text-white mb-2">User Profile</h1>
+                        <p className="text-sm text-zinc-400">
+                            Your physical attributes are used to calculate physiological metrics like estimated water loss and calories burned during trips.
+                        </p>
+                    </div>
                 </div>
 
-                <div className="space-y-2">
-                    <Label htmlFor="weightKg">Weight (kg)</Label>
-                    <Input
-                        id="weightKg"
-                        type="number"
-                        step="0.1"
-                        value={weightKg}
-                        onChange={(e) => setWeightKg(e.target.value ? Number(e.target.value) : "")}
-                        placeholder="e.g. 70"
-                        className="bg-zinc-950 border-zinc-800"
-                    />
-                </div>
+                <form onSubmit={handleSave} className="space-y-6 bg-[#27272A] p-6 rounded-lg border border-zinc-800 shadow-sm max-w-xl">
+                    <div className="space-y-2">
+                        <Label htmlFor="heightCm" className="text-zinc-300 font-medium">Height (cm)</Label>
+                        <Input
+                            id="heightCm"
+                            type="number"
+                            value={heightCm}
+                            onChange={(e) => setHeightCm(e.target.value ? Number(e.target.value) : "")}
+                            placeholder="e.g. 175"
+                            className="bg-zinc-900 border-zinc-700 text-zinc-100 placeholder:text-zinc-600 focus-visible:ring-emerald-500"
+                        />
+                    </div>
 
-                <div className="space-y-2">
-                    <Label htmlFor="waterRatio">Water Replenishment Ratio</Label>
-                    <Input
-                        id="waterRatio"
-                        type="number"
-                        step="0.05"
-                        min="0"
-                        max="2"
-                        value={waterRatio}
-                        onChange={(e) => setWaterRatio(Number(e.target.value))}
-                        className="bg-zinc-950 border-zinc-800"
-                    />
-                    <p className="text-xs text-zinc-500">
-                        Default 0.75. Multiplying sweat loss by this factor gets recommended water intake.
-                    </p>
-                </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="weightKg" className="text-zinc-300 font-medium">Weight (kg)</Label>
+                        <Input
+                            id="weightKg"
+                            type="number"
+                            step="0.1"
+                            value={weightKg}
+                            onChange={(e) => setWeightKg(e.target.value ? Number(e.target.value) : "")}
+                            placeholder="e.g. 70"
+                            className="bg-zinc-900 border-zinc-700 text-zinc-100 placeholder:text-zinc-600 focus-visible:ring-emerald-500"
+                        />
+                    </div>
 
-                <Button type="submit" disabled={saving} className="w-full">
-                    {saving ? "Saving..." : "Save Profile"}
-                </Button>
-            </form>
+                    <div className="space-y-2">
+                        <Label htmlFor="waterRatio" className="text-zinc-300 font-medium">Water Replenishment Ratio</Label>
+                        <Input
+                            id="waterRatio"
+                            type="number"
+                            step="0.05"
+                            min="0"
+                            max="2"
+                            value={waterRatio}
+                            onChange={(e) => setWaterRatio(Number(e.target.value))}
+                            className="bg-zinc-900 border-zinc-700 text-zinc-100 focus-visible:ring-emerald-500 font-mono"
+                        />
+                        <p className="text-xs text-zinc-500 mt-1">
+                            Default: 0.75. Multiplies estimated sweat loss by this factor to yield recommended intake.
+                        </p>
+                    </div>
+
+                    <Button type="submit" disabled={saving} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium shadow-[0_0_15px_rgba(5,150,105,0.2)] transition-all">
+                        {saving ? "Saving..." : "Save Profile Configuration"}
+                    </Button>
+                </form>
+            </div>
         </div>
     );
 }

@@ -64,6 +64,18 @@ impl TripRepository {
         Ok(trip)
     }
 
+    pub async fn list_by_user(&self, user_id: Uuid) -> anyhow::Result<Vec<Trip>> {
+        let trips = sqlx::query_as!(
+            Trip,
+            "SELECT id, user_id, name, target_date, description, base_loadout_id, planned_duration_minutes, elevation_gain_m, created_at, updated_at FROM trips WHERE user_id = $1 ORDER BY target_date DESC",
+            user_id
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(trips)
+    }
+
     pub async fn get_details(&self, trip_id: Uuid) -> anyhow::Result<TripDetails> {
         let trip = sqlx::query_as!(
             Trip,
@@ -243,6 +255,23 @@ impl TripRepository {
         )
         .execute(&self.pool)
         .await?;
+        Ok(())
+    }
+
+    pub async fn delete(&self, trip_id: Uuid) -> anyhow::Result<()> {
+        let mut tx = self.pool.begin().await?;
+
+        // First, delete trip items (cascade isn't strictly necessary if FK is ON DELETE CASCADE, but explicit is safer)
+        sqlx::query!("DELETE FROM trip_items WHERE trip_id = $1", trip_id)
+            .execute(&mut *tx)
+            .await?;
+
+        // Then, delete the trip itself
+        sqlx::query!("DELETE FROM trips WHERE id = $1", trip_id)
+            .execute(&mut *tx)
+            .await?;
+
+        tx.commit().await?;
         Ok(())
     }
 }

@@ -54,4 +54,25 @@ impl GearRepository {
         .await?;
         Ok(gears)
     }
+
+    pub async fn delete(&self, id: Uuid) -> anyhow::Result<()> {
+        let mut tx = self.pool.begin().await?;
+
+        // First, delete from trip_items and loadout_items where this gear is used
+        sqlx::query!("DELETE FROM trip_items WHERE gear_id = $1", id)
+            .execute(&mut *tx)
+            .await?;
+        
+        sqlx::query!("DELETE FROM loadout_items WHERE gear_id = $1", id)
+            .execute(&mut *tx)
+            .await?;
+
+        // Then, delete the gear itself
+        sqlx::query!("DELETE FROM gears WHERE id = $1", id)
+            .execute(&mut *tx)
+            .await?;
+
+        tx.commit().await?;
+        Ok(())
+    }
 }
