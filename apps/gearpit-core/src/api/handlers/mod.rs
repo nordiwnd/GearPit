@@ -132,6 +132,22 @@ pub async fn get_trip(
     Json(details)
 }
 
+pub async fn list_trips(
+    State(state): State<AppState>,
+) -> impl IntoResponse {
+    let user_id = Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap();
+    let trips = state.trip_repo.list_by_user(user_id).await.unwrap();
+    Json(trips)
+}
+
+pub async fn delete_trip(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> impl IntoResponse {
+    state.trip_repo.delete(id).await.unwrap();
+    Json(serde_json::json!({"status": "ok"}))
+}
+
 pub async fn add_trip_item(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -158,6 +174,14 @@ pub async fn list_gears(
     Json(gears)
 }
 
+pub async fn delete_gear(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> impl IntoResponse {
+    state.gear_repo.delete(id).await.unwrap();
+    Json(serde_json::json!({"status": "ok"}))
+}
+
 pub fn api_routes(pool: PgPool) -> Router {
     let kit_repo = Arc::new(KitRepository::new(pool.clone()));
     let trip_repo = Arc::new(TripRepository::new(pool.clone()));
@@ -168,12 +192,12 @@ pub fn api_routes(pool: PgPool) -> Router {
 
     Router::new()
         .route("/gears", post(create_gear).get(list_gears))
-        .route("/gears/:id", get(get_gear))
+        .route("/gears/:id", get(get_gear).delete(delete_gear))
         .route("/kits", post(create_kit))
         .route("/kits/:id", get(get_kit))
         .route("/kits/:id/items", post(add_kit_item))
-        .route("/trips", post(create_trip))
-        .route("/trips/:id", get(get_trip))
+        .route("/trips", get(list_trips).post(create_trip))
+        .route("/trips/:id", get(get_trip).delete(delete_trip))
         .route("/trips/:id/items", post(add_trip_item))
         .route("/trips/:id/items/:gear_id", delete(remove_trip_item))
         // Loadout routes

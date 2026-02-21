@@ -8,9 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Separator } from "@/components/ui/separator" // separator.tsx might fail if not exists. I'll check or remove if fails.
 // Assuming Separator exists or I'll implement it or use <hr>. 
 // Wait, generic <hr> with className is fine.
-import { ArrowLeft, CalendarPlus } from "lucide-react"
+import { ArrowLeft, Box } from "lucide-react"
 import { GroupedGearList, GroupedCategoryData } from "@/components/grouped-gear-list"
-import { CreateTripDialog } from "@/components/create-trip-dialog"
+import { Badge } from "@/components/ui/badge"
+import { Progress } from "@/components/ui/progress"
 
 export default function LoadoutDetailPage() {
     const params = useParams()
@@ -18,7 +19,6 @@ export default function LoadoutDetailPage() {
     const id = params.id as string
     const [loadoutDetail, setLoadoutDetail] = useState<LoadoutDetail | null>(null)
     const [loading, setLoading] = useState(true)
-    const [createTripOpen, setCreateTripOpen] = useState(false)
 
     useEffect(() => {
         if (!id) return;
@@ -72,8 +72,11 @@ export default function LoadoutDetailPage() {
                 id: detail.item.id,
                 gearId: detail.gear.id,
                 name: detail.gear.name,
+                manufacturer: detail.gear.manufacturer,
+                category: detail.item.packing_category || detail.gear.default_packing_category || "Uncategorized",
                 quantity: detail.item.quantity,
-                subtotalWeight: detail.subtotal_weight_g
+                unitWeight: detail.gear.weight_g,
+                subtotalWeight: detail.gear.weight_g * detail.item.quantity
             }))
         }
     }).filter(cat => cat.items.length > 0)
@@ -83,73 +86,89 @@ export default function LoadoutDetailPage() {
         console.log("Delete item", itemId)
     }
 
+    // Calculate weight distribution percentages
+    const totalWeightForBar = total_weight_g > 0 ? total_weight_g : 1; // prevent div by 0
+    const packPct = (pack_weight_g / totalWeightForBar) * 100;
+    const wornPct = (worn_weight_g / totalWeightForBar) * 100;
+    const consumablePct = (consumable_weight_g / totalWeightForBar) * 100;
+
     return (
-        <div className="flex flex-col h-full space-y-6 p-6">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                    <Button variant="ghost" size="icon" onClick={() => router.back()}>
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight">{loadout.name}</h1>
-                        {loadout.description && <p className="text-muted-foreground text-sm">{loadout.description}</p>}
+        <div className="flex flex-col h-full bg-[#18181B] text-zinc-200">
+            <div className="w-full max-w-7xl mx-auto p-4 md:p-6 flex flex-col h-[calc(100vh-3rem)] gap-4">
+
+                {/* ZONE 1: Context (Header & Metadata) - Fixed Top */}
+                <div className="flex-none flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div className="flex items-center space-x-4">
+                        <Button variant="ghost" size="icon" onClick={() => router.back()} className="text-zinc-400 hover:text-white hover:bg-zinc-800">
+                            <ArrowLeft className="h-5 w-5" />
+                        </Button>
+                        <div>
+                            <div className="flex items-center gap-3 mb-1">
+                                <h1 className="text-2xl font-bold tracking-tight text-white">{loadout.name}</h1>
+                                <Badge variant="outline" className="text-emerald-400 border-emerald-500/30 bg-emerald-500/10 font-mono">
+                                    <Box className="w-3 h-3 mr-1" />
+                                    BASE LOADOUT
+                                </Badge>
+                            </div>
+                            {loadout.description && <p className="text-zinc-400 text-sm">{loadout.description}</p>}
+                        </div>
                     </div>
                 </div>
-                <Button onClick={() => setCreateTripOpen(true)}>
-                    <CalendarPlus className="mr-2 h-4 w-4" />
-                    Plan Trip
-                </Button>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">Total Weight</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{total_weight_g} g</div>
-                        <p className="text-xs text-muted-foreground">{(total_weight_g / 1000).toFixed(2)} kg</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">Base Weight (Pack)</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{pack_weight_g} g</div>
-                        <p className="text-xs text-muted-foreground">Without worn/consumables</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">Worn Weight</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{worn_weight_g} g</div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">Consumable Weight</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{consumable_weight_g} g</div>
-                    </CardContent>
-                </Card>
-            </div>
+                {/* ZONE 2: Tactical Summary (KPI Panels) - Fixed Top */}
+                <div className="flex-none grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <Card className="bg-[#27272A] border-zinc-800 rounded-md shadow-sm">
+                        <CardContent className="p-4 flex flex-row items-center justify-between">
+                            <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Total Sys Wt</span>
+                            <div className="text-xl font-mono text-zinc-100">{total_weight_g} <span className="text-zinc-500 text-sm">g</span></div>
+                        </CardContent>
+                    </Card>
+                    <Card className="bg-[#27272A] border-zinc-800 rounded-md shadow-sm">
+                        <CardContent className="p-4 flex flex-row items-center justify-between">
+                            <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Base Pack Wt</span>
+                            <div className="text-xl font-mono text-emerald-400">{pack_weight_g} <span className="text-emerald-700 text-sm">g</span></div>
+                        </CardContent>
+                    </Card>
+                    <Card className="bg-[#27272A] border-zinc-800 rounded-md shadow-sm">
+                        <CardContent className="p-4 flex flex-row items-center justify-between">
+                            <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Worn / Ext Wt</span>
+                            <div className="text-xl font-mono text-zinc-100">{worn_weight_g + external_weight_g} <span className="text-zinc-500 text-sm">g</span></div>
+                        </CardContent>
+                    </Card>
+                    <Card className="bg-[#27272A] border-zinc-800 rounded-md shadow-sm">
+                        <CardContent className="p-4 flex flex-row items-center justify-between">
+                            <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Consumables Wt</span>
+                            <div className="text-xl font-mono text-zinc-100">{consumable_weight_g} <span className="text-zinc-500 text-sm">g</span></div>
+                        </CardContent>
+                    </Card>
+                </div>
 
-            <div className="space-y-6">
-                <GroupedGearList
-                    categories={groupedCategories}
-                    onRemoveItem={handleDeleteItem}
-                />
-            </div>
+                {/* ZONE 3: Packing Matrix - Flex 1 (Scrollable Table Area) */}
+                <div className="flex-1 overflow-auto min-h-0 w-full relative rounded-md border border-zinc-800 bg-zinc-900/40">
+                    <GroupedGearList
+                        categories={groupedCategories}
+                        onRemoveItem={handleDeleteItem}
+                    />
+                </div>
 
-            <CreateTripDialog
-                open={createTripOpen}
-                onOpenChange={setCreateTripOpen}
-                baseLoadoutId={loadout.id}
-            />
+                {/* Zone 4: Weight Distribution Bar at the bottom - Fixed Bottom */}
+                <div className="flex-none flex flex-col space-y-2 pt-2">
+                    <div className="flex justify-between items-center text-xs font-mono text-zinc-500 uppercase tracking-widest px-1">
+                        <span>Weight Distribution Matrix</span>
+                        <div className="flex items-center gap-4">
+                            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> Pack ({packPct.toFixed(1)}%)</span>
+                            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500"></span> Worn ({wornPct.toFixed(1)}%)</span>
+                            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500"></span> Consumables ({consumablePct.toFixed(1)}%)</span>
+                        </div>
+                    </div>
+                    <div className="h-2 w-full flex rounded-sm overflow-hidden bg-zinc-800">
+                        <div style={{ width: `${packPct}%` }} className="bg-emerald-500 h-full" title={`Pack: ${packPct.toFixed(1)}%`} />
+                        <div style={{ width: `${wornPct}%` }} className="bg-blue-500 h-full bg-opacity-80" title={`Worn: ${wornPct.toFixed(1)}%`} />
+                        <div style={{ width: `${consumablePct}%` }} className="bg-amber-500 h-full bg-opacity-80" title={`Consumables: ${consumablePct.toFixed(1)}%`} />
+                    </div>
+                </div>
+
+            </div>
         </div>
     )
 }

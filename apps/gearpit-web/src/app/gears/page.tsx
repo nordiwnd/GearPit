@@ -60,44 +60,46 @@ function GearPageContent() {
     }
 
     return (
-        <div className="h-full flex flex-col space-y-4 p-4">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-xl font-bold tracking-tight">Gear Command Center</h1>
-                    <p className="text-muted-foreground text-xs">Manage your inventory efficiently.</p>
+        <div className="flex flex-col h-full bg-[#18181B] text-zinc-200 p-6 md:p-8">
+            <div className="max-w-7xl mx-auto w-full flex flex-col h-full space-y-6">
+                <div className="flex-none flex items-center justify-between mb-2">
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Gear Command Center</h1>
+                        <p className="text-sm text-zinc-400">Manage your inventory efficiently.</p>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                        <Input
+                            placeholder="Filter gears..."
+                            value={q}
+                            onChange={(e) => setQ(e.target.value)}
+                            className="bg-zinc-900 border-zinc-700 text-zinc-100 placeholder:text-zinc-600 focus-visible:ring-emerald-500 w-[250px]"
+                        />
+                        <AddGearDialog onSuccess={handleAddGear} />
+                    </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                    <Input
-                        placeholder="Filter gears..."
-                        value={q}
-                        onChange={(e) => setQ(e.target.value)}
-                        className="h-8 w-[250px] text-xs"
+                {selectedGearIds.length > 0 && (
+                    <div className="flex-none flex items-center justify-between bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-md">
+                        <span className="text-sm font-medium text-emerald-400">{selectedGearIds.length} items selected</span>
+                        <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium shadow-[0_0_15px_rgba(5,150,105,0.2)] transition-colors" onClick={() => setCreateLoadoutOpen(true)}>
+                            Create Loadout
+                        </Button>
+                    </div>
+                )}
+                <div className="flex-1 overflow-auto rounded-md shadow-sm">
+                    <DataTable
+                        columns={columns}
+                        data={filteredData}
+                        rowSelection={rowSelection}
+                        setRowSelection={setRowSelection}
+                        getRowId={(row) => row.id}
                     />
-                    <AddGearDialog onSuccess={handleAddGear} />
                 </div>
-            </div>
-            {selectedGearIds.length > 0 && (
-                <div className="flex items-center space-x-2 bg-muted/40 p-2 rounded-md">
-                    <span className="text-xs font-medium">{selectedGearIds.length} items selected</span>
-                    <Button size="sm" variant="secondary" onClick={() => setCreateLoadoutOpen(true)}>
-                        Create Loadout
-                    </Button>
-                </div>
-            )}
-            <div className="flex-1 overflow-hidden rounded-md border bg-background shadow-sm">
-                <DataTable
-                    columns={columns}
-                    data={filteredData}
-                    rowSelection={rowSelection}
-                    setRowSelection={setRowSelection}
-                    getRowId={(row) => row.id}
+                <CreateLoadoutFromSelectionDialog
+                    open={createLoadoutOpen}
+                    onOpenChange={setCreateLoadoutOpen}
+                    selectedGearIds={selectedGearIds}
                 />
             </div>
-            <CreateLoadoutFromSelectionDialog
-                open={createLoadoutOpen}
-                onOpenChange={setCreateLoadoutOpen}
-                selectedGearIds={selectedGearIds}
-            />
         </div>
     )
 }

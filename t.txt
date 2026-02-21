@@ -1,0 +1,273 @@
+antigravity/
+├── annotations
+├── brain
+│   ├── 0ee3d98a-dad6-463b-a97b-835be7a63702
+│   │   ├── implementation_plan.md
+│   │   └── task.md
+│   ├── 17db2110-7b0f-4347-9928-e5aed32c70c1
+│   │   ├── implementation_plan.md
+│   │   ├── task.md
+│   │   └── walkthrough.md
+│   ├── 18b158e3-834d-41c4-854e-6401edb5f05e
+│   │   └── task.md
+│   ├── 214e131f-7e4f-4f01-b898-f5f2b648a80c
+│   │   ├── implementation_plan.md
+│   │   └── task.md
+│   ├── 2302919f-bc21-43dc-8a22-f62605288484
+│   │   ├── implementation_plan.md
+│   │   ├── task.md
+│   │   └── walkthrough.md
+│   ├── 2c991ecb-172c-42af-aa44-1fcee0d222b8
+│   │   ├── implementation_plan.md
+│   │   ├── task.md
+│   │   └── walkthrough.md
+│   ├── 319d0fe2-4720-4926-b51c-965cd4a5c4d0
+│   ├── 34a78c7e-3536-4800-850e-d8b0dce3ee5f
+│   │   └── walkthrough.md
+│   ├── 382617eb-0edb-4dab-9aaa-b9e63935918a
+│   │   ├── implementation_plan.md
+│   │   ├── task.md
+│   │   └── walkthrough.md
+│   ├── 3b3ffa90-c129-4a14-98a7-0d70496f9a97
+│   │   └── task.md
+│   ├── 48f7b3b9-bd77-43f8-a368-fe3b4e5eb015
+│   ├── 4cecb525-2232-4380-abc5-d34396e6a3b5
+│   │   └── task.md
+│   ├── 5b830c06-cb0a-4dbe-9390-0cfb8f8c905f
+│   │   ├── implementation_plan.md
+│   │   ├── task.md
+│   │   └── walkthrough.md
+│   ├── 613988ea-3934-450e-89ae-9e41efe0b2f1
+│   │   ├── implementation_plan.md
+│   │   ├── task.md
+│   │   └── walkthrough.md
+│   ├── 62bf0849-7a57-409e-a335-4b9d0bb74ff5
+│   ├── 62f01f81-f7db-43d4-a4a5-06a23e2fb7ee
+│   │   └── implementation_plan.md
+│   ├── 69c63dd4-8163-4b98-a6ec-e82357ff7c46
+│   │   ├── implementation_plan.md
+│   │   ├── task.md
+│   │   └── walkthrough.md
+│   ├── 6d22cbfe-4564-4854-b8b7-bba4d6db3744
+│   │   ├── implementation_plan.md
+│   │   ├── task.md
+│   │   └── walkthrough.md
+│   ├── 6d9c8129-0ea8-4d02-8130-34c71ff6d8e1
+│   │   ├── implementation_plan.md
+│   │   ├── task.md
+│   │   └── walkthrough.md
+│   ├── 8966e90e-586e-46aa-aeef-31cef36920a4
+│   │   ├── implementation_plan.md
+│   │   ├── task.md
+│   │   └── walkthrough.md
+│   ├── 9024741b-4779-4ec8-9ef5-bc95f867607e
+│   │   ├── task.md
+│   │   └── walkthrough.md
+│   ├── 91a3e3f1-7ed1-4b43-91f6-51618f63bc85
+│   │   ├── implementation_plan.md
+│   │   ├── task.md
+│   │   └── walkthrough.md
+│   ├── 97df8529-9142-40a6-9c93-60a3483fa245
+│   │   ├── implementation_plan.md
+│   │   ├── task.md
+│   │   └── walkthrough.md
+│   ├── 9abdf9f4-96a6-4a00-9e48-d27f769132dd
+│   │   ├── implementation_plan.md
+│   │   └── task.md
+│   ├── afb9a174-a48d-497a-873b-1c705ccd217b
+│   │   ├── implementation_plan.md
+│   │   ├── task.md
+│   │   └── walkthrough.md
+│   ├── b1907d64-3ef4-413c-a269-147fe1529bbb
+│   │   ├── implementation_plan.md
+│   │   ├── task.md
+│   │   └── walkthrough.md
+│   ├── bc58688b-69e2-4240-a091-2e056fd261df
+│   │   ├── implementation_plan.md
+│   │   └── task.md
+│   ├── be0e480a-d260-4bfa-9ede-4d7800dcf45e
+│   │   ├── implementation_plan.md
+│   │   ├── task.md
+│   │   └── walkthrough.md
+│   ├── c126171e-29e8-4ef8-a40a-58a2c752bd18
+│   │   └── walkthrough.md
+│   ├── c32e00ae-48e7-4c9b-97d7-3093d5900c2e
+│   │   ├── implementation_plan.md
+│   │   ├── task.md
+│   │   └── walkthrough.md
+│   ├── cac4ee5c-9291-4985-9996-3935cee1ea33
+│   │   ├── implementation_plan.md
+│   │   └── task.md
+│   ├── d2a60e7d-cd22-4960-ac50-989166d90ae2
+│   │   ├── implementation_plan.md
+│   │   ├── task.md
+│   │   └── walkthrough.md
+│   ├── d3e20d48-4cd9-49d3-a4e8-18f1e22da065
+│   │   ├── implementation_plan.md
+│   │   └── task.md
+│   ├── d476d30a-5c40-459d-97a2-5e834b372a3a
+│   ├── d69f1537-704d-4359-8a95-1fbfc6607f78
+│   │   ├── implementation_plan.md
+│   │   └── task.md
+│   ├── da60544e-e2e3-494d-8cfc-631a52145f51
+│   │   ├── implementation_plan.md
+│   │   ├── task.md
+│   │   └── walkthrough.md
+│   ├── e0430239-1188-4d7d-bc9c-0203561040a1
+│   │   ├── implementation_plan.md
+│   │   ├── task.md
+│   │   └── walkthrough.md
+│   ├── eb356f68-f100-48fd-9854-105b88661af8
+│   │   ├── implementation_plan.md
+│   │   ├── task.md
+│   │   └── walkthrough.md
+│   ├── eb8dbfb5-d4d1-4d1f-9f09-1ace285edb82
+│   │   ├── implementation_plan.md
+│   │   ├── task.md
+│   │   └── walkthrough.md
+│   ├── f16fe9ba-85bc-44d0-8300-6cf7f0b489b5
+│   │   ├── implementation_plan.md
+│   │   ├── task.md
+│   │   └── walkthrough.md
+│   └── f97ffead-57d5-4375-95c2-cfe0303981a8
+│       ├── implementation_plan.md
+│       ├── task.md
+│       └── walkthrough.md
+├── browser_recordings
+│   ├── 17db2110-7b0f-4347-9928-e5aed32c70c1
+│   │   └── metadata.json
+│   ├── 2302919f-bc21-43dc-8a22-f62605288484
+│   │   └── metadata.json
+│   ├── 382617eb-0edb-4dab-9aaa-b9e63935918a
+│   │   └── metadata.json
+│   ├── 8966e90e-586e-46aa-aeef-31cef36920a4
+│   │   └── metadata.json
+│   ├── 9024741b-4779-4ec8-9ef5-bc95f867607e
+│   │   └── metadata.json
+│   ├── 9abdf9f4-96a6-4a00-9e48-d27f769132dd
+│   │   └── metadata.json
+│   ├── bc58688b-69e2-4240-a091-2e056fd261df
+│   │   └── metadata.json
+│   ├── be0e480a-d260-4bfa-9ede-4d7800dcf45e
+│   │   └── metadata.json
+│   └── cac4ee5c-9291-4985-9996-3935cee1ea33
+│       └── metadata.json
+├── code_tracker
+│   ├── active
+│   │   ├── GearPit_4bef4a2533537e3d6a07dbb646cf208d94180e9d
+│   │   │   └── e202d735b847e283641cdcd739d4e246_Tiltfile
+│   │   ├── GearPit_60260c7a03cecb63e65c6d2a3698fc998b8e2b8c
+│   │   │   ├── 0cf18c64f87cedd807cf449dc7e74832_Dockerfile
+│   │   │   ├── 1ddd699be5be108c068fb042164840f2_models.ts
+│   │   │   ├── 24657cabc71922763350cbf8fd8e3175_user_profile_repository.rs
+│   │   │   ├── 34ce1b99785b8aa193f929fe3d047529_page.tsx
+│   │   │   ├── 3c5f8ab591287cfc7fd27f2b9f2ff922_layout.tsx
+│   │   │   ├── 3e28dc46ad5fb0cf22a090dbd6d49b7c_user_profile.rs
+│   │   │   ├── 5cbdcebf07f44a548ed85a93cbf8295d_grouped-gear-list.tsx
+│   │   │   ├── 5decd60aa56b946970db7c0e6955d97c_trip_repository.rs
+│   │   │   ├── 657fa6d7d0daae4d6d8ec8ca5d9327ef_columns.tsx
+│   │   │   ├── 663f944d95e34994d3c5c7f2c5fd8200_page.tsx
+│   │   │   ├── 7a0f26eedf4bddb1d822f8c3bc453fdd_Dockerfile
+│   │   │   ├── 7ca9aa898a56ebe401a976597cc65f35_20240217000000_initial_schema.sql
+│   │   │   ├── 803b9057c9900e86a319e79ae4ed634a_SKILL.md
+│   │   │   ├── 826b29418f479e5255539ec82c4f3d2a_package.json
+│   │   │   ├── 84bf4375f3a1d0d837fb22f7491cb25c_main.rs
+│   │   │   ├── 87bc3454fab581d035d7dee2fac74aa7_page.tsx
+│   │   │   ├── ba1c3216dec29c7ea3d04a8d6b30d3c0_SKILL.md
+│   │   │   ├── cb795e53888013528b308b30a12cbecb_models.rs
+│   │   │   ├── ce8d2147831b57fedb56843b0c42ecad_data-table.tsx
+│   │   │   ├── cf8d82b203d2c179a31237dd0f7bbc83_LICENSE.txt
+│   │   │   ├── d1f52ae0f50187e3e3706dfdf22b6f90_pit_logic.rs
+│   │   │   ├── dba2e2ef614efde3d74a489788ad605a_all.yaml
+│   │   │   ├── dc7fc327ed4e7972f7df8c1326ee234a_mod.rs
+│   │   │   ├── e0223ad18af806a60907f53b265d2beb_schema.ts
+│   │   │   ├── e202d735b847e283641cdcd739d4e246_Tiltfile
+│   │   │   ├── e820e85d3b316de841ed7a3fe84b2102_mod.rs
+│   │   │   ├── ebd24bfe0ca377edce74e9ae7518bb00_mod.rs
+│   │   │   ├── f7fd6db49fcebb9bf8ada868ebff55ad_SKILL.md
+│   │   │   └── fbe9307b092d531cf4b4d219b2a62eb9_page.tsx
+│   │   ├── GearPit_93e860481ed932c2c310a6b7c4400d12228d7682
+│   │   │   ├── 1ea40dbbf15ae44a0d77c3677721d671_conventions.md
+│   │   │   ├── 2cb324a38f78798ddca5fba67303fb16_suggested_commands.md
+│   │   │   ├── 2cb86456d94adb7d5436e043406c013b_.gitignore
+│   │   │   ├── 422fd3d312a7f666f606d93489713e62_tech_stack.md
+│   │   │   ├── 72231d9d48e3a44117358dd284b59ff5_project.yml
+│   │   │   └── d11a7fe53b78155e1ae4425531355486_completion_checklist.md
+│   │   ├── k3s-cellular-automaton_2e69c41e4b4d5256e14126a644d85691d767a953
+│   │   │   ├── 0b6231009bea8baf7eae676077b47ab1_build.rs
+│   │   │   ├── 0fcaececd78867a465d8e2ff3440b4f5_Cargo.toml
+│   │   │   ├── 10623477b88ff00312ca701a26e0f87a_Dockerfile
+│   │   │   ├── 15b1b1522694335e7af8b55e5e386f21_main.rs
+│   │   │   ├── 24e7723e1ed59e6dfc9e2f1b46ca628c_.rustc_info.json
+│   │   │   ├── 2c3afac765322c708e12a3e373429d08_Dockerfile
+│   │   │   ├── 338c38f5f8021be89bba4ecfed94b879_project_concept.md
+│   │   │   ├── 36d69984b374818233b6da816eb79021_.gitignore
+│   │   │   ├── 4f84162f783195ab4a5747709e1c065b_.gitignore
+│   │   │   ├── 63e4af718f5e7df470a7954d5fcc812c_verify.sh
+│   │   │   ├── 7c72c610ecadcef11b15e48a93891eef_nginx.conf
+│   │   │   ├── 84ed26a25826872215366b7338fd3283_SKILL.md
+│   │   │   ├── 876a5c5493094f50335d8901e4714326_App.tsx
+│   │   │   ├── 8854dc0e4a451af9bd37cc242c442c59_SKILL.md
+│   │   │   ├── a0b8c624336f36a2e947daa8c8287fbc_infra.yaml
+│   │   │   ├── b7a20271c95c9f61110e16744fc8e444_cell.proto
+│   │   │   ├── b9e9cde803be2af51ddafb9084c4dab4_Makefile
+│   │   │   ├── c3c07f3e9a79b2c3a4adc4aee461b15d_main.go
+│   │   │   ├── e0a9cabd9b3ffecfa64bbb642b4c8e62_README.md
+│   │   │   ├── e38d0464f2602ddbde4097aed98c6e02_cells.yaml
+│   │   │   ├── e7d483dada9abfaba1d025ba85a7875d_build.yaml
+│   │   │   └── ee6d1bf6ad3295af0a90a9fd08540414_Dockerfile
+│   │   └── no_repo
+│   │       └── d0ea294cd26b4b9d120487b9e2a65f45_GEMINI.md
+│   └── history
+├── context_state
+├── conversations
+│   ├── 0ee3d98a-dad6-463b-a97b-835be7a63702.pb
+│   ├── 17db2110-7b0f-4347-9928-e5aed32c70c1.pb
+│   ├── 18b158e3-834d-41c4-854e-6401edb5f05e.pb
+│   ├── 214e131f-7e4f-4f01-b898-f5f2b648a80c.pb
+│   ├── 2302919f-bc21-43dc-8a22-f62605288484.pb
+│   ├── 2c991ecb-172c-42af-aa44-1fcee0d222b8.pb
+│   ├── 319d0fe2-4720-4926-b51c-965cd4a5c4d0.pb
+│   ├── 34a78c7e-3536-4800-850e-d8b0dce3ee5f.pb
+│   ├── 382617eb-0edb-4dab-9aaa-b9e63935918a.pb
+│   ├── 3b3ffa90-c129-4a14-98a7-0d70496f9a97.pb
+│   ├── 48f7b3b9-bd77-43f8-a368-fe3b4e5eb015.pb
+│   ├── 4cecb525-2232-4380-abc5-d34396e6a3b5.pb
+│   ├── 5b830c06-cb0a-4dbe-9390-0cfb8f8c905f.pb
+│   ├── 613988ea-3934-450e-89ae-9e41efe0b2f1.pb
+│   ├── 62bf0849-7a57-409e-a335-4b9d0bb74ff5.pb
+│   ├── 62f01f81-f7db-43d4-a4a5-06a23e2fb7ee.pb
+│   ├── 69c63dd4-8163-4b98-a6ec-e82357ff7c46.pb
+│   ├── 6d22cbfe-4564-4854-b8b7-bba4d6db3744.pb
+│   ├── 6d9c8129-0ea8-4d02-8130-34c71ff6d8e1.pb
+│   ├── 8966e90e-586e-46aa-aeef-31cef36920a4.pb
+│   ├── 9024741b-4779-4ec8-9ef5-bc95f867607e.pb
+│   ├── 91a3e3f1-7ed1-4b43-91f6-51618f63bc85.pb
+│   ├── 97df8529-9142-40a6-9c93-60a3483fa245.pb
+│   ├── 9abdf9f4-96a6-4a00-9e48-d27f769132dd.pb
+│   ├── afb9a174-a48d-497a-873b-1c705ccd217b.pb
+│   ├── b1907d64-3ef4-413c-a269-147fe1529bbb.pb
+│   ├── bc58688b-69e2-4240-a091-2e056fd261df.pb
+│   ├── be0e480a-d260-4bfa-9ede-4d7800dcf45e.pb
+│   ├── c126171e-29e8-4ef8-a40a-58a2c752bd18.pb
+│   ├── c32e00ae-48e7-4c9b-97d7-3093d5900c2e.pb
+│   ├── cac4ee5c-9291-4985-9996-3935cee1ea33.pb
+│   ├── d2a60e7d-cd22-4960-ac50-989166d90ae2.pb
+│   ├── d3e20d48-4cd9-49d3-a4e8-18f1e22da065.pb
+│   ├── d476d30a-5c40-459d-97a2-5e834b372a3a.pb
+│   ├── d69f1537-704d-4359-8a95-1fbfc6607f78.pb
+│   ├── da60544e-e2e3-494d-8cfc-631a52145f51.pb
+│   ├── e0430239-1188-4d7d-bc9c-0203561040a1.pb
+│   ├── eb356f68-f100-48fd-9854-105b88661af8.pb
+│   ├── eb8dbfb5-d4d1-4d1f-9f09-1ace285edb82.pb
+│   ├── f16fe9ba-85bc-44d0-8300-6cf7f0b489b5.pb
+│   └── f97ffead-57d5-4375-95c2-cfe0303981a8.pb
+├── html_artifacts
+├── implicit
+│   └── 03518313-a481-4d84-b19f-dd18ada0d492.pb
+├── installation_id
+├── knowledge
+│   └── knowledge.lock
+└── mcp_config.json
+
+67 directories, 204 files

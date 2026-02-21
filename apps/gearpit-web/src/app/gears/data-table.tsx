@@ -84,14 +84,14 @@ export function DataTable<TData, TValue>({
     }
 
     return (
-        <div className="rounded-md border bg-background">
+        <div className="rounded-md border border-zinc-800 bg-[#27272A] overflow-hidden">
             <Table>
                 <TableHeader>
                     {table.getHeaderGroups().map((headerGroup) => (
-                        <TableRow key={headerGroup.id} className="h-8 hover:bg-transparent">
+                        <TableRow key={headerGroup.id} className="h-8 hover:bg-transparent border-b border-zinc-800 bg-zinc-900/40">
                             {headerGroup.headers.map((header) => {
                                 return (
-                                    <TableHead key={header.id} className="h-8 px-2 text-xs">
+                                    <TableHead key={header.id} className="h-8 px-4 text-xs font-semibold text-zinc-400">
                                         {header.isPlaceholder
                                             ? null
                                             : flexRender(
@@ -110,12 +110,12 @@ export function DataTable<TData, TValue>({
                             <TableRow
                                 key={row.id}
                                 data-state={row.getIsSelected() && "selected"}
-                                className="h-8 hover:bg-muted/50 even:bg-muted/20"
+                                className="h-10 hover:bg-zinc-800/50 border-b border-zinc-800/50 transition-colors group"
                             >
                                 {row.getVisibleCells().map((cell, colIndex) => (
                                     <TableCell
                                         key={cell.id}
-                                        className="p-0 h-8 focus-within:ring-1 focus-within:ring-ring focus-within:z-10 relative"
+                                        className="p-0 h-10 focus-within:ring-1 focus-within:ring-emerald-500/50 focus-within:z-10 relative px-4 text-zinc-300 font-medium"
                                     // We delegate focus handling to the inner EditableCell or use this cell as nav container
                                     // But EditableCell also has tabIndex.
                                     // Strategy: The *Cell* itself is the nav target if it doesn't contain an editable.
@@ -128,7 +128,7 @@ export function DataTable<TData, TValue>({
                                             data-row={rowIndex}
                                             data-col={colIndex}
                                             tabIndex={0}
-                                            className="h-full w-full outline-none focus:ring-2 focus:ring-primary/20 focus:bg-accent/50 transition-colors"
+                                            className="h-full w-full flex items-center outline-none focus:ring-2 focus:ring-emerald-500/20 focus:bg-emerald-500/5 transition-colors"
                                         >
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                         </div>
@@ -138,8 +138,8 @@ export function DataTable<TData, TValue>({
                         ))
                     ) : (
                         <TableRow>
-                            <TableCell colSpan={columns.length} className="h-24 text-center text-xs">
-                                No results.
+                            <TableCell colSpan={columns.length} className="h-24 text-center text-sm font-mono tracking-widest text-zinc-500 uppercase">
+                                No records found.
                             </TableCell>
                         </TableRow>
                     )}
