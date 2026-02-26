@@ -203,6 +203,8 @@ pub fn api_routes(pool: PgPool) -> Router {
         // Loadout routes
         .route("/loadouts", get(loadout::list_loadouts).post(loadout::create_loadout))
         .route("/loadouts/:id", get(loadout::get_loadout))
+        .route("/loadouts/:id/items", post(loadout::add_loadout_item))
+        .route("/loadouts/:id/items/:gear_id", delete(loadout::remove_loadout_item))
         // User Profile routes
         .route("/user_profiles", post(user_profile::upsert_user_profile))
         .route("/user_profiles/:id", get(user_profile::get_user_profile))

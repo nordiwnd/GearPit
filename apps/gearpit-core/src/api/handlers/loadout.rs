@@ -25,6 +25,13 @@ pub struct CreateLoadoutItemRequest {
     pub packing_category: Option<PackingCategory>,
 }
 
+#[derive(Deserialize)]
+pub struct AddLoadoutItemRequest {
+    pub gear_id: Uuid,
+    pub quantity: i32,
+    pub packing_category: Option<PackingCategory>,
+}
+
 #[derive(Serialize)]
 pub struct LoadoutResponse {
     pub loadout: Loadout,
@@ -247,4 +254,51 @@ pub async fn get_loadout(
     };
 
     (StatusCode::OK, Json(response)).into_response()
+}
+
+pub async fn add_loadout_item(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<AddLoadoutItemRequest>,
+) -> impl IntoResponse {
+    let res = sqlx::query(
+        r#"
+        INSERT INTO loadout_items (loadout_id, gear_id, quantity, packing_category)
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (loadout_id, gear_id) 
+        DO UPDATE SET quantity = EXCLUDED.quantity, packing_category = EXCLUDED.packing_category
+        "#
+    )
+    .bind(id)
+    .bind(payload.gear_id)
+    .bind(payload.quantity)
+    .bind(payload.packing_category)
+    .execute(&state.pool)
+    .await;
+
+    match res {
+        Ok(_) => (StatusCode::OK, Json(serde_json::json!({"status": "ok"}))).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+    }
+}
+
+pub async fn remove_loadout_item(
+    State(state): State<AppState>,
+    Path((id, gear_id)): Path<(Uuid, Uuid)>,
+) -> impl IntoResponse {
+    let res = sqlx::query(
+        r#"
+        DELETE FROM loadout_items 
+        WHERE loadout_id = $1 AND gear_id = $2
+        "#
+    )
+    .bind(id)
+    .bind(gear_id)
+    .execute(&state.pool)
+    .await;
+
+    match res {
+        Ok(_) => (StatusCode::OK, Json(serde_json::json!({"status": "ok"}))).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+    }
 }

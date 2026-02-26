@@ -8,10 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Separator } from "@/components/ui/separator" // separator.tsx might fail if not exists. I'll check or remove if fails.
 // Assuming Separator exists or I'll implement it or use <hr>. 
 // Wait, generic <hr> with className is fine.
-import { ArrowLeft, Box } from "lucide-react"
+import { ArrowLeft, Box, Edit3 } from "lucide-react"
 import { GroupedGearList, GroupedCategoryData } from "@/components/grouped-gear-list"
+import { AddGearToLoadoutDialog } from "@/components/add-gear-to-loadout-dialog"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
 
 export default function LoadoutDetailPage() {
     const params = useParams()
@@ -19,25 +19,25 @@ export default function LoadoutDetailPage() {
     const id = params.id as string
     const [loadoutDetail, setLoadoutDetail] = useState<LoadoutDetail | null>(null)
     const [loading, setLoading] = useState(true)
+    const [addGearOpen, setAddGearOpen] = useState(false)
+
+    const fetchLoadout = async () => {
+        try {
+            const response = await fetch(`/api/loadouts/${id}`)
+            if (!response.ok) {
+                throw new Error('Failed to fetch loadout')
+            }
+            const data = await response.json()
+            setLoadoutDetail(data)
+        } catch (error) {
+            console.error("Error fetching loadout:", error)
+        } finally {
+            setLoading(false)
+        }
+    }
 
     useEffect(() => {
         if (!id) return;
-
-        const fetchLoadout = async () => {
-            try {
-                const response = await fetch(`/api/loadouts/${id}`)
-                if (!response.ok) {
-                    throw new Error('Failed to fetch loadout')
-                }
-                const data = await response.json()
-                setLoadoutDetail(data)
-            } catch (error) {
-                console.error("Error fetching loadout:", error)
-            } finally {
-                setLoading(false)
-            }
-        }
-
         fetchLoadout()
     }, [id])
 
@@ -82,8 +82,15 @@ export default function LoadoutDetailPage() {
     }).filter(cat => cat.items.length > 0)
 
     const handleDeleteItem = async (itemId: string, gearId: string) => {
-        // Implement delete logic if needed
-        console.log("Delete item", itemId)
+        try {
+            const response = await fetch(`/api/loadouts/${id}/items/${gearId}`, {
+                method: 'DELETE',
+            })
+            if (!response.ok) throw new Error("Failed to delete item")
+            fetchLoadout()
+        } catch (err) {
+            console.error("Failed to delete item", err)
+        }
     }
 
     // Calculate weight distribution percentages
@@ -113,6 +120,9 @@ export default function LoadoutDetailPage() {
                             {loadout.description && <p className="text-zinc-400 text-sm">{loadout.description}</p>}
                         </div>
                     </div>
+                    <Button onClick={() => setAddGearOpen(true)} variant="ghost" className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-400/10 font-medium shrink-0">
+                        <Edit3 className="mr-2 h-4 w-4" /> Modify Loadout
+                    </Button>
                 </div>
 
                 {/* ZONE 2: Tactical Summary (KPI Panels) - Fixed Top */}
@@ -144,7 +154,7 @@ export default function LoadoutDetailPage() {
                 </div>
 
                 {/* ZONE 3: Packing Matrix - Flex 1 (Scrollable Table Area) */}
-                <div className="flex-1 overflow-auto min-h-0 w-full relative rounded-md border border-zinc-800 bg-zinc-900/40">
+                <div className="flex-1 overflow-auto min-h-0 w-full relative">
                     <GroupedGearList
                         categories={groupedCategories}
                         onRemoveItem={handleDeleteItem}
@@ -153,22 +163,32 @@ export default function LoadoutDetailPage() {
 
                 {/* Zone 4: Weight Distribution Bar at the bottom - Fixed Bottom */}
                 <div className="flex-none flex flex-col space-y-2 pt-2">
-                    <div className="flex justify-between items-center text-xs font-mono text-zinc-500 uppercase tracking-widest px-1">
-                        <span>Weight Distribution Matrix</span>
-                        <div className="flex items-center gap-4">
-                            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> Pack ({packPct.toFixed(1)}%)</span>
-                            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500"></span> Worn ({wornPct.toFixed(1)}%)</span>
-                            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500"></span> Consumables ({consumablePct.toFixed(1)}%)</span>
+                    <div className="flex items-center justify-between text-xs font-mono text-zinc-300 px-1">
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-2 h-2 rounded-sm bg-emerald-500" />Pack ({packPct.toFixed(0)}%)
+                        </div>
+                        <div className="flex items-center gap-1.5 text-zinc-400">
+                            <div className="w-2 h-2 rounded-sm bg-blue-500" />Worn ({wornPct.toFixed(0)}%)
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-2 h-2 rounded-sm bg-amber-500" />Consumables ({consumablePct.toFixed(0)}%)
                         </div>
                     </div>
-                    <div className="h-2 w-full flex rounded-sm overflow-hidden bg-zinc-800">
-                        <div style={{ width: `${packPct}%` }} className="bg-emerald-500 h-full" title={`Pack: ${packPct.toFixed(1)}%`} />
-                        <div style={{ width: `${wornPct}%` }} className="bg-blue-500 h-full bg-opacity-80" title={`Worn: ${wornPct.toFixed(1)}%`} />
-                        <div style={{ width: `${consumablePct}%` }} className="bg-amber-500 h-full bg-opacity-80" title={`Consumables: ${consumablePct.toFixed(1)}%`} />
+                    <div className="h-2 w-full bg-zinc-800 rounded-sm overflow-hidden flex">
+                        {packPct > 0 && <div style={{ width: `${packPct}%` }} className="h-full bg-emerald-500" title={`Pack Weight ${packPct.toFixed(1)}%`} />}
+                        {wornPct > 0 && <div style={{ width: `${wornPct}%` }} className="h-full bg-blue-500" title={`Worn Weight ${wornPct.toFixed(1)}%`} />}
+                        {consumablePct > 0 && <div style={{ width: `${consumablePct}%` }} className="h-full bg-amber-500" title={`Consumables Weight ${consumablePct.toFixed(1)}%`} />}
                     </div>
                 </div>
 
             </div>
+
+            <AddGearToLoadoutDialog
+                open={addGearOpen}
+                onOpenChange={setAddGearOpen}
+                loadoutId={loadout.id}
+                onSuccess={fetchLoadout}
+            />
         </div>
     )
 }

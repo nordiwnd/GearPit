@@ -90,10 +90,10 @@ export function CreateLoadoutFromSelectionDialog({ open, onOpenChange, selectedG
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[425px] bg-[#27272A] border-zinc-800 text-zinc-200">
                 <DialogHeader>
-                    <DialogTitle>Create Loadout</DialogTitle>
-                    <DialogDescription>
+                    <DialogTitle className="text-white">Create Loadout</DialogTitle>
+                    <DialogDescription className="text-zinc-400">
                         Create a new loadout with {selectedGearIds.length} selected items.
                     </DialogDescription>
                 </DialogHeader>
@@ -113,8 +113,8 @@ export function CreateLoadoutFromSelectionDialog({ open, onOpenChange, selectedG
                             )}
                         />
                         <DialogFooter>
-                            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-                            <Button type="submit" disabled={loading}>Create</Button>
+                            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="hover:bg-zinc-800 hover:text-white">Cancel</Button>
+                            <Button type="submit" disabled={loading} className="bg-emerald-600 hover:bg-emerald-500 text-white">Create</Button>
                         </DialogFooter>
                     </form>
                 </Form>

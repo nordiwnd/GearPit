@@ -54,13 +54,21 @@ export function AddGearDialog({ onSuccess }: AddGearDialogProps) {
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         try {
+            const rawProps = {
+                type: values.category,
+                data: values.properties || {}
+            };
+            
+            const parsedPropsValidate = GearPropertiesSchema.safeParse(rawProps);
+            if (!parsedPropsValidate.success) {
+                console.error("Category properties validation failed:", parsedPropsValidate.error);
+                throw new Error("Category properties validation failed");
+            }
+
             const payload = {
                 ...values,
                 user_id: "00000000-0000-0000-0000-000000000001",
-                properties: {
-                    type: values.category,
-                    data: values.properties || {}
-                }
+                properties: parsedPropsValidate.data
             }
 
             const res = await fetch('/api/gears', {
@@ -69,8 +77,11 @@ export function AddGearDialog({ onSuccess }: AddGearDialogProps) {
                 body: JSON.stringify(payload)
             })
 
-            if (!res.ok) throw new Error("Failed to create gear")
-
+            if (!res.ok) {
+                const errorText = await res.text()
+                console.error("API Error Response:", res.status, errorText)
+                throw new Error(`Failed to create gear. ${res.status}: ${errorText}`)
+            }
             const newGear = await res.json()
             onSuccess(newGear)
             setOpen(false)
@@ -85,9 +96,9 @@ export function AddGearDialog({ onSuccess }: AddGearDialogProps) {
             <DialogTrigger asChild>
                 <Button size="sm" className="h-8 text-xs">Add Gear</Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[425px] bg-[#27272A] border-zinc-800 text-zinc-200">
                 <DialogHeader>
-                    <DialogTitle>Add New Gear</DialogTitle>
+                    <DialogTitle className="text-white">Add New Gear</DialogTitle>
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -272,13 +283,20 @@ export function AddGearDialog({ onSuccess }: AddGearDialogProps) {
                                         control={form.control}
                                         name="properties.is_preloaded_binding"
                                         render={({ field }) => (
-                                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                                                <FormControl>
-                                                    <Input type="checkbox" checked={field.value ?? false} onChange={field.onChange} />
-                                                </FormControl>
-                                                <div className="space-y-1 leading-none">
-                                                    <FormLabel>Preloaded Binding</FormLabel>
-                                                </div>
+                                            <FormItem>
+                                                <FormLabel>Preloaded Binding</FormLabel>
+                                                <Select onValueChange={(val) => field.onChange(val === "true")} value={field.value ? "true" : "false"}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select Yes or No" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="true">Yes</SelectItem>
+                                                        <SelectItem value="false">No</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
                                             </FormItem>
                                         )}
                                     />
@@ -320,13 +338,20 @@ export function AddGearDialog({ onSuccess }: AddGearDialogProps) {
                                         control={form.control}
                                         name="properties.has_frame"
                                         render={({ field }) => (
-                                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                                                <FormControl>
-                                                    <Input type="checkbox" checked={field.value ?? false} onChange={field.onChange} />
-                                                </FormControl>
-                                                <div className="space-y-1 leading-none">
-                                                    <FormLabel>Has Frame</FormLabel>
-                                                </div>
+                                            <FormItem>
+                                                <FormLabel>Has Frame</FormLabel>
+                                                <Select onValueChange={(val) => field.onChange(val === "true")} value={field.value ? "true" : "false"}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select Yes or No" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="true">Yes</SelectItem>
+                                                        <SelectItem value="false">No</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
                                             </FormItem>
                                         )}
                                     />
@@ -381,13 +406,20 @@ export function AddGearDialog({ onSuccess }: AddGearDialogProps) {
                                         control={form.control}
                                         name="properties.is_double_wall"
                                         render={({ field }) => (
-                                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                                                <FormControl>
-                                                    <Input type="checkbox" checked={field.value ?? false} onChange={field.onChange} />
-                                                </FormControl>
-                                                <div className="space-y-1 leading-none">
-                                                    <FormLabel>Double Wall</FormLabel>
-                                                </div>
+                                            <FormItem>
+                                                <FormLabel>Double Wall</FormLabel>
+                                                <Select onValueChange={(val) => field.onChange(val === "true")} value={field.value ? "true" : "false"}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select Yes or No" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="true">Yes</SelectItem>
+                                                        <SelectItem value="false">No</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
                                             </FormItem>
                                         )}
                                     />
@@ -429,13 +461,20 @@ export function AddGearDialog({ onSuccess }: AddGearDialogProps) {
                                         control={form.control}
                                         name="properties.is_adjustable"
                                         render={({ field }) => (
-                                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                                                <FormControl>
-                                                    <Input type="checkbox" checked={field.value ?? false} onChange={field.onChange} />
-                                                </FormControl>
-                                                <div className="space-y-1 leading-none">
-                                                    <FormLabel>Adjustable</FormLabel>
-                                                </div>
+                                            <FormItem>
+                                                <FormLabel>Adjustable</FormLabel>
+                                                <Select onValueChange={(val) => field.onChange(val === "true")} value={field.value ? "true" : "false"}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select Yes or No" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="true">Yes</SelectItem>
+                                                        <SelectItem value="false">No</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
                                             </FormItem>
                                         )}
                                     />
@@ -703,20 +742,27 @@ export function AddGearDialog({ onSuccess }: AddGearDialogProps) {
                                         control={form.control}
                                         name="properties.has_ventilation"
                                         render={({ field }) => (
-                                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                                                <FormControl>
-                                                    <Input type="checkbox" checked={field.value ?? false} onChange={field.onChange} />
-                                                </FormControl>
-                                                <div className="space-y-1 leading-none">
-                                                    <FormLabel>Ventilation</FormLabel>
-                                                </div>
+                                            <FormItem>
+                                                <FormLabel>Ventilation</FormLabel>
+                                                <Select onValueChange={(val) => field.onChange(val === "true")} value={field.value ? "true" : "false"}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select Yes or No" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="true">Yes</SelectItem>
+                                                        <SelectItem value="false">No</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
                                             </FormItem>
                                         )}
                                     />
                                 </div>
                             </div>
                         )}
-                        <Button type="submit" className="w-full">Save Gear</Button>
+                        <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white">Save Gear</Button>
                     </form>
                 </Form>
             </DialogContent>

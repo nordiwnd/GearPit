@@ -32,14 +32,14 @@ const formSchema = z.object({
     packing_category: z.string().optional(),
 })
 
-interface AddGearToTripDialogProps {
+interface AddGearToLoadoutDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
-    tripId: string
+    loadoutId: string
     onSuccess?: () => void
 }
 
-export function AddGearToTripDialog({ open, onOpenChange, tripId, onSuccess }: AddGearToTripDialogProps) {
+export function AddGearToLoadoutDialog({ open, onOpenChange, loadoutId, onSuccess }: AddGearToLoadoutDialogProps) {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
     const [gears, setGears] = useState<Gear[]>([])
@@ -69,7 +69,7 @@ export function AddGearToTripDialog({ open, onOpenChange, tripId, onSuccess }: A
                 ? values.packing_category
                 : null;
 
-            const response = await fetch(`/api/trips/${tripId}/items`, {
+            const response = await fetch(`/api/loadouts/${loadoutId}/items`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -91,7 +91,7 @@ export function AddGearToTripDialog({ open, onOpenChange, tripId, onSuccess }: A
             if (onSuccess) onSuccess()
             router.refresh()
         } catch (error) {
-            console.error("Error adding trip item:", error)
+            console.error("Error adding loadout item:", error)
         } finally {
             setLoading(false)
         }
@@ -103,7 +103,7 @@ export function AddGearToTripDialog({ open, onOpenChange, tripId, onSuccess }: A
                 <DialogHeader>
                     <DialogTitle className="text-white">Add/Update Gear</DialogTitle>
                     <DialogDescription className="text-zinc-400">
-                        Select a gear item from your inventory to add to this trip. If the item is already added, this will update its quantity and packing category.
+                        Select a gear item from your inventory to add to this loadout. If the item is already added, this will update its quantity and packing category.
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>

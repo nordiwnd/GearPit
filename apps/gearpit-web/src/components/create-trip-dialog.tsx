@@ -98,10 +98,10 @@ export function CreateTripDialog({ open, onOpenChange, baseLoadoutId }: CreateTr
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[425px] bg-[#27272A] border-zinc-800 text-zinc-200">
                 <DialogHeader>
-                    <DialogTitle>Create Trip</DialogTitle>
-                    <DialogDescription>
+                    <DialogTitle className="text-white">Create Trip</DialogTitle>
+                    <DialogDescription className="text-zinc-400">
                         {baseLoadoutId ? "Create a new trip using this loadout as a base." : "Create a new trip."}
                     </DialogDescription>
                 </DialogHeader>
@@ -176,12 +176,12 @@ export function CreateTripDialog({ open, onOpenChange, baseLoadoutId }: CreateTr
                         </div>
 
                         <DialogFooter>
-                            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-                            <Button type="submit" disabled={loading}>Create</Button>
+                            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="hover:bg-zinc-800 hover:text-white">Cancel</Button>
+                            <Button type="submit" disabled={loading} className="bg-emerald-600 hover:bg-emerald-500 text-white">Create</Button>
                         </DialogFooter>
                     </form>
                 </Form>
             </DialogContent>
-        </Dialog>
+        </Dialog >
     )
 }

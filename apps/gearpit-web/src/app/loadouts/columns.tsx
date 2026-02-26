@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table"
 import { Loadout } from "@/types/models"
 import { Button } from "@/components/ui/button"
-import { ArrowUpDown, MoreHorizontal } from "lucide-react"
+import { ArrowUpDown, MoreHorizontal, Copy, Eye, Trash2 } from "lucide-react"
 import Link from "next/link"
 import {
     DropdownMenu,
@@ -79,18 +79,21 @@ export const columns: ColumnDef<Loadout>[] = [
                             <MoreHorizontal className="h-4 w-4" />
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem
-                            onClick={() => navigator.clipboard.writeText(loadout.id)}
-                        >
+                    <DropdownMenuContent align="end" className="bg-[#27272A] border-zinc-800 text-zinc-200">
+                        <DropdownMenuLabel className="text-zinc-400">Actions</DropdownMenuLabel>
+                        <DropdownMenuItem onClick={() => navigator.clipboard.writeText(loadout.id)} className="hover:bg-zinc-800 hover:text-white cursor-pointer focus:bg-zinc-800 focus:text-white">
+                            <Copy className="mr-2 h-4 w-4" />
                             Copy ID
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild>
-                            <Link href={`/loadouts/${loadout.id}`}>View Details</Link>
+                        <DropdownMenuSeparator className="bg-zinc-800" />
+                        <DropdownMenuItem onClick={() => window.location.href = `/loadouts/${loadout.id}`} className="hover:bg-zinc-800 hover:text-white cursor-pointer focus:bg-zinc-800 focus:text-white">
+                            <Eye className="mr-2 h-4 w-4" />
+                            View Details
                         </DropdownMenuItem>
-                        <DropdownMenuItem>Delete</DropdownMenuItem>
+                        <DropdownMenuItem className="text-red-400 hover:text-red-300 hover:bg-red-400/10 cursor-pointer focus:text-red-300 focus:bg-red-400/10">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             )

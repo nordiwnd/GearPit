@@ -16,24 +16,24 @@ export const SkiPropsSchema = z.object({
     radius_m: z.coerce.number().min(0),
     dimensions_mm: DimensionsSchema,
     binding_type: z.string().min(1, "Binding type is required"),
-    is_preloaded_binding: z.boolean(),
+    is_preloaded_binding: z.boolean().optional().default(false),
 })
 
 export const BackpackPropsSchema = z.object({
     capacity_liters: z.coerce.number().min(0),
     back_length_size: z.string().min(1, "Size is required"),
-    has_frame: z.boolean(),
+    has_frame: z.boolean().optional().default(false),
 })
 
 export const TentPropsSchema = z.object({
     capacity_persons: z.coerce.number().min(1),
     water_resistance_mm: z.coerce.number().min(0),
     shape: z.string().min(1, "Shape is required"),
-    is_double_wall: z.boolean(),
+    is_double_wall: z.boolean().optional().default(false),
 })
 
 export const PolePropsSchema = z.object({
-    is_adjustable: z.boolean(),
+    is_adjustable: z.boolean().optional().default(false),
     adjustment_stages: z.coerce.number().min(0),
     length_range_mm: LengthRangeSchema,
     packed_length_mm: z.coerce.number().min(0),
@@ -67,7 +67,7 @@ export const CramponsPropsSchema = z.object({
 export const HardShellPropsSchema = z.object({
     water_resistance_mm: z.coerce.number().min(0),
     moisture_permeability_g: z.coerce.number().min(0),
-    has_ventilation: z.boolean(),
+    has_ventilation: z.boolean().optional().default(false),
     material_tech: z.string().min(1, "Material technology is required"),
 })
 
