@@ -1,0 +1,120 @@
+name: E2E Test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e-playwright:
+    name: Playwright E2E Test
+    runs-on: gearpit-runner-set
+    
+    # 2. 依存サービスの起動 (Postgres 18-alpine)
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: gearpit
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: gearpit_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      # 1. コードのチェックアウト
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # (Optional) QEMU のセットアップ: ユーザーの要求に基づく (amd64 / arm変換)
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      # 1. Node.js のセットアップ
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: './apps/gearpit-web/package-lock.json'
+
+      # 1. Rust のセットアップ
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ./apps/gearpit-core
+
+      # 2. テストDBの作成とマイグレーション
+      - name: Run Backend Migrations
+        working-directory: ./apps/gearpit-core
+        env:
+          DATABASE_URL: postgres://gearpit:password@localhost:5432/gearpit_test
+        run: |
+          cargo install sqlx-cli --no-default-features --features postgres
+          sqlx database create
+          sqlx migrate run
+
+      # 3. バックエンド（Rust API）をバックグラウンドで起動
+      - name: Start Backend (Background)
+        working-directory: ./apps/gearpit-core
+        env:
+          DATABASE_URL: postgres://gearpit:password@localhost:5432/gearpit_test
+          RUST_LOG: debug
+        run: |
+          cargo run &
+          # サーバーの立ち上がりを少し待つ (ヘルスチェックやWait-onに変更可能)
+          sleep 10
+
+      # 4. フロントエンド（Next.js）をビルドし、バックグラウンドで起動
+      - name: Build and Start Frontend (Background)
+        working-directory: ./apps/gearpit-web
+        run: |
+          npm ci
+          npm run build
+          npm run start &
+          # フロントエンドの立ち上がりを待つ
+          sleep 10
+
+      # 5. Playwright の依存関係をインストール
+      - name: Install Playwright Browsers
+        working-directory: ./apps/gearpit-web
+        run: npx playwright install --with-deps chromium
+
+      # 6. E2Eテストを実行
+      - name: Run Playwright Tests
+        working-directory: ./apps/gearpit-web
+        env:
+          # もしターゲットURLが必要ならここで渡す (例)
+           TARGET_URL: http://localhost:3000
+        run: npx playwright test
+
+      # 7. アーティファクト(トレースやスクリーンショット)の保存
+      # Playwrightの出力ディレクトリはプロジェクト内の playwright-report や test-results
+      - name: Upload Playwright Report & Traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            ./apps/gearpit-web/playwright-report/
+            ./apps/gearpit-web/test-results/
+          retention-days: 7
+          if-no-files-found: ignore
