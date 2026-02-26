@@ -11,9 +11,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test-and-scan:
-    name: Build, Scan & Test
-    runs-on: gearpit-runner-set
+  # 1. Backend Regression Test (Rust)
+  test-backend:
+    name: Backend Regression Test
+    runs-on: ubuntu-latest
     
     services:
       postgres:
@@ -37,8 +38,13 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: 1.93.1
+          toolchain: stable # Ensures compatibility
           
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ./apps/gearpit-core
+
       - name: Run Backend Migrations & Tests
         working-directory: ./apps/gearpit-core
         env:
@@ -48,6 +54,14 @@ jobs:
           sqlx database create
           sqlx migrate run
           cargo test --all-features
+
+  # 2. Frontend Build Check (Next.js)
+  build-frontend:
+    name: Frontend Build Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -61,6 +75,15 @@ jobs:
         run: |
           npm ci
           npm run build
+
+  # 3. Security Scan (Trivy) - Depends on successful builds/tests
+  security-scan:
+    name: Container Security Scan
+    runs-on: ubuntu-latest
+    needs: [test-backend, build-frontend]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
       - name: Build Core Docker Image
         working-directory: ./apps/gearpit-core
