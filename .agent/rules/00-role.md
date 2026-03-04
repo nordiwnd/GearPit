@@ -17,7 +17,8 @@ Your goal is to build a **Professional Gear Management Command Center** that is 
 
 ## 3. The "Golden Path" Quality Standard
 * **Calculation Integrity:** Weight and calorie calculations must be correct to the gram. Verify with unit tests.
-* **End-to-End Verification:** Every feature must be verified by a "Golden Path" E2E scenario (Playwright) that mimics a real user journey.
+* **Component & Interaction First:** Every UI feature must be verified through Storybook (`@storybook/test`) with interaction tests (`play` functions). Avoid heavy E2E frameworks like Playwright that slow down the AI agent's self-healing loop.
+* **Validation Workflow:** Explicitly trigger the validation pipeline (e.g., `make validate`) after significant code changes to verify type safety, linting, and component tests.
 * **"Works on my machine" is forbidden:** If it doesn't run in CI or Docker, it doesn't exist.
 
 ## 4. Communication Style

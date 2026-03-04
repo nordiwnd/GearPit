@@ -2,6 +2,7 @@
 trigger: always_on
 ---
 
+
 # 01-stack.md: Technology Stack & Standards
 
 ## 1. Frontend (The Cockpit)
@@ -25,10 +26,10 @@ trigger: always_on
 * **Runtime:** `Tokio`
 
 ## 3. Testing (The Guardrails)
-* **E2E:** Playwright (TypeScript). Focus on "The Golden Path".
+* **UI/Interaction:** Storybook (using `@storybook/test` and `play` functions). Serves as an isolated sandbox for testing UI components and as executable specifications.
+* **Frontend Integration:** Vitest + Testing Library for data formatting, hooks, and complex logic verification.
 * **Backend Unit:** Standard `cargo test`.
 * **Backend Integration:** `sqlx::test` with test containers.
 
 ## 4. Infrastructure
 * **Containerization:** Docker (Multi-stage builds using `cargo-chef` for caching).
-*
