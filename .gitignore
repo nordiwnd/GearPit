@@ -50,4 +50,11 @@ Thumbs.db
 mycert.pem
 .mycert
 .serena/
-.agent/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# AI Agent Workspaces
+# ※ チームで共有する場合はコメントアウトを維持してください
+# .agent/
